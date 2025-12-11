@@ -111,10 +111,10 @@ const AuditArena: React.FC = () => {
             return (
               <div key={step.id} className="flex items-center">
                 <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${isActive
-                    ? `bg-gradient-to-r ${step.color} shadow-lg scale-110`
-                    : isCompleted
-                      ? 'bg-green-500 shadow-md'
-                      : 'bg-gray-200'
+                  ? `bg-gradient-to-r ${step.color} shadow-lg scale-110`
+                  : isCompleted
+                    ? 'bg-green-500 shadow-md'
+                    : 'bg-gray-200'
                   }`}>
                   {isCompleted ? (
                     <CheckCircle className="w-6 h-6 text-white" />
