@@ -227,26 +227,26 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
         </div>
       </div>
 
-      <div className="flex-1 flex gap-6 ">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
         {/* Left Panel - Documents */}
-        <div className="w-1/3 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 p-6 shadow-xl py-2 my-0">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Case Documents</h2>
+        <div className="w-full lg:w-1/4 bg-white/80 backdrop-blur-sm border-r border-gray-200/50 p-4 shadow-xl overflow-y-auto max-h-[30vh] lg:max-h-full">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Case Documents</h2>
 
-          <div className="space-y-4 mb-8">
+          <div className="space-y-3 mb-6">
             {auditCase.documents.map((doc) => (
               <button
                 key={doc.id}
                 onClick={() => setSelectedDocument(doc)}
-                className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${selectedDocument?.id === doc.id
-                  ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100/50'
-                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                className={`w-full p-3 rounded-lg border-2 text-left transition-all duration-200 ${selectedDocument?.id === doc.id
+                  ? 'border-blue-500 bg-blue-50 shadow-md'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                   }`}
               >
-                <div className="flex items-start gap-3 ">
-                  <FileText className="w-0 h-0 text-gray-600 mt-0" />
+                <div className="flex items-start gap-3">
+                  <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
                   <div>
-                    <p className="font-bold text-gray-900 text-sm mb-1">{doc.name}</p>
-                    <p className="text-gray-500 text-xs leading-relaxed">{doc.preview}</p>
+                    <p className="font-bold text-gray-900 text-xs mb-0.5">{doc.name}</p>
+                    <p className="text-gray-500 text-[10px] leading-relaxed line-clamp-2">{doc.preview}</p>
                   </div>
                 </div>
               </button>
@@ -254,18 +254,18 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
           </div>
 
           {selectedDocument && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900">{selectedDocument.name}</h3>
-                <button className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-all">
-                  <Download className="w-4 h-4" />
+            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-md">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 text-sm">{selectedDocument.name}</h3>
+                <button className="text-blue-600 hover:text-blue-700 p-1.5 rounded-md hover:bg-blue-50 transition-all">
+                  <Download className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="bg-gradient-to-br from-gray-100 to-blue-50 rounded-xl p-6 h-64 flex items-center justify-center border border-gray-200">
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-4 h-48 flex items-center justify-center border border-gray-200">
                 <div className="text-center text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="font-medium">Document Preview</p>
-                  <p className="text-xs mt-2 leading-relaxed">{selectedDocument.preview}</p>
+                  <FileText className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="font-medium text-xs">Document Preview</p>
+                  <p className="text-[10px] mt-1 leading-relaxed px-2">{selectedDocument.preview}</p>
                 </div>
               </div>
             </div>
@@ -273,8 +273,10 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
         </div>
 
         {/* Right Panel - Tasks */}
-        <div className="flex-1 p-8">
-          {renderTask(currentTask)}
+        <div className="flex-1 p-6 overflow-y-auto bg-gray-50/50">
+          <div className="max-w-4xl mx-auto">
+            {renderTask(currentTask)}
+          </div>
         </div>
       </div>
     </div>
