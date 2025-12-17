@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.example
+
+# Allow the example file to be committed
+!.env.example
+
+# Explicitly ignore nested env files (safety net)
+frontend/.env
+backend/.env
