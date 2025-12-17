@@ -1,21 +1,27 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+
+import authRoutes from "./routes/auth.routes";
+import activityRoutes from "./routes/activity.routes";
+import leaderboardRoutes from "./routes/leaderboard.routes";
+import adminRoutes from "./routes/admin.routes";
+import { clerkWebhook } from "./webhooks/clerkWebhook";
 
 const app = express();
+app.post(
+    "/api/webhooks/clerk",
+    bodyParser.raw({ type: "application/json" }),
+    clerkWebhook
+);
 
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
-app.use(morgan('dev'));
 
-// Routes will be imported here
-// app.use('/api/auth', authRoutes);
-// app.use('/api/content', contentRoutes);
-
-app.get('/', (req, res) => {
-    res.json({ message: 'Finopoly Backend API' });
-});
+// ROUTES
+app.use("/api/auth", authRoutes);
+app.use("/api/activity", activityRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/admin", adminRoutes);
 
 export default app;

@@ -15,6 +15,7 @@ import AuditArena from './components/simulations/AuditArena';
 import TaxSimulation from './components/simulations/TaxSimulation';
 import CaseLawModuleLive from './components/caselaws/CaseLawModuleLive';
 import CaseLawExplorer from './components/caselaw/CaseLawExplorer';
+import CaseDetailView from './components/caselaw/CaseDetailView';
 import QuizArena from './components/quiz/QuizArena';
 import Leaderboard from './components/leaderboard/Leaderboard';
 import ProgressModule from './components/progress/ProgressModule';
@@ -26,6 +27,7 @@ const AppContent: React.FC = () => {
   const { showOnboarding, user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(window.location.pathname === '/AdminPanel' ? 'admin' : 'dashboard');
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
+  const [currentCaseDetail, setCurrentCaseDetail] = useState<string | null>(null);
 
   if (loading || !user) {
     return (
@@ -47,6 +49,14 @@ const AppContent: React.FC = () => {
 
   const handleBackToSimulations = () => {
     setCurrentSimulation(null);
+  };
+
+  const handleOpenCaseDetail = (caseId: string) => {
+    setCurrentCaseDetail(caseId);
+  };
+
+  const handleCloseCaseDetail = () => {
+    setCurrentCaseDetail(null);
   };
 
   const renderContent = () => {
@@ -79,7 +89,10 @@ const AppContent: React.FC = () => {
       case 'caselaw-simulation':
         return <CaseLawModuleLive />;
       case 'caselaw-explorer':
-        return <CaseLawExplorer />;
+        if (currentCaseDetail) {
+          return <CaseDetailView caseId={currentCaseDetail} onBack={handleCloseCaseDetail} />;
+        }
+        return <CaseLawExplorer onOpenCase={handleOpenCaseDetail} />;
       case 'tax-simulation':
         return <TaxSimulation />;
       case 'tax-cases':

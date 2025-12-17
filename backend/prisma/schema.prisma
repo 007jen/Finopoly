@@ -1,3 +1,6 @@
+// ============================================================
+//  DATASOURCE & GENERATOR
+// ============================================================
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
@@ -7,58 +10,9 @@ generator client {
     provider = "prisma-client-js"
 }
 
-model User {
-    id        String   @id @default(uuid())
-    clerkId   String   @unique
-    email     String   @unique
-    role      String   @default("Student") // "Student", "Partner", "admin"
-    xp        Int      @default(0)
-    streak    Int      @default(0)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    badges         Badge[]
-    activities     Activity[]
-    userBadges     UserBadge[]
-    auditCases     AuditCase[]
-    taxSimulations TaxSimulation[]
-}
-
-model Badge {
-    id          String      @id @default(uuid())
-    name        String
-    description String
-    icon        String?
-    userId      String
-    user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    earnedAt    DateTime    @default(now())
-    userBadges  UserBadge[]
-}
-
-model CaseLaw {
-    id            String   @id @default(uuid())
-    title         String
-    category      String
-    difficulty    String
-    xpReward      Int
-    facts         String
-    question      String
-    options       String[]
-    correctAnswer String
-    explanation   String
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
-}
-
-model Activity {
-    id          String   @id @default(uuid())
-    type        String
-    description String
-    userId      String
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    createdAt   DateTime @default(now())
-}
-
+// ============================================================
+//  ENUMS
+// ============================================================
 enum Role {
     student
     admin
@@ -70,6 +24,54 @@ enum Difficulty {
     Pro
 }
 
+// ============================================================
+//  USER MODEL
+// ============================================================
+model User {
+    id      String  @id @default(uuid())
+    clerkId String  @unique
+    email   String  @unique
+    name    String?
+    avatar  String?
+    role    Role    @default(student)
+
+    xp               Int       @default(0)
+    streak           Int       @default(0)
+    lastActivityDate DateTime?
+
+    preferredAreas String[] @default([])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    userBadges UserBadge[]
+    activities Activity[]
+
+    // Content created by Admin
+    auditCases     AuditCase[]
+    taxSimulations TaxSimulation[]
+    caseLaws       CaseLaw[]
+
+    @@index([xp])
+}
+
+// ============================================================
+//  BADGES (Catalog of all badges)
+// ============================================================
+model Badge {
+    id            String  @id @default(uuid())
+    name          String  @unique
+    description   String
+    icon          String?
+    xpRequirement Int
+
+    userBadges UserBadge[]
+}
+
+// ============================================================
+//  USER-BADGES (Which user earned which badge)
+// ============================================================
 model UserBadge {
     id       String   @id @default(uuid())
     userId   String
@@ -79,9 +81,36 @@ model UserBadge {
     user  User  @relation(fields: [userId], references: [id])
     badge Badge @relation(fields: [badgeId], references: [id])
 
-    @@unique([userId, badgeId])
+    @@unique([userId, badgeId]) // Prevent duplicate badges
 }
 
+// ============================================================
+//  CASE LAW CONTENT
+// ============================================================
+model CaseLaw {
+    id         String     @id @default(uuid())
+    title      String
+    category   String
+    difficulty Difficulty
+    xpReward   Int        @default(100)
+
+    facts         String
+    question      String
+    options       String[]
+    correctAnswer String
+    explanation   String
+    isActive      Boolean  @default(true)
+
+    createdBy String?
+    creator   User?   @relation(fields: [createdBy], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+//  AUDIT CASE CONTENT
+// ============================================================
 model AuditCase {
     id          String     @id @default(uuid())
     title       String
@@ -100,6 +129,9 @@ model AuditCase {
     updatedAt DateTime @updatedAt
 }
 
+// ============================================================
+//  TAX SIMULATIONS
+// ============================================================
 model TaxSimulation {
     id          String     @id @default(uuid())
     title       String
@@ -119,4 +151,32 @@ model TaxSimulation {
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+//  USER ACTIVITY LOGGING (XP, Scores, Progress)
+// ============================================================
+enum ActivityType {
+    audit
+    tax
+    caselaw
+    quiz
+}
+
+model Activity {
+    id           String       @id @default(uuid())
+    userId       String
+    activityType ActivityType
+    activityId   String
+    xpEarned     Int
+    score        Float?
+    timeTaken    Int?
+    answers      Json?
+
+    createdAt DateTime @default(now())
+
+    user User @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+    @@index([createdAt])
 }

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  BookOpen, 
-  Scale, 
+import {
+  Search,
+  Filter,
+  BookOpen,
+  Scale,
   Award,
   Clock,
   Star,
@@ -11,7 +11,12 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-const CaseLawExplorer: React.FC = () => {
+
+interface CaseLawExplorerProps {
+  onOpenCase?: (id: string) => void;
+}
+
+const CaseLawExplorer: React.FC<CaseLawExplorerProps> = ({ onOpenCase }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -89,7 +94,7 @@ const CaseLawExplorer: React.FC = () => {
 
   const filteredCaseLaws = caseLaws.filter(caselaw => {
     const matchesSearch = caselaw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         caselaw.summary.toLowerCase().includes(searchQuery.toLowerCase());
+      caselaw.summary.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || caselaw.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -131,8 +136,8 @@ const CaseLawExplorer: React.FC = () => {
         </div>
         <div className="mt-4">
           <div className="w-full bg-white bg-opacity-20 rounded-full h-3">
-            <div 
-              className="bg-white h-3 rounded-full transition-all duration-300" 
+            <div
+              className="bg-white h-3 rounded-full transition-all duration-300"
               style={{ width: `${(badgeProgress.current / badgeProgress.target) * 100}%` }}
             />
           </div>
@@ -152,11 +157,11 @@ const CaseLawExplorer: React.FC = () => {
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-500" />
-              <select 
+              <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-3 bg-white text-sm"
@@ -166,7 +171,7 @@ const CaseLawExplorer: React.FC = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="flex border border-gray-300 rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('grid')}
@@ -196,11 +201,11 @@ const CaseLawExplorer: React.FC = () => {
       {/* Case Laws Grid/List */}
       <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
         {filteredCaseLaws.map((caselaw) => (
-          <div 
-            key={caselaw.id} 
-            className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer group ${
-              viewMode === 'list' ? 'p-4' : 'p-6'
-            }`}
+          <div
+            key={caselaw.id}
+            onClick={() => onOpenCase && onOpenCase(caselaw.id)}
+            className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer group ${viewMode === 'list' ? 'p-4' : 'p-6'
+              }`}
           >
             <div className={viewMode === 'list' ? 'flex items-start gap-4' : ''}>
               <div className={viewMode === 'list' ? 'flex-1' : ''}>
@@ -220,7 +225,7 @@ const CaseLawExplorer: React.FC = () => {
                 <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                   {caselaw.title}
                 </h3>
-                
+
                 <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                   {caselaw.summary}
                 </p>
@@ -243,7 +248,7 @@ const CaseLawExplorer: React.FC = () => {
                       {caselaw.xpReward} XP
                     </div>
                   </div>
-                  
+
                   <button className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
                     Read More
                     <ChevronRight className="w-4 h-4" />
@@ -262,13 +267,13 @@ const CaseLawExplorer: React.FC = () => {
           <div className="text-2xl font-bold text-gray-900 mb-1">156</div>
           <p className="text-gray-600 text-sm">Total Case Laws</p>
         </div>
-        
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
           <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-3" />
           <div className="text-2xl font-bold text-gray-900 mb-1">23</div>
           <p className="text-gray-600 text-sm">Completed This Month</p>
         </div>
-        
+
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
           <Award className="w-8 h-8 text-purple-600 mx-auto mb-3" />
           <div className="text-2xl font-bold text-gray-900 mb-1">4</div>

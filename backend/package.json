@@ -14,6 +14,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@clerk/backend": "^2.27.0",
         "@clerk/clerk-sdk-node": "^4.13.23",
         "@prisma/client": "^5.22.0",
         "cors": "^2.8.5",
@@ -22,6 +23,7 @@
         "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.3",
         "morgan": "^1.10.0",
+        "svix": "^1.82.0",
         "zod": "^3.25.76"
     },
     "devDependencies": {
@@ -34,5 +36,8 @@
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3"
     },
-    "type": "commonjs"
+    "type": "commonjs",
+    "prisma": {
+        "seed": "ts-node prisma/seed.ts"
+    }
 }
