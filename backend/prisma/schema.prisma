@@ -193,6 +193,11 @@ model CaseSubmission {
   userId String
   answer String
 
+  status String @default("pending") 
+  score Int?  
+  feedback String?  
+  reviewedAt DateTime? 
+
   createdAt DateTime @default(now())
 
   case CaseLaw @relation(fields: [caseId], references: [id], onDelete: Cascade)
