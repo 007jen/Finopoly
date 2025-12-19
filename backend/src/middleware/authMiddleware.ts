@@ -31,16 +31,29 @@ import { clerk, verifyToken } from "../config/clerk";
 
 
 // middleware/authMiddleware.ts
+import { prisma } from "../utils/prisma";
+
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = req.headers.authorization?.replace("Bearer ", "");
         if (!token) return res.status(401).json({ error: "No token" });
 
         const session = await verifyToken(token);
-        req.user = { clerkId: session.sub };
+
+        // Find user in DB
+        const user = await prisma.user.findUnique({
+            where: { clerkId: session.sub }
+        });
+
+        if (!user) {
+            return res.status(401).json({ error: "User not found in database" });
+        }
+
+        req.user = user;
 
         next();
-    } catch {
+    } catch (err) {
+        console.error("Auth error:", err);
         res.status(401).json({ error: "Unauthorized" });
     }
 };

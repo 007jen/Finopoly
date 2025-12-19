@@ -8,6 +8,7 @@ import leaderboardRoutes from "./routes/leaderboard.routes";
 import adminRoutes from "./routes/admin.routes";
 import { clerkWebhook } from "./webhooks/clerkWebhook";
 import caseRoutes from "./routes/case.route";
+import caseReviewRoutes from "./routes/caseReview.routes";
 
 const app = express();
 app.post(
@@ -25,6 +26,7 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/cases", caseRoutes);
+app.use("/api/admin", caseReviewRoutes);
 console.log("Case routes mounted");
 
 
