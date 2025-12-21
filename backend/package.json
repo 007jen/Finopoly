@@ -19,6 +19,7 @@
         "@clerk/clerk-sdk-node": "^4.13.23",
         "@prisma/client": "^5.22.0",
         "cors": "^2.8.5",
+        "date-fns": "^4.1.0",
         "dotenv": "^16.6.1",
         "express": "^4.22.1",
         "helmet": "^7.1.0",

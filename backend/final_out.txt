@@ -1,0 +1,10 @@
+  console.log
+    Progress routes mounted
+
+      at Object.<anonymous> (src/server.ts:35:9)
+
+  console.log
+    Profile routes mounted
+
+      at Object.<anonymous> (src/server.ts:36:9)
+

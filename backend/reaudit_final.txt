@@ -1,0 +1,322 @@
+  console.log
+    Progress routes mounted
+
+      at Object.<anonymous> (src/server.ts:35:9)
+
+  console.log
+    Profile routes mounted
+
+      at Object.<anonymous> (src/server.ts:36:9)
+
+FAIL src/tests/api_audit.test.ts (42.308 s)
+  Profile & Progress API Audit
+    GET /api/progress/weekly-xp
+      × should enforce auth (5005 ms)
+      × should return valid structure with valid token (5003 ms)
+      × should handle empty database gracefully (5006 ms)
+    GET /api/progress/streak
+      × should return status 200 and an array of dates (5014 ms)
+    GET /api/progress/subjects
+      × should return status 200 and subject stats (5003 ms)
+    GET /api/profile/overview
+      × should return profile overview (5007 ms)
+    GET /api/profile/timeline
+      × should return timeline array with limit (5017 ms)
+    GET /api/profile/stats
+      × should return stats with corrected key (5017 ms)
+
+  ● Profile & Progress API Audit › GET /api/progress/weekly-xp › should enforce auth
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 77 |[39m
+     [90m 78 |[39m     describe([32m'GET /api/progress/weekly-xp'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 79 |[39m         it([32m'should enforce auth'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 80 |[39m             [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/weekly-xp'[39m)[33m.[39mexpect([35m401[39m)[33m;[39m
+     [90m 81 |[39m         })[33m;[39m
+     [90m 82 |[39m[0m
+
+      at src/tests/api_audit.test.ts:79:9
+      at src/tests/api_audit.test.ts:78:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/progress/weekly-xp › should return valid structure with valid token
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 81 |[39m         })[33m;[39m
+     [90m 82 |[39m
+    [31m[1m>[22m[39m[90m 83 |[39m         it([32m'should return valid structure with valid token'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 84 |[39m             (prisma[33m.[39mactivity[33m.[39mfindMany [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue(mockActivities)[33m;[39m
+     [90m 85 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/weekly-xp'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m 86 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m[0m
+
+      at src/tests/api_audit.test.ts:83:9
+      at src/tests/api_audit.test.ts:78:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/progress/weekly-xp › should handle empty database gracefully
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 91 |[39m         })[33m;[39m
+     [90m 92 |[39m
+    [31m[1m>[22m[39m[90m 93 |[39m         it([32m'should handle empty database gracefully'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m    |[39m         [31m[1m^[22m[39m
+     [90m 94 |[39m             (prisma[33m.[39mactivity[33m.[39mfindMany [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([])[33m;[39m
+     [90m 95 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/weekly-xp'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m 96 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m[0m
+
+      at src/tests/api_audit.test.ts:93:9
+      at src/tests/api_audit.test.ts:78:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/progress/streak › should return status 200 and an array of dates
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 100 |[39m
+     [90m 101 |[39m     describe([32m'GET /api/progress/streak'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 102 |[39m         it([32m'should return status 200 and an array of dates'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 103 |[39m             [90m// Mock $queryRaw for the optimized implementation[39m
+     [90m 104 |[39m             (prisma[33m.[39m$queryRaw [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([{ date[33m:[39m [32m'2023-12-01'[39m }[33m,[39m { date[33m:[39m [32m'2023-12-02'[39m }])[33m;[39m
+     [90m 105 |[39m[0m
+
+      at src/tests/api_audit.test.ts:102:9
+      at src/tests/api_audit.test.ts:101:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/progress/subjects › should return status 200 and subject stats
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 113 |[39m
+     [90m 114 |[39m     describe([32m'GET /api/progress/subjects'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 115 |[39m         it([32m'should return status 200 and subject stats'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 116 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/subjects'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m 117 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 118 |[39m             expect(res[33m.[39mbody)[33m.[39mtoEqual({[0m
+
+      at src/tests/api_audit.test.ts:115:9
+      at src/tests/api_audit.test.ts:114:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/profile/overview › should return profile overview
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 125 |[39m
+     [90m 126 |[39m     describe([32m'GET /api/profile/overview'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 127 |[39m         it([32m'should return profile overview'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 128 |[39m             (prisma[33m.[39muser[33m.[39mfindUnique [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue(mockUser)[33m;[39m
+     [90m 129 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/profile/overview'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m 130 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m[0m
+
+      at src/tests/api_audit.test.ts:127:9
+      at src/tests/api_audit.test.ts:126:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/profile/timeline › should return timeline array with limit
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 135 |[39m
+     [90m 136 |[39m     describe([32m'GET /api/profile/timeline'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 137 |[39m         it([32m'should return timeline array with limit'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 138 |[39m             (prisma[33m.[39mactivity[33m.[39mfindMany [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue(mockActivities)[33m;[39m
+     [90m 139 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/profile/timeline'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m 140 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m[0m
+
+      at src/tests/api_audit.test.ts:137:9
+      at src/tests/api_audit.test.ts:136:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+  ● Profile & Progress API Audit › GET /api/profile/stats › should return stats with corrected key
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 145 |[39m
+     [90m 146 |[39m     describe([32m'GET /api/profile/stats'[39m[33m,[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 147 |[39m         it([32m'should return stats with corrected key'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m         [31m[1m^[22m[39m
+     [90m 148 |[39m             (prisma[33m.[39mactivity[33m.[39mcount [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([35m5[39m)[33m;[39m
+     [90m 149 |[39m             (prisma[33m.[39muserBadge[33m.[39mcount [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([35m2[39m)[33m;[39m
+     [90m 150 |[39m[0m
+
+      at src/tests/api_audit.test.ts:147:9
+      at src/tests/api_audit.test.ts:146:5
+      at Object.<anonymous> (src/tests/api_audit.test.ts:73:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 8 total
+Snapshots:   0 total
+Time:        42.497 s, estimated 43 s
+Ran all test suites matching src/tests/api_audit.test.ts.
+
+Jest has detected the following 8 open handles potentially keeping Jest from exiting:
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 78 |[39m     describe([32m'GET /api/progress/weekly-xp'[39m[33m,[39m () [33m=>[39m {
+     [90m 79 |[39m         it([32m'should enforce auth'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 80 |[39m             [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/weekly-xp'[39m)[33m.[39mexpect([35m401[39m)[33m;[39m
+     [90m    |[39m                                [31m[1m^[22m[39m
+     [90m 81 |[39m         })[33m;[39m
+     [90m 82 |[39m
+     [90m 83 |[39m         it([32m'should return valid structure with valid token'[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:80:32
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:79:46)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 83 |[39m         it([32m'should return valid structure with valid token'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m 84 |[39m             (prisma[33m.[39mactivity[33m.[39mfindMany [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue(mockActivities)[33m;[39m
+    [31m[1m>[22m[39m[90m 85 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/weekly-xp'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m    |[39m                                            [31m[1m^[22m[39m
+     [90m 86 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 87 |[39m             expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m'dailyXp'[39m)[33m;[39m
+     [90m 88 |[39m             expect([36mtypeof[39m res[33m.[39mbody[33m.[39mtotalXp)[33m.[39mtoBe([32m'number'[39m)[33m;[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:85:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:83:73)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 93 |[39m         it([32m'should handle empty database gracefully'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m 94 |[39m             (prisma[33m.[39mactivity[33m.[39mfindMany [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([])[33m;[39m
+    [31m[1m>[22m[39m[90m 95 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/weekly-xp'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m    |[39m                                            [31m[1m^[22m[39m
+     [90m 96 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 97 |[39m             expect(res[33m.[39mbody[33m.[39mtotalXp)[33m.[39mtoBe([35m0[39m)[33m;[39m
+     [90m 98 |[39m         })[33m;[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:95:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:93:66)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 104 |[39m             (prisma[33m.[39m$queryRaw [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([{ date[33m:[39m [32m'2023-12-01'[39m }[33m,[39m { date[33m:[39m [32m'2023-12-02'[39m }])[33m;[39m
+     [90m 105 |[39m
+    [31m[1m>[22m[39m[90m 106 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/streak'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m     |[39m                                            [31m[1m^[22m[39m
+     [90m 107 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 108 |[39m             expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m'activeDates'[39m)[33m;[39m
+     [90m 109 |[39m             expect([33mArray[39m[33m.[39misArray(res[33m.[39mbody[33m.[39mactiveDates))[33m.[39mtoBe([36mtrue[39m)[33m;[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:106:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:102:73)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 114 |[39m     describe([32m'GET /api/progress/subjects'[39m[33m,[39m () [33m=>[39m {
+     [90m 115 |[39m         it([32m'should return status 200 and subject stats'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+    [31m[1m>[22m[39m[90m 116 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/progress/subjects'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m     |[39m                                            [31m[1m^[22m[39m
+     [90m 117 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 118 |[39m             expect(res[33m.[39mbody)[33m.[39mtoEqual({
+     [90m 119 |[39m                 audit[33m:[39m [35m0[39m[33m,[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:116:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:115:69)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 127 |[39m         it([32m'should return profile overview'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m 128 |[39m             (prisma[33m.[39muser[33m.[39mfindUnique [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue(mockUser)[33m;[39m
+    [31m[1m>[22m[39m[90m 129 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/profile/overview'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m     |[39m                                            [31m[1m^[22m[39m
+     [90m 130 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 131 |[39m             expect(res[33m.[39mbody[33m.[39mxp)[33m.[39mtoBe([35m1200[39m)[33m;[39m
+     [90m 132 |[39m             expect(res[33m.[39mbody[33m.[39mlevel)[33m.[39mtoBe([35m3[39m)[33m;[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:129:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:127:57)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 137 |[39m         it([32m'should return timeline array with limit'[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m 138 |[39m             (prisma[33m.[39mactivity[33m.[39mfindMany [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue(mockActivities)[33m;[39m
+    [31m[1m>[22m[39m[90m 139 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/profile/timeline'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m     |[39m                                            [31m[1m^[22m[39m
+     [90m 140 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 141 |[39m             expect([33mArray[39m[33m.[39misArray(res[33m.[39mbody))[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m 142 |[39m             expect(res[33m.[39mbody[[35m0[39m])[33m.[39mtoHaveProperty([32m'label'[39m)[33m;[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:139:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:137:66)
+
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 149 |[39m             (prisma[33m.[39muserBadge[33m.[39mcount [36mas[39m jest[33m.[39m[33mMock[39m)[33m.[39mmockResolvedValue([35m2[39m)[33m;[39m
+     [90m 150 |[39m
+    [31m[1m>[22m[39m[90m 151 |[39m             [36mconst[39m res [33m=[39m [36mawait[39m request(app)[33m.[39m[36mget[39m([32m'/api/profile/stats'[39m)[33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m'Bearer valid_token'[39m)[33m;[39m
+     [90m     |[39m                                            [31m[1m^[22m[39m
+     [90m 152 |[39m             expect(res[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 153 |[39m             [90m// Expect corrected key 'activitiesCompleted'[39m
+     [90m 154 |[39m             expect(res[33m.[39mbody)[33m.[39mtoEqual({[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as get] (node_modules/supertest/index.js:39:18)
+      at src/tests/api_audit.test.ts:151:44
+      at src/tests/api_audit.test.ts:8:71
+      at __awaiter (src/tests/api_audit.test.ts:4:12)
+      at Object.<anonymous> (src/tests/api_audit.test.ts:147:65)
+
