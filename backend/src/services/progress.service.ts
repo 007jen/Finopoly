@@ -9,6 +9,14 @@ export class ProgressService {
         const weekStart = startOfWeek(now, { weekStartsOn: 1 });
         const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
         const activities = await prisma.activity.findMany({
             where: {
                 userId,
@@ -45,20 +53,21 @@ export class ProgressService {
     }
 
     static async getStreakCalendar(userId: string) {
+        // Fetch all activities for the user, order by date
         const activities = await prisma.activity.findMany({
             where: { userId },
             select: { createdAt: true },
+            orderBy: { createdAt: 'asc' }
         });
 
-        const rows = await prisma.$queryRaw<{ date: string }[]>`
-        SELECT DISTINCT DATE(createdAt) AS date
-        FROM activity
-        WHERE userId = ${userId}    
-        `;
-        return rows.map(r => r.date);
-    }// this function returns an array of dates
-    // with no duplicates and sorted in ascending order of dates 
-    // so that we can display the calendar  
+        // Extract unique dates in YYYY-MM-DD format using a Set
+        // This avoids DB-specific raw queries (e.g. SQLite vs Postgres differences on DATE())
+        const uniqueDates = new Set(
+            activities.map(a => a.createdAt.toISOString().split('T')[0])
+        );
+
+        return Array.from(uniqueDates);
+    }
 
 
 

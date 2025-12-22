@@ -10,8 +10,11 @@ export const getProfileOverview = async (req: Request, res: Response) => {
 
         const overview = await ProfileService.getProfileOverview(userId);
         return res.json(overview);
-    } catch (err) {
+    } catch (err: any) {
         console.error("getProfileOverview error", err);
+        if (err.message === "User not found") {
+            return res.status(404).json({ error: "User not found" });
+        }
         return res.status(500).json({ error: "Failed to fetch profile overview" });
     }
 };

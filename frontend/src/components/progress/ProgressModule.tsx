@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   TrendingUp,
   Target,
@@ -10,6 +10,7 @@ import {
   Star
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 
 import { useXP } from '../../_xp/xp-context';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
@@ -17,10 +18,82 @@ import { RotateCcw } from 'lucide-react';
 
 const ProgressModule: React.FC = () => {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { resetXP } = useXP();
   const { resetAccuracy } = useAccuracy();
 
+  const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 5;
+
+  const [weeklyXpData, setWeeklyXpData] = useState<any>(null);
+  const [streakData, setStreakData] = useState<string[]>([]);
+  const [subjectData, setSubjectData] = useState<any>(null);
+
   if (!user) return null;
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const fetchProgress = async () => {
+      try {
+        const token = await getToken();
+        const headers = { Authorization: `Bearer ${token}` };
+
+        // Fetch all 3 endpoints parallelly
+        const responses = await Promise.all([
+          fetch("/api/progress/weekly-xp", { headers }),
+          fetch("/api/progress/streak", { headers }),
+          fetch("/api/progress/subjects", { headers })
+        ]);
+
+        // Check if ANY returned 404
+        if (responses.some(r => r.status === 404)) {
+          if (retryCount < MAX_RETRIES) {
+            timeoutId = setTimeout(() => {
+              setRetryCount((c: number) => c + 1);
+            }, 1000);
+            return;
+          } else {
+            throw new Error("User setup failed");
+          }
+        }
+
+        if (responses.some(r => !r.ok)) {
+          throw new Error("Failed to fetch progress data");
+        }
+
+        const [xpData, streakRes, subjectsRes] = await Promise.all(responses.map(r => r.json()));
+
+        setWeeklyXpData(xpData);
+        setStreakData(streakRes.activeDates || []); // API returns { activeDates: string[] }
+        setSubjectData(subjectsRes);
+        setLoading(false);
+
+      } catch (err) {
+        console.error("Fetch progress error", err);
+        if (retryCount >= MAX_RETRIES) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProgress();
+
+    return () => clearTimeout(timeoutId);
+  }, [retryCount, getToken]);
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">Loading Progress...</h3>
+          <p className="text-gray-500">Syncing your stats</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleReset = () => {
     if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
@@ -29,20 +102,44 @@ const ProgressModule: React.FC = () => {
     }
   };
 
+  // Transform Weekly Data
   const weeklyData = [
-    { day: 'Mon', xp: 120, streak: true },
-    { day: 'Tue', xp: 200, streak: true },
-    { day: 'Wed', xp: 150, streak: true },
-    { day: 'Thu', xp: 300, streak: true },
-    { day: 'Fri', xp: 180, streak: true },
-    { day: 'Sat', xp: 0, streak: false },
-    { day: 'Sun', xp: 250, streak: true },
-  ];
+    { day: 'Mon', xp: weeklyXpData?.dailyXp?.Mon || 0 },
+    { day: 'Tue', xp: weeklyXpData?.dailyXp?.Tue || 0 },
+    { day: 'Wed', xp: weeklyXpData?.dailyXp?.Wed || 0 },
+    { day: 'Thu', xp: weeklyXpData?.dailyXp?.Thu || 0 },
+    { day: 'Fri', xp: weeklyXpData?.dailyXp?.Fri || 0 },
+    { day: 'Sat', xp: weeklyXpData?.dailyXp?.Sat || 0 },
+    { day: 'Sun', xp: weeklyXpData?.dailyXp?.Sun || 0 },
+  ].map(d => ({ ...d, streak: d.xp > 0 }));
 
-  const monthlyStreak = Array.from({ length: 30 }, (_, i) => ({
-    date: i + 1,
-    active: Math.random() > 0.3,
-  }));
+  const totalWeeklyXp = weeklyXpData?.totalXp || 0;
+
+  // Transform Streak Data (Current Month Mock-up using real data for active)
+  // Generating days for current month
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const monthlyStreak = Array.from({ length: daysInMonth }, (_, i) => {
+    const date = i + 1;
+    // Construct date string YYYY-MM-DD to match API format if possible
+    // Assuming API returns YYYY-MM-DD or ISO strings.
+    // Ideally we should compare proper date objects.
+    // For simplicity, let's assume streakData contains "YYYY-MM-DD"
+    const paddedDate = date.toString().padStart(2, '0');
+    const yearMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const dateStr = `${yearMonth}-${paddedDate}`;
+
+    // Check if dateStr exists in streakData. 
+    // Note: we need to ensure timezones don't mess this up, but for MVP this is OK.
+    const active = streakData.some(d => d.startsWith(dateStr));
+    return { date, active };
+  });
+
+  // Use Subject Data
+  const accuracyData = {
+    audit: subjectData?.audit ?? user.accuracy.audit,
+    tax: subjectData?.tax ?? user.accuracy.tax,
+    caselaw: subjectData?.caseLaw ?? user.accuracy.caselaw
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -70,7 +167,7 @@ const ProgressModule: React.FC = () => {
             <span className="text-2xl font-bold text-gray-900"><span data-xp-display>{user.xp.toLocaleString()}</span></span>
           </div>
           <p className="text-gray-600 text-sm">Total XP Earned</p>
-          <div className="mt-2 text-xs text-green-600">+450 this week</div>
+          <div className="mt-2 text-xs text-green-600">+{totalWeeklyXp} this week</div>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -107,7 +204,7 @@ const ProgressModule: React.FC = () => {
                 <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
                   <div
                     className="h-full bg-blue-600 transition-all duration-300"
-                    style={{ width: `${(day.xp / 300) * 100}%` }}
+                    style={{ width: `${Math.min((day.xp / 300) * 100, 100)}%` }}
                   />
                 </div>
                 <div className="w-16 text-sm font-semibold text-gray-900 text-right">
@@ -120,7 +217,7 @@ const ProgressModule: React.FC = () => {
 
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="text-center">
-              <span className="text-2xl font-bold text-gray-900">1,200</span>
+              <span className="text-2xl font-bold text-gray-900">{totalWeeklyXp.toLocaleString()}</span>
               <p className="text-gray-600 text-sm">Total XP this week</p>
             </div>
           </div>
@@ -172,9 +269,9 @@ const ProgressModule: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { subject: 'Audit', accuracy: user.accuracy.audit, color: 'blue' },
-            { subject: 'Tax', accuracy: user.accuracy.tax, color: 'green' },
-            { subject: 'Case Law', accuracy: user.accuracy.caselaw, color: 'purple' },
+            { subject: 'Audit', accuracy: accuracyData.audit, color: 'blue' },
+            { subject: 'Tax', accuracy: accuracyData.tax, color: 'green' },
+            { subject: 'Case Law', accuracy: accuracyData.caselaw, color: 'purple' },
           ].map((item) => (
             <div key={item.subject} className="text-center">
               <div className="relative w-24 h-24 mx-auto mb-4">

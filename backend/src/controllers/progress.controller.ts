@@ -9,8 +9,11 @@ export const getWeeklyXp = async (req: Request, res: Response) => {
         }
         const data = await ProgressService.getWeeklyXp(userId);
         return res.status(200).json(data);
-    } catch (err) {
+    } catch (err: any) {
         console.error("getWeeklyXp error", err);
+        if (err.message === "User not found") {
+            return res.status(404).json({ error: "User not found" });
+        }
         return res.status(500).json({ error: "Failed to fetch weekly XP" });
     }
 }

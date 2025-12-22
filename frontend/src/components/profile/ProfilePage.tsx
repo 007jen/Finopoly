@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     User,
     Star,
@@ -15,13 +15,82 @@ import {
     CheckCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
+    const { getToken } = useClerkAuth();
     const { accuracy } = useAccuracy();
+    const [loading, setLoading] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
+    const [profileOverview, setProfileOverview] = useState<any>(null);
+    const MAX_RETRIES = 5;
+
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout;
+
+        const fetchProfile = async () => {
+            if (!user) return;
+
+            try {
+                const token = await getToken();
+                const res = await fetch("/api/profile/overview", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (res.status === 404) {
+                    // User not ready yet
+                    if (retryCount < MAX_RETRIES) {
+                        timeoutId = setTimeout(() => {
+                            setRetryCount((c: number) => c + 1);
+                        }, 1000); // wait 1 second
+                        return;
+                    } else {
+                        throw new Error("User setup failed");
+                    }
+                }
+
+                if (!res.ok) {
+                    throw new Error("Failed to fetch profile");
+                }
+
+                const data = await res.json();
+                setProfileOverview(data);
+                setLoading(false);
+            } catch (err) {
+                console.error(err);
+                if (retryCount >= MAX_RETRIES) {
+                    setLoading(false); // Stop loading on max retries failure
+                }
+            }
+        };
+
+        fetchProfile();
+
+        return () => clearTimeout(timeoutId);
+    }, [user, retryCount, getToken]);
+
+    if (loading) {
+        return (
+            <div className="min-h-full flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Setting up your account...</h3>
+                    <p className="text-gray-600">This usually takes a few seconds.</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!user) return null;
+
+    // Use profileOverview data if available, fallback to user context
+    const currentXp = profileOverview?.xp ?? user.xp;
+    const currentLevel = profileOverview?.level ?? user.level;
+    const xpToNextLevel = profileOverview?.xpToNextLevel ?? 350; // Fallback or calculated
 
     const journeyMilestones = [
         {
@@ -93,15 +162,15 @@ const ProfilePage: React.FC = () => {
 
                             <div className="flex items-center justify-center gap-3 mb-6">
                                 <Star className="w-6 h-6 text-yellow-500" />
-                                <span className="text-2xl font-bold text-gray-900"><span data-xp-display>{user.xp.toLocaleString()}</span> XP</span>
+                                <span className="text-2xl font-bold text-gray-900"><span data-xp-display>{currentXp.toLocaleString()}</span> XP</span>
                             </div>
 
                             <div className="text-center mb-6">
-                                <p className="text-sm text-gray-500 mb-2">Level <span data-level-display>{user.currentLevel}</span></p>
+                                <p className="text-sm text-gray-500 mb-2">Level <span data-level-display>{currentLevel}</span></p>
                                 <div className="w-full bg-gray-200 rounded-full h-3">
                                     <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full" data-xp-progress style={{ width: '65%' }}></div>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-2"><span data-xp-next>350</span> XP to next level</p>
+                                <p className="text-xs text-gray-500 mt-2"><span data-xp-next>{xpToNextLevel}</span> XP to next level</p>
                             </div>
 
                             <div className="flex flex-col gap-3">
