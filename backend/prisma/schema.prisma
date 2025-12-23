@@ -171,6 +171,7 @@ model Activity {
   userId       String
   activityType ActivityType
   activityId   String
+  title        String?
   xpEarned     Int
   score        Float?
   timeTaken    Int?
@@ -193,10 +194,10 @@ model CaseSubmission {
   userId String
   answer String
 
-  status String @default("pending") 
-  score Int?  
-  feedback String?  
-  reviewedAt DateTime? 
+  status     String    @default("pending")
+  score      Int?
+  feedback   String?
+  reviewedAt DateTime?
 
   createdAt DateTime @default(now())
 

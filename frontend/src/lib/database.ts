@@ -47,7 +47,42 @@ const MOCK_LEADERBOARD = [
 
 export const db = {
   // Read operations
-  async getProfile(userId: string) {
+  // Read operations
+  async getProfile(userId: string, token?: string | null) {
+    // Phase 2: If we have a token, prefer the Backend API
+    if (token) {
+      try {
+        const res = await fetch('/api/profile/overview', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const backendData = await res.json();
+          // Backend returns { xp, level, xpToNextLevel, joinedAt }
+          // We need to map this to the 'Profile' shape expected by AuthContext (database schema shape)
+          // AuthContext expects: { id, name, email, avatar, role, xp, level, daily_streak, ... }
+          // The /api/profile/overview returns limited data. 
+          // We might need to call a fuller endpoint or just merge with mock defaults for now?
+          // Actually, /api/profile/overview returns: { xp, level, xpToNextLevel, joinedAt }.
+          // It does NOT return badges yet (separate endpoint).
+          // It does NOT return name/email (Clerk has that).
+          // So we can return a hybrid object.
+
+          return {
+            ...MOCK_PROFILE,
+            id: userId,
+            name: null, // Force AuthContext to use Clerk Name
+            email: null, // Force AuthContext to use Clerk Email
+            avatar: null,
+            xp: backendData.xp,
+            current_level: backendData.level,
+            created_at: backendData.joinedAt
+          };
+        }
+      } catch (e) {
+        console.warn("db.getProfile: Backend fetch failed", e);
+      }
+    }
+
     if (!isSupabaseConfigured) {
       console.warn('db.getProfile: Supabase not configured — returning mock profile.');
       return MOCK_PROFILE;
@@ -229,7 +264,20 @@ export const db = {
     }
   },
 
-  async getUserBadges(userId: string) {
+  async getUserBadges(userId: string, token?: string | null) {
+    if (token) {
+      try {
+        const res = await fetch('/api/profile/badges', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (e) {
+        console.warn("db.getUserBadges: Backend fetch failed", e);
+      }
+    }
+
     if (!isSupabaseConfigured) {
       console.warn('db.getUserBadges: Supabase not configured — returning mock badges.');
       return MOCK_BADGES;

@@ -16,40 +16,18 @@ export const INITIAL_STATE: XPState = {
     xpToNextLevel: 100,
 };
 
-// Level thresholds calculation
-// Level 1: 0 (Next: 100)
-// Level 2: 100 (Next: 300) -> 200 gap
-// Level 3: 300 (Next: 600) -> 300 gap
-// Level 4: 600 (Next: 1000) -> 400 gap
-// ... and so on (+200 increment per level is not quite matching the user's example sequence exactly, 
-// let's infer the pattern:
-// L1->L2: 100
-// L2->L3: 200
-// L3->L4: 300
-// L4->L5: 400
-// This matches the user's numbers: 0, 100, 300, 600, 1000.
-// So the pattern is: XP required for next level increases by 100 each time.
+// Helper to calculate level details based on XP
+// STRICT LINEAR LOGIC: 500 XP per level.
+// This matches the backend ProfileService implementation.
 const calculateLevelDetails = (totalXP: number) => {
-    let level = 1;
-    let currentLevelXP = 0;
-    let xpForNextLevel = 100; // XP needed to go from L1 to L2
-
-    // Iterate to find current level
-    while (totalXP >= currentLevelXP + xpForNextLevel) {
-        currentLevelXP += xpForNextLevel;
-        level++;
-        xpForNextLevel += 100; // Increment gap by 100 for each subsequent level
-    }
-
-    const xpProgressInLevel = totalXP - currentLevelXP;
-    const xpNeededForNext = xpForNextLevel - xpProgressInLevel;
+    const XP_PER_LEVEL = 500;
+    const level = Math.floor(totalXP / XP_PER_LEVEL) + 1;
+    const nextLevelTotalXP = level * XP_PER_LEVEL;
+    const xpToNextLevel = nextLevelTotalXP - totalXP;
 
     return {
         level,
-        xpToNextLevel: xpNeededForNext,
-        currentLevelXP, // The total XP where this level started
-        nextLevelThreshold: currentLevelXP + xpForNextLevel,
-        progressPercent: (xpProgressInLevel / xpForNextLevel) * 100
+        xpToNextLevel
     };
 };
 

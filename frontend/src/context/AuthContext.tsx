@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as AppUserType } from '../types';
-import { useUser, useSignIn, useSignUp, useClerk } from '@clerk/clerk-react';
+import { useUser, useSignIn, useSignUp, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { db } from '../lib/database';
 // Safe abstraction for data layer interaction if needed
 import { getUserBadges } from '../lib/data-layer';
@@ -105,6 +105,7 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user: clerkUser, isLoaded: userLoaded } = useUser();
+    const { getToken } = useClerkAuth();
     const { signIn, isLoaded: signInLoaded } = useSignIn();
     const { signUp, isLoaded: signUpLoaded, setActive } = useSignUp();
     const { signOut } = useClerk();
@@ -129,9 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                     // 1. Fetch Profile (Safe DB Call)
                     try {
-                        // In Phase 1, db.getProfile returns Mock if Supabase is unconfigured, 
-                        // or the Real profile if configured. It never throws.
-                        profile = await db.getProfile(clerkUser.id);
+                        const token = await getToken();
+                        // Call backend via db layer, passing token
+                        profile = await db.getProfile(clerkUser.id, token);
                     } catch (e) {
                         console.error('[Auth] Profile fetch error (should be caught by db layer):', e);
                         profile = null;
@@ -140,7 +141,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     // 2. Fetch Badges (Safe DB Call)
                     try {
                         // db.getUserBadges handles the internal Supabase vs Mock switch
-                        badges = await db.getUserBadges(clerkUser.id);
+                        const token = await getToken();
+                        badges = await db.getUserBadges(clerkUser.id, token);
                     } catch (e) {
                         // If db abstraction failed, try raw data-layer fallback
                         console.error('[Auth] Badge fetch error:', e);

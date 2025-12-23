@@ -24,7 +24,7 @@ export const xpService = {
             try {
                 const token = await getTokenFn();
                 if (token) {
-                    await fetch('/api/progress/xp', {
+                    const res = await fetch('/api/progress/xp', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -32,10 +32,19 @@ export const xpService = {
                         },
                         body: JSON.stringify({ amount, source })
                     });
+
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        console.error(`[XP] Server sync failed: ${res.status} ${errText}`);
+                    }
+                } else {
+                    console.warn('[XP] No token available for sync');
                 }
             } catch (err) {
                 console.error("[XP] Failed to sync with server:", err);
             }
+        } else {
+            console.warn('[XP] Token getter not initialized');
         }
 
         // Dispatch event to window (Optimistic UI update)

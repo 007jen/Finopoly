@@ -19,7 +19,7 @@ import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 
 const ProfilePage: React.FC = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const { getToken } = useClerkAuth();
     const { accuracy } = useAccuracy();
     const [loading, setLoading] = useState(true);
@@ -163,7 +163,8 @@ const ProfilePage: React.FC = () => {
                                 </button>
                             </div>
 
-                            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">{user.name}</h2>
+                            <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
+                            <p className="text-gray-500 mb-4">{user.email}</p>
                             <p className="text-gray-600 mb-6 text-lg">{user.role} • Level <span data-level-display>{user.level}</span></p>
 
                             <div className="flex items-center justify-center gap-3 mb-6">
@@ -276,7 +277,29 @@ const ProfilePage: React.FC = () => {
 
                         {/* Recent Quiz Scores */}
                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8">
-                            <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Recent Quiz Scores</h3>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl lg:text-2xl font-bold text-gray-900">Recent Quiz Scores</h3>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const token = await getToken();
+                                            await fetch('/api/progress/xp', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                                body: JSON.stringify({
+                                                    amount: 100,
+                                                    source: 'Test Quiz ' + new Date().toLocaleTimeString(),
+                                                    score: Math.floor(Math.random() * 40) + 60 // Random score between 60 and 100
+                                                })
+                                            });
+                                            window.location.reload();
+                                        } catch (e) { console.error(e); }
+                                    }}
+                                    className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                                >
+                                    + Test Activity
+                                </button>
+                            </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {recentQuizScores.map((quiz, index) => (
                                     <div key={index} className="flex items-center justify-between p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:shadow-md transition-all duration-300">
@@ -321,6 +344,77 @@ const ProfilePage: React.FC = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="bg-red-50/50 backdrop-blur-sm rounded-2xl shadow-lg border border-red-100 p-6 lg:p-8">
+                            <h3 className="text-xl lg:text-2xl font-bold text-red-700 mb-6">Danger Zone</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-red-100">
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Reset Progress</h4>
+                                        <p className="text-sm text-gray-600">Clears all XP, Streak, and Activity History. This cannot be undone.</p>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            if (!window.confirm("Are you sure you want to RESET your progress? This cannot be undone.")) return;
+                                            try {
+                                                const token = await getToken();
+                                                const res = await fetch('/api/profile/reset', {
+                                                    method: 'POST',
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                });
+                                                if (res.ok) {
+                                                    alert("Progress reset successfully. Reloading...");
+                                                    window.location.reload();
+                                                } else {
+                                                    alert("Failed to reset progress.");
+                                                }
+                                            } catch (e) {
+                                                console.error(e);
+                                                alert("An error occurred.");
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition-colors"
+                                    >
+                                        Reset Progress
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-red-100">
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Delete Account</h4>
+                                        <p className="text-sm text-gray-600">Permanently delete your account and all data.</p>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            const confirmText = prompt("Type 'DELETE' to confirm account deletion. This action is irreversible.");
+                                            if (confirmText !== 'DELETE') return;
+
+                                            try {
+                                                const token = await getToken();
+                                                const res = await fetch('/api/profile/delete', {
+                                                    method: 'DELETE',
+                                                    headers: { Authorization: `Bearer ${token}` }
+                                                });
+                                                if (res.ok) {
+                                                    alert("Account deleted. Goodbye!");
+                                                    await logout();
+                                                    window.location.href = '/sign-in';
+                                                } else {
+                                                    alert("Failed to delete account.");
+                                                }
+                                            } catch (e) {
+                                                console.error(e);
+                                                alert("An error occurred.");
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                                    >
+                                        Delete Account
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

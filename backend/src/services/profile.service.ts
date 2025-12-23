@@ -49,9 +49,65 @@ export class ProfileService {
         ]);
         return {
             activitiesCompleted: activityCount,
-            // what is ue of activitiesCompleted instead on stimulationCompleted 
-            // stimulationCompleted is not used anywhere whereas activitiesCompleted is used in the frontend 
             badgesEarned: badges,
         };
+    }
+
+    static async resetProgress(userId: string) {
+        return prisma.$transaction(async (tx) => {
+            // 1. Delete all UserBadges
+            await tx.userBadge.deleteMany({ where: { userId } });
+
+            // 2. Delete all Activities
+            await tx.activity.deleteMany({ where: { userId } });
+
+            // 3. Delete all CaseSubmissions
+            await tx.caseSubmission.deleteMany({ where: { userId } });
+
+            // 4. Reset User stats
+            return tx.user.update({
+                where: { id: userId },
+                data: {
+                    xp: 0,
+                    streak: 0,
+                    lastActivityDate: null,
+                },
+            });
+        });
+    }
+
+    static async deleteAccount(userId: string) {
+        return prisma.$transaction(async (tx) => {
+            // 1. Delete all UserBadges
+            await tx.userBadge.deleteMany({ where: { userId } });
+
+            // 2. Delete all Activities
+            await tx.activity.deleteMany({ where: { userId } });
+
+            // 3. Delete all CaseSubmissions
+            await tx.caseSubmission.deleteMany({ where: { userId } });
+
+            // 4. Delete the User record
+            return tx.user.delete({ where: { id: userId } });
+        });
+    }
+
+    static async getUserBadges(userId: string) {
+        // Fetch UserBadges and include the Badge details
+        const userBadges = await prisma.userBadge.findMany({
+            where: { userId },
+            include: { badge: true },
+            orderBy: { earnedAt: 'desc' }
+        });
+
+        // Map to frontend friendly format
+        return userBadges.map(ub => ({
+            id: ub.id,
+            name: ub.badge.name,
+            description: ub.badge.description,
+            icon: ub.badge.icon,
+            earnedDate: ub.earnedAt.toISOString(),
+            xpRequirement: ub.badge.xpRequirement
+        }));
     }
 }

@@ -1,36 +1,23 @@
 import React, { useReducer, useEffect, useRef } from 'react';
-import { useAuth } from '@clerk/clerk-react'; // Import Clerk hook
+import { useAuth as useClerkAuth } from '@clerk/clerk-react'; // Rename Clerk hook
+import { useAuth } from '../context/AuthContext'; // Import Custom Auth Context
 import { XPContext } from './xp-context';
 import { xpReducer, INITIAL_STATE } from './xp-reducer';
-import { XP_EVENT_NAME, XP_RESET_EVENT_NAME, xpService } from './xp-service'; // Import xpService
+import { XP_EVENT_NAME, XP_RESET_EVENT_NAME, xpService } from './xp-service';
 import { startXPObserver, updateAllXPElements } from './xp-dom-binding';
 
-const STORAGE_KEY = 'global_xp_v1';
-
 export const XPProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { getToken } = useAuth(); // Get getToken from Clerk
+    const { getToken } = useClerkAuth(); // Get getToken from Clerk
+    const { user } = useAuth(); // Get rich user object from our context
 
     // Initialize Global Service with Token Getter
     useEffect(() => {
         xpService.setTokenGetter(getToken);
     }, [getToken]);
 
-    // 1. Initialize State
-    const [state, dispatch] = useReducer(xpReducer, INITIAL_STATE, (initial) => {
-        // ... existing initialization logic
-        if (typeof window !== 'undefined') {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    return { ...initial, ...parsed };
-                }
-            } catch (e) {
-                console.error('Failed to load XP', e);
-            }
-        }
-        return initial;
-    });
+    // 1. Initialize State - START FRESH (No localStorage)
+    // The state is effectively ephemeral and re-hydrated from AuthContext.
+    const [state, dispatch] = useReducer(xpReducer, INITIAL_STATE);
 
     const stateRef = useRef(state);
 
@@ -39,22 +26,18 @@ export const XPProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         stateRef.current = state;
         // Update DOM whenever state changes
         updateAllXPElements(state);
-
-        // Save to localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        // data-xp-display attributes will be updated here.
     }, [state]);
 
     // 2. Setup DOM Observer
     useEffect(() => {
         const observer = startXPObserver(() => stateRef.current);
-
-        // Initial update
         updateAllXPElements(stateRef.current);
-
         return () => observer.disconnect();
     }, []);
 
     // 3. Listen for Service Events (xpService.increment and reset)
+    // These events are usually fired by optimistic UI updates or quizzes.
     useEffect(() => {
         const handleXPEvent = (e: Event) => {
             const detail = (e as CustomEvent).detail;
@@ -77,28 +60,21 @@ export const XPProvider: React.FC<{ children: React.ReactNode }> = ({ children }
         };
     }, []);
 
-    // 4. Sync across tabs
+    // 4. Sync with AuthContext user data (The Source of Truth)
     useEffect(() => {
-        const handleStorage = (e: StorageEvent) => {
-            if (e.key === STORAGE_KEY && e.newValue) {
-                try {
-                    const remoteState = JSON.parse(e.newValue);
-                    // We can just set the whole state
-                    // Note: This might overwrite local pending changes if race condition, 
-                    // but for XP usually last-write-wins is okay or we accept the specific update.
-                    // We don't have a 'SET_STATE' action, but 'SET_XP' is close enough if we trust the level calc, 
-                    // OR we can add a replacements action.
-                    // Let's use SET_XP to ensure level integrity.
-                    dispatch({ type: 'SET_XP', payload: { xp: remoteState.xp } });
-                } catch (err) {
-                    console.error('Storage sync error', err);
-                }
-            }
-        };
-
-        window.addEventListener('storage', handleStorage);
-        return () => window.removeEventListener('storage', handleStorage);
-    }, []);
+        if (user) {
+            // When user loads or updates (e.g. initial fetch or profile refresh),
+            // update our local XP state to match.
+            // This ensures we always start with the backend's persisted XP.
+            dispatch({
+                type: 'SET_XP',
+                payload: { xp: user.xp || 0 }
+            });
+        } else {
+            // If logged out, reset to 0
+            dispatch({ type: 'RESET_XP' });
+        }
+    }, [user]);
 
     // Context Values
     const addXP = (amount: number, source?: string) => {
