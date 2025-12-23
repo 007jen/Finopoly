@@ -1,25 +1,28 @@
 import React, { useReducer, useEffect, useRef } from 'react';
+import { useAuth } from '@clerk/clerk-react'; // Import Clerk hook
 import { XPContext } from './xp-context';
 import { xpReducer, INITIAL_STATE } from './xp-reducer';
-import { XP_EVENT_NAME, XP_RESET_EVENT_NAME } from './xp-service';
+import { XP_EVENT_NAME, XP_RESET_EVENT_NAME, xpService } from './xp-service'; // Import xpService
 import { startXPObserver, updateAllXPElements } from './xp-dom-binding';
 
 const STORAGE_KEY = 'global_xp_v1';
 
 export const XPProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { getToken } = useAuth(); // Get getToken from Clerk
+
+    // Initialize Global Service with Token Getter
+    useEffect(() => {
+        xpService.setTokenGetter(getToken);
+    }, [getToken]);
+
     // 1. Initialize State
     const [state, dispatch] = useReducer(xpReducer, INITIAL_STATE, (initial) => {
-        // Try to load from localStorage
+        // ... existing initialization logic
         if (typeof window !== 'undefined') {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const parsed = JSON.parse(stored);
-                    // Re-validate level logic in case of corruption, but keep XP
-                    // Actually, reducer 'SET_XP' handles level recalc, so let's just return raw if valid
-                    // Better yet, dispatch SET_XP after mount or calculate here.
-                    // Let's just trust localStorage for now or perform a quick recalc if we refined `xp-reducer` to export calc logic.
-                    // To be safe, we return parsed, assuming it was saved correctly.
                     return { ...initial, ...parsed };
                 }
             } catch (e) {

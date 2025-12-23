@@ -2,18 +2,43 @@
 export const XP_EVENT_NAME = 'xp-update';
 export const XP_RESET_EVENT_NAME = 'xp-reset';
 
+let getTokenFn: (() => Promise<string | null>) | null = null;
+
 export const xpService = {
+    setTokenGetter: (fn: () => Promise<string | null>) => {
+        getTokenFn = fn;
+    },
+
     /**
      * Increments the global XP.
      * Dispatches a custom event that the XPProvider listens to.
      * @param amount - Amount of XP to add
      * @param source - The source/reason for the XP (e.g., "Daily Login")
      */
-    increment: (amount: number, source: string = 'Unknown') => {
-        // Log intent as requested
+    increment: async (amount: number, source: string = 'Unknown') => {
+        // Log intent
         console.log(`[XP] Incrementing ${amount} XP from: ${source}`);
 
-        // Dispatch event to window
+        // API Call
+        if (getTokenFn) {
+            try {
+                const token = await getTokenFn();
+                if (token) {
+                    await fetch('/api/progress/xp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ amount, source })
+                    });
+                }
+            } catch (err) {
+                console.error("[XP] Failed to sync with server:", err);
+            }
+        }
+
+        // Dispatch event to window (Optimistic UI update)
         const event = new CustomEvent(XP_EVENT_NAME, {
             detail: { amount, source },
         });

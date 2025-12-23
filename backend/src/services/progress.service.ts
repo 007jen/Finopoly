@@ -69,6 +69,40 @@ export class ProgressService {
         return Array.from(uniqueDates);
     }
 
+    static async addXp(userId: string, amount: number, source: string) {
+        return await prisma.$transaction(async (tx) => {
+            // Map source to ActivityType enum (default to 'quiz')
+            let type: any = "quiz";
+            const s = source.toLowerCase();
+            if (s.includes("audit")) type = "audit";
+            else if (s.includes("tax")) type = "tax";
+            else if (s.includes("case")) type = "caselaw";
+
+            // 1. Create activity log
+            const activity = await tx.activity.create({
+                data: {
+                    userId,
+                    activityType: type,
+                    activityId: `xp-event-${Date.now()}`, // Placeholder ID
+                    xpEarned: amount,
+                    // 'description' is not in schema, so we omit it. 
+                    // We can store source in 'answers' or similar JSON if needed, but for now we skip it.
+                }
+            });
+
+            // 2. Update User XP
+            const user = await tx.user.update({
+                where: { id: userId },
+                data: {
+                    xp: { increment: amount },
+                    lastActivityDate: new Date()
+                }
+            });
+
+            return { user, activity };
+        });
+    }
+
 
 
     static async getSubjectAccuracy(_userId: string) {

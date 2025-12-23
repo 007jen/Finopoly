@@ -41,29 +41,35 @@ const ProfilePage: React.FC = () => {
                     },
                 });
 
+                if (res.status === 401) {
+                    throw new Error("Unauthorized"); // Do not retry on 401
+                }
+
                 if (res.status === 404) {
-                    // User not ready yet
+                    // User not ready yet - specific retry logic
                     if (retryCount < MAX_RETRIES) {
                         timeoutId = setTimeout(() => {
                             setRetryCount((c: number) => c + 1);
-                        }, 1000); // wait 1 second
+                        }, 1000);
                         return;
                     } else {
-                        throw new Error("User setup failed");
+                        throw new Error("User setup failed after retries");
                     }
                 }
 
                 if (!res.ok) {
-                    throw new Error("Failed to fetch profile");
+                    throw new Error(`Failed to fetch profile: ${res.statusText}`);
                 }
 
                 const data = await res.json();
                 setProfileOverview(data);
                 setLoading(false);
-            } catch (err) {
-                console.error(err);
-                if (retryCount >= MAX_RETRIES) {
-                    setLoading(false); // Stop loading on max retries failure
+            } catch (err: any) {
+                console.error("Profile fetch error:", err);
+                // Only stop loading if it's NOT a retry-able 404 (which is handled above)
+                // OR if it's a 401/500/Network error where we shouldn't retry or max retries hit
+                if (err.message === "Unauthorized" || retryCount >= MAX_RETRIES) {
+                    setLoading(false);
                 }
             }
         };

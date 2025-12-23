@@ -45,3 +45,24 @@ export const getSubjectAccuracy = async (req: Request, res: Response) => {
         return res.status(500).json({ error: "Failed to fetch subject accuracy" });
     }
 };
+
+export const addXp = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { amount, source } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        if (!amount || !source) {
+            return res.status(400).json({ message: "Amount and source are required" });
+        }
+
+        const data = await ProgressService.addXp(userId, Number(amount), String(source));
+        return res.status(200).json(data);
+    } catch (err: any) {
+        console.error("Error adding XP:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

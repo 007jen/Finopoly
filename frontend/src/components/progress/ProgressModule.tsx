@@ -47,7 +47,12 @@ const ProgressModule: React.FC = () => {
           fetch("/api/progress/subjects", { headers })
         ]);
 
-        // Check if ANY returned 404
+        // Check if ANY returned 401 -> abort immediately
+        if (responses.some(r => r.status === 401)) {
+          throw new Error("Unauthorized");
+        }
+
+        // Check if ANY returned 404 -> retry logic
         if (responses.some(r => r.status === 404)) {
           if (retryCount < MAX_RETRIES) {
             timeoutId = setTimeout(() => {
@@ -70,9 +75,10 @@ const ProgressModule: React.FC = () => {
         setSubjectData(subjectsRes);
         setLoading(false);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error("Fetch progress error", err);
-        if (retryCount >= MAX_RETRIES) {
+        // Stop retrying if unauthorized OR retries exceeded
+        if (err.message === "Unauthorized" || retryCount >= MAX_RETRIES) {
           setLoading(false);
         }
       }
@@ -327,8 +333,8 @@ const ProgressModule: React.FC = () => {
           ))}
         </div>
       </div>
-      {/* Danger Zone */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-red-100">
+      {/* Danger Zone - Hidden Temporarily as per user request */}
+      {/* <div className="bg-white p-6 rounded-xl shadow-sm border border-red-100">
         <h2 className="text-lg font-semibold text-red-900 mb-4">Danger Zone</h2>
         <div className="flex items-center justify-between">
           <div>
@@ -343,7 +349,7 @@ const ProgressModule: React.FC = () => {
             Reset Progress
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

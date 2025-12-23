@@ -45,23 +45,52 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         const session = await verifyToken(token);
         const clerkId = session.sub as string;
         const email = session.email as string | undefined;
-        const name = session.name as string | undefined;
+        // Construct name from parts if full name isn't directly available
+        const name = (session.name as string) ||
+            (`${session.given_name || ''} ${session.family_name || ''}`.trim()) ||
+            undefined;
 
         // 1. Try to find user
         let user = await prisma.user.findUnique({
             where: { clerkId }
         });
 
-        // 2. If missing → fallback create (THIS is where upsert goes)
-        if (!user) {
-            user = await prisma.user.upsert({
+        // 1.5 Sync email if user exists but has placeholder
+        if (user && user.email.includes("@placeholder.finopoly") && email) {
+            user = await prisma.user.update({
                 where: { clerkId },
-                update: {},
-                create: {
+                data: { email: email, name: name || user.name },
+            });
+        }
+
+        // 2. If missing → Check by EMAIL first (Account Linking) to avoid unique constraint error
+        if (!user && email) {
+            const userByEmail = await prisma.user.findUnique({
+                where: { email }
+            });
+
+            if (userByEmail) {
+                // Link the new Clerk ID to the existing user record
+                user = await prisma.user.update({
+                    where: { email }, // or id: userByEmail.id
+                    data: {
+                        clerkId: clerkId,
+                        name: name || userByEmail.name,
+                        avatar: session.image_url as string | undefined
+                    }
+                });
+            }
+        }
+
+        // 3. If still missing → Create new user
+        if (!user) {
+            user = await prisma.user.create({
+                data: {
                     clerkId,
                     email: email ?? `${clerkId}@placeholder.finopoly`,
                     name: name ?? "New User",
                     role: "student",
+                    // avatar: session.image_url // Optional if you have avatar field
                 },
             });
         }
@@ -71,7 +100,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         next();
     } catch (err) {
         console.error("Auth Error:", err);
-        res.status(401).json({ error: "Unauthorized" });
+        res.status(401).json({ error: "Unauthorized", details: err instanceof Error ? err.message : String(err) });
     }
 }
 
