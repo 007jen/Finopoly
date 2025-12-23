@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Crown, TrendingUp, Award, ChevronDown } from 'lucide-react';
 import { db } from '../../lib/database';
 
+
 // Normalized Interface for View Layer
 interface LeaderboardEntry {
   id: string;
@@ -15,20 +16,17 @@ interface LeaderboardEntry {
   xp: number;
   avatarUrl?: string;
   badges?: any[];
+  rank?: number;
 }
 
-// Mock Data for Rising Talents (Static UI Feature)
-const mockRisingTalents = [
-  { name: "Aditya Kumar", xpChange: "+2,340", rankJump: 15, avatarColor: "bg-blue-600" },
-  { name: "Meera Nair", xpChange: "+1,980", rankJump: 12, avatarColor: "bg-purple-600" },
-  { name: "Sanjay Gupta", xpChange: "+1,750", rankJump: 10, avatarColor: "bg-green-600" },
-];
+// Mock Data for Rising Talents (Static UI Feature) -> REMOVED per requirements
+const mockRisingTalents: any[] = [];
 
 import { useXP } from '../../_xp/xp-context';
 
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
-  const { xp: currentXp } = useXP();
+  const { xp: currentXp } = useXP(); // Decoupled from leaderboard fetch, used for display only
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,38 +34,18 @@ const Leaderboard: React.FC = () => {
     let mounted = true;
     const fetchData = async () => {
       try {
-        // Fetch via safe DB wrapper (returns specific Mock or Real data)
+        // Fetch via safe DB wrapper which now hits /api/leaderboard
         const data: any[] = await db.getLeaderboard();
 
-        // Normalize Data: 
-        // Handle field variances: 'username' vs 'fullName', 'avatar' vs 'avatarUrl'
+        // Normalize Data from Backend { rank, userId, name, xp, level }
         const normalized = data.map((d: any) => ({
-          id: d.id || d.user_id || 'unknown',
-          username: d.username || d.fullName || d.name || 'Anonymous',
-          xp: typeof d.weeklyXP === 'number' ? d.weeklyXP : (typeof d.xp === 'number' ? d.xp : 0),
-          avatarUrl: d.avatarUrl || d.avatar || '',
-          badges: d.badges || []
+          id: d.userId || d.id || 'unknown',
+          username: d.name || d.username || 'Anonymous',
+          xp: d.xp || 0,
+          avatarUrl: '', // Backend doesn't send avatar yet
+          badges: d.badges || [], // Now receiving badges from backend
+          rank: d.rank
         }));
-
-        // Inject Current User if missing (ENSURE VISIBILITY)
-        // This guarantees the new user appears in the list even if they have 0 XP
-        // Use live `currentXp` here instead of `user.xp` to ensure real-time updates
-        const userEntry = normalized.find(u => u.id === user?.id);
-        if (user && !userEntry) {
-          normalized.push({
-            id: user.id,
-            username: user.name,
-            xp: currentXp, // Use live XP
-            avatarUrl: user.avatar,
-            badges: user.badges
-          });
-        } else if (userEntry) {
-          // Update existing user entry with live XP if they are already in the list
-          userEntry.xp = currentXp;
-        }
-
-        // Strict Sorting: Descending XP
-        normalized.sort((a, b) => b.xp - a.xp);
 
         if (mounted) {
           setLeaderboardData(normalized);
@@ -84,7 +62,7 @@ const Leaderboard: React.FC = () => {
 
     fetchData();
     return () => { mounted = false; };
-  }, [user, currentXp]); // Re-run when user or their XP changes
+  }, []); // Run ONCE on mount, do not depend on user/xp
 
   const topThree = leaderboardData.slice(0, 3);
   const rank1 = topThree[0];
@@ -98,7 +76,7 @@ const Leaderboard: React.FC = () => {
   };
 
   const getBadgesCount = (index: number) => {
-    return leaderboardData[index]?.badges?.length || (12 + (index * 3) % 20);
+    return leaderboardData[index]?.badges?.length || 0;
   };
 
   if (loading) {

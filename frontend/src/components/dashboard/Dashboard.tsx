@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
-import { mockLeaderboard } from '../../data/mockData';
+import { db } from '../../lib/database';
 
 interface DashboardProps {
   setActiveTab: (tab: string) => void;
@@ -25,6 +25,11 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
   const { user } = useAuth();
   const { accuracy } = useAccuracy();
+  const [leaderboard, setLeaderboard] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    db.getLeaderboard(3).then(setLeaderboard);
+  }, []);
 
   if (!user) return null;
 
@@ -201,8 +206,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             </div>
 
             <div className="space-y-4">
-              {mockLeaderboard.slice(0, 3).map((entry, index) => (
-                <div key={entry.user.id} className="flex items-center gap-4 p-4 bg-gradient-to-r from-gray-50 to-blue-50/50 rounded-xl border border-gray-100 hover:shadow-md transition-all duration-300">
+              {leaderboard.map((entry: any, index: number) => (
+                <div key={entry.userId || index} className="flex items-center gap-4 p-4 bg-gradient-to-r from-gray-50 to-blue-50/50 rounded-xl border border-gray-100 hover:shadow-md transition-all duration-300">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${entry.rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white' :
                       entry.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white' :
@@ -212,19 +217,22 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
                     </div>
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
                       <span className="text-white font-bold text-sm">
-                        {entry.user.name.split(' ').map(n => n[0]).join('')}
+                        {(entry.name || 'U').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                       </span>
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">{entry.user.name}</h3>
+                    <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">{entry.name || 'Anonymous'}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Star className="w-3 h-3 text-yellow-500" />
-                      <span className="text-xs lg:text-sm font-semibold text-gray-600">{entry.user.xp.toLocaleString()} XP</span>
+                      <span className="text-xs lg:text-sm font-semibold text-gray-600">{(entry.xp || 0).toLocaleString()} XP</span>
                     </div>
                   </div>
                 </div>
               ))}
+              {leaderboard.length === 0 && (
+                <div className="text-center py-4 text-gray-500 text-sm">No leaderboard data available yet.</div>
+              )}
             </div>
           </div>
 

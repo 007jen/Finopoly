@@ -217,12 +217,24 @@ export const db = {
 
   // Leaderboard
   async getLeaderboard(limit = 50) {
+    try {
+      const res = await fetch('/api/leaderboard');
+      if (res.ok) {
+        const data = await res.json();
+        // Backend returns { leaderboard: [...] }
+        return data.leaderboard || [];
+      }
+    } catch (err) {
+      console.warn('db.getLeaderboard: Backend fetch failed, falling back to mock/supabase', err);
+    }
+
     if (!isSupabaseConfigured) {
       console.warn('db.getLeaderboard: Supabase not configured — returning mock leaderboard.');
       return MOCK_LEADERBOARD.slice(0, limit);
     }
 
     try {
+      // Fallback to Supabase logic if API fails (or keep as deprecated path)
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
