@@ -90,7 +90,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50"
+        aria-label="Toggle navigation menu"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
       >
         {isMobileMenuOpen ? (
           <X className="w-6 h-6 text-gray-600" />

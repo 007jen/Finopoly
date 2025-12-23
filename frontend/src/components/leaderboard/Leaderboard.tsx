@@ -209,8 +209,46 @@ const Leaderboard: React.FC = () => {
 
       </div>
 
-      {/* 3. Global Leaderboard Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* 3. Global Leaderboard - Mobile Cards (< 640px) */}
+      <div className="sm:hidden space-y-3">
+        {leaderboardData.map((entry, index) => {
+          const rank = index + 1;
+          const isCurrentUser = user && (user.id === entry.id || user.name === entry.username);
+          return (
+            <div key={entry.id || index} className={`bg-white rounded-xl p-4 shadow-sm border ${isCurrentUser ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-100'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm ${rank === 1 ? 'bg-yellow-100 text-yellow-700' :
+                    rank === 2 ? 'bg-gray-100 text-gray-700' :
+                      rank === 3 ? 'bg-orange-100 text-orange-700' :
+                        'bg-blue-50 text-blue-600'
+                  }`}>
+                  #{rank}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-900 truncate">{entry.username}</h3>
+                    {isCurrentUser && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">YOU</span>}
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                    <span>{entry.badges?.length || 0} Badges</span>
+                    <span>•</span>
+                    <span className="text-gray-400">{getSpecialty(index)}</span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="block font-bold text-blue-600">{entry.xp.toLocaleString()}</span>
+                  <span className="text-[10px] text-gray-400 font-medium">XP</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3. Global Leaderboard Table - Tablet/Desktop (> 640px) */}
+      <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-800">Global Leaderboard</h2>
           <button className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-blue-100 transition-colors">
