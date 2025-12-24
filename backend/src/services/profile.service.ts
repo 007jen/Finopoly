@@ -7,6 +7,8 @@ export class ProfileService {
             select: {
                 xp: true,
                 createdAt: true,
+                correctAnswers: true,
+                totalQuestions: true,
             },
         });
         if (!user) {
@@ -21,6 +23,8 @@ export class ProfileService {
             level: currentLevel,
             xpToNextLevel: Math.max(nextLevelThreshold - user.xp, 0),
             joinedAt: user.createdAt,
+            correctAnswers: user.correctAnswers,
+            totalQuestions: user.totalQuestions
         };
     }
 
@@ -33,12 +37,17 @@ export class ProfileService {
                 activityType: true,
                 xpEarned: true,
                 createdAt: true,
+                title: true,
+                activityId: true
             },
         });
-        return activities.reverse().map(a => ({// this will reverse the order of the activities like latest first
+        return activities.map(a => ({
             label: `${a.activityType.toUpperCase()} completed`,
             xp: a.xpEarned,
             date: a.createdAt,
+            title: a.title,
+            type: a.activityType,
+            id: a.activityId
         }));
     }
 

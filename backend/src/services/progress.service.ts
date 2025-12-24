@@ -69,6 +69,20 @@ export class ProgressService {
         return Array.from(uniqueDates);
     }
 
+    static async updateAccuracy(userId: string, isCorrect: boolean) {
+        return prisma.user.update({
+            where: { id: userId },
+            data: {
+                totalQuestions: { increment: 1 },
+                correctAnswers: isCorrect ? { increment: 1 } : undefined
+            },
+            select: {
+                correctAnswers: true,
+                totalQuestions: true
+            }
+        });
+    }
+
     static async addXp(userId: string, amount: number, source: string) {
         return await prisma.$transaction(async (tx) => {
             // Map source to ActivityType enum (default to 'quiz')

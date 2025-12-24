@@ -66,3 +66,24 @@ export const addXp = async (req: Request, res: Response) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+
+export const updateAccuracy = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { isCorrect } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        if (typeof isCorrect !== 'boolean') {
+            return res.status(400).json({ message: "isCorrect boolean is required" });
+        }
+
+        const data = await ProgressService.updateAccuracy(userId, isCorrect);
+        return res.status(200).json(data);
+    } catch (err: any) {
+        console.error("Error updating accuracy:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}

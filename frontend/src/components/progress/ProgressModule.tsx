@@ -277,8 +277,8 @@ const ProgressModule: React.FC = () => {
                 <div
                   key={index}
                   className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border-2 ${day.active
-                      ? 'bg-green-100 border-green-500 text-green-700'
-                      : 'bg-white border-gray-100 text-gray-300'
+                    ? 'bg-green-100 border-green-500 text-green-700'
+                    : 'bg-white border-gray-100 text-gray-300'
                     }`}
                 >
                   {day.date}
@@ -299,54 +299,64 @@ const ProgressModule: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { subject: 'Audit', accuracy: accuracyData.audit, color: 'blue' },
-            { subject: 'Tax', accuracy: accuracyData.tax, color: 'green' },
-            { subject: 'Case Law', accuracy: accuracyData.caselaw, color: 'purple' },
+            { subject: 'Tax', accuracy: accuracyData.tax, color: 'green', locked: true },
+            { subject: 'Case Law', accuracy: accuracyData.caselaw, color: 'purple', locked: true },
           ].map((item) => (
-            <>
+            <React.Fragment key={item.subject}>
               {/* Desktop: Donut Chart */}
-              <div key={item.subject} className="text-center hidden md:block">
+              <div className="text-center hidden md:block">
                 <div className="relative w-24 h-24 mx-auto mb-4">
-                  <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#e5e7eb"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke={`rgb(${item.color === 'blue' ? '59 130 246' : item.color === 'green' ? '34 197 94' : '168 85 247'})`}
-                      strokeWidth="8"
-                      fill="none"
-                      strokeDasharray={`${item.accuracy * 2.51} 251`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold text-gray-900">{item.accuracy}%</span>
-                  </div>
+                  {item.locked ? (
+                    <div className="w-full h-full rounded-full border-4 border-gray-100 flex items-center justify-center bg-gray-50">
+                      <Clock className="w-8 h-8 text-gray-400" />
+                    </div>
+                  ) : (
+                    <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="#e5e7eb"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke={`rgb(${item.color === 'blue' ? '59 130 246' : item.color === 'green' ? '34 197 94' : '168 85 247'})`}
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={`${item.accuracy * 2.51} 251`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  {!item.locked && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xl font-bold text-gray-900">{item.accuracy}%</span>
+                    </div>
+                  )}
                 </div>
-                <h3 className="font-semibold text-gray-900">{item.subject}</h3>
-                <p className="text-sm text-gray-500">Accuracy Rate</p>
+                <h3 className={`font-semibold ${item.locked ? 'text-gray-400' : 'text-gray-900'}`}>{item.subject}</h3>
+                <p className="text-sm text-gray-500">{item.locked ? 'Coming Soon' : 'Accuracy Rate'}</p>
               </div>
               {/* Mobile: Linear Progress Bar */}
-              <div key={item.subject + '-mobile'} className="md:hidden block w-full mb-4">
+              <div id={item.subject + '-mobile'} className="md:hidden block w-full mb-4">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-gray-900">{item.subject}</span>
-                  <span className="font-bold text-gray-900">{item.accuracy}%</span>
+                  <span className={`font-bold ${item.locked ? 'text-gray-400' : 'text-gray-900'}`}>{item.subject}</span>
+                  <span className={`font-bold ${item.locked ? 'text-gray-400' : 'text-gray-900'}`}>
+                    {item.locked ? 'Locked' : `${item.accuracy}%`}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${item.color === 'blue' ? 'bg-blue-500' : item.color === 'green' ? 'bg-green-500' : 'bg-purple-500'}`}
-                    style={{ width: `${item.accuracy}%` }}
+                    className={`h-full rounded-full ${item.locked ? 'bg-gray-200' : (item.color === 'blue' ? 'bg-blue-500' : item.color === 'green' ? 'bg-green-500' : 'bg-purple-500')}`}
+                    style={{ width: item.locked ? '100%' : `${item.accuracy}%` }}
                   />
                 </div>
               </div>
-            </>
+            </React.Fragment>
           ))}
         </div>
       </div>

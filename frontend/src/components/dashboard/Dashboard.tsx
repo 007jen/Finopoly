@@ -18,20 +18,167 @@ import { useAuth } from '../../context/AuthContext';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { db } from '../../lib/database';
 
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+
+import { xpService, XP_EVENT_NAME, XP_RESET_EVENT_NAME } from '../../_xp/xp-service';
+
 interface DashboardProps {
   setActiveTab: (tab: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { accuracy } = useAccuracy();
+
   const [leaderboard, setLeaderboard] = React.useState<any[]>([]);
+  const [weeklyXP, setWeeklyXP] = React.useState(0);
+  const [lastActivity, setLastActivity] = React.useState<any>(null);
+
+  const fetchData = React.useCallback(async () => {
+    // 1. Fetch Weekly XP & Last Activity (Protected)
+    try {
+      const token = await getToken();
+      if (token) {
+        // Weekly XP
+        const xpRes = await fetch("/api/progress/weekly-xp", { headers: { Authorization: `Bearer ${token}` } });
+        if (xpRes.ok) {
+          const data = await xpRes.json();
+          setWeeklyXP(data.totalXp || 0);
+        } else {
+          setWeeklyXP(0);
+        }
+
+        // Last Activity (Timeline)
+        const timelineRes = await fetch("/api/profile/timeline", { headers: { Authorization: `Bearer ${token}` } });
+        if (timelineRes.ok) {
+          const activities = await timelineRes.json(); // Returns array sorted by latest
+          if (activities && activities.length > 0) {
+            setLastActivity(activities[0]);
+          }
+        }
+      }
+    } catch (e) { console.error("Dashboard data fetch failed", e); }
+
+    // 2. Fetch Leaderboard (Public)
+    try {
+      const res = await fetch("/api/leaderboard");
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboard(data.leaderboard || []);
+      }
+    } catch (e) { console.error("Leaderboard fetch failed", e); }
+  }, [getToken]);
 
   React.useEffect(() => {
-    db.getLeaderboard(3).then(setLeaderboard);
-  }, []);
+    fetchData();
+
+    // Listen for XP updates (e.g. from Vouching Racer)
+    const handleXPUpdate = () => {
+      // Add a small delay to ensure backend is updated
+      setTimeout(fetchData, 500);
+    };
+
+    const handleXPReset = () => {
+      setWeeklyXP(0);
+      setLastActivity(null);
+      fetchData(); // Refetch to confirm
+    }
+
+    window.addEventListener(XP_EVENT_NAME, handleXPUpdate);
+    window.addEventListener(XP_RESET_EVENT_NAME, handleXPReset);
+
+    return () => {
+      window.removeEventListener(XP_EVENT_NAME, handleXPUpdate);
+      window.removeEventListener(XP_RESET_EVENT_NAME, handleXPReset);
+    }
+  }, [fetchData]);
+
+  const getTimeAgo = (dateStr: string) => {
+    if (!dateStr) return '';
+    const diff = new Date().getTime() - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} mins ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    return `${days} days ago`;
+  };
+
+  const getResumeAction = () => {
+    const type = lastActivity?.type || '';
+    if (type.includes('audit') || type.includes('tax')) return 'simulations';
+    if (type.includes('quiz')) return 'quiz-arena';
+    return 'simulations';
+  }
+
 
   if (!user) return null;
+
+  const getSmartRecommendations = () => {
+    const recs = [];
+    const currentHour = new Date().getHours();
+
+    // 1. Morning Routine / First Login (Mock time logic)
+    if (user.xp < 100) {
+      recs.push({
+        time: 'Now',
+        activity: 'Start Your Journey: Take the First Quiz',
+        points: '+150 XP Reward',
+        status: 'active',
+        action: () => setActiveTab('quiz-arena')
+      });
+    } else {
+      recs.push({
+        time: '09:00 AM',
+        activity: 'Daily Login Streak',
+        points: `+50 XP (Day ${user.dailyStreak})`,
+        status: 'completed'
+      });
+    }
+
+    // 2. Core Activity Recommendation (Based on XP)
+    if (user.xp > 500) {
+      recs.push({
+        time: 'Now',
+        activity: 'Suggested: Vouching Racer (Time Limited)',
+        points: 'Up to 500 XP',
+        status: 'active',
+        action: () => setActiveTab('simulations')
+      });
+    } else {
+      recs.push({
+        time: 'Now',
+        activity: 'Learn Basics: Audit Simulations',
+        points: '+100 XP / Level',
+        status: 'upcoming',
+        action: () => setActiveTab('simulations')
+      });
+    }
+
+    // 3. Challenge / Discovery
+    if (accuracy && accuracy > 80) {
+      recs.push({
+        time: 'Tonight',
+        activity: 'Advanced Audit Challenge',
+        points: 'Double XP Event',
+        status: 'upcoming',
+        action: () => setActiveTab('audit-arena')
+      });
+    } else {
+      recs.push({
+        time: 'Tip',
+        activity: 'Review Case Laws to boost Accuracy',
+        points: '+50 XP',
+        status: 'upcoming',
+        action: () => alert("Case Laws Coming Soon!")
+      });
+    }
+
+    return recs;
+  };
 
   const quickStats = [
     {
@@ -77,7 +224,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
     {
       title: 'Try New Challenge',
       description: 'Daily case law challenge available',
-      action: () => setActiveTab('caselaw-simulation'),
+      action: () => alert("Coming Soon! Case Law challenges are currently in development."), // Feature Coming Soon
       icon: Zap,
       color: 'from-indigo-500 to-purple-500'
     },
@@ -91,7 +238,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
     {
       title: 'Explore Case Laws',
       description: 'Browse latest judgments and rulings',
-      action: () => setActiveTab('caselaw-explorer'),
+      action: () => alert("Coming Soon! Case Law library is under construction."), // Feature Coming Soon
       icon: BookOpen,
       color: 'from-purple-500 to-pink-500'
     }
@@ -129,28 +276,35 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         </div>
 
         {/* Continue Learning Section */}
+        {/* Continue Learning Section */}
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-2xl">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="flex-1">
-              <h2 className="text-2xl lg:text-3xl font-bold mb-4">Continue Learning</h2>
-              <p className="text-lg lg:text-xl opacity-95 mb-2">Fixed Assets Audit - ABC Pvt Ltd</p>
-              <p className="text-sm lg:text-base opacity-80 mb-6">Last activity: 2 hours ago</p>
+              <h2 className="text-2xl lg:text-3xl font-bold mb-4">
+                {lastActivity ? 'Continue Learning' : 'Start Your Journey'}
+              </h2>
+              <p className="text-lg lg:text-xl opacity-95 mb-2">
+                {lastActivity ? (lastActivity.title || lastActivity.label) : 'Learn Audit Basics: Simulation 101'}
+              </p>
+              <p className="text-sm lg:text-base opacity-80 mb-6">
+                {lastActivity ? `Last activity: ${getTimeAgo(lastActivity.date)}` : 'Ready to earn your first badge?'}
+              </p>
               <div>
                 <div className="flex items-center justify-between text-sm lg:text-base mb-3">
                   <span className="font-medium">Progress</span>
-                  <span className="font-bold">65%</span>
+                  <span className="font-bold">{lastActivity ? 'Resuming...' : '0%'}</span>
                 </div>
                 <div className="w-full bg-white bg-opacity-20 rounded-full h-3 lg:h-4">
-                  <div className="bg-white h-3 lg:h-4 rounded-full shadow-sm transition-all duration-500" style={{ width: '65%' }}></div>
+                  <div className="bg-white h-3 lg:h-4 rounded-full shadow-sm transition-all duration-500" style={{ width: lastActivity ? '100%' : '5%' }}></div>
                 </div>
               </div>
             </div>
             <button
-              onClick={() => setActiveTab('simulations')}
+              onClick={() => setActiveTab(lastActivity ? getResumeAction() : 'simulations')}
               className="w-full lg:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 px-8 py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 font-bold text-lg hover:scale-105 shadow-lg"
             >
               <Play className="w-6 h-6" />
-              Continue
+              {lastActivity ? 'Resume' : 'Start Now'}
             </button>
           </div>
         </div>
@@ -262,11 +416,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         <div className="bg-white/80 backdrop-blur-sm p-6 lg:p-8 rounded-2xl shadow-lg border border-white/50">
           <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Today's Learning Activity</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { time: '09:30 AM', activity: 'Completed Audit Quiz', points: '+150 XP', status: 'completed' },
-              { time: '11:15 AM', activity: 'Started Tax Simulation', points: 'In Progress', status: 'active' },
-              { time: '02:00 PM', activity: 'Case Law Challenge', points: '+200 XP', status: 'upcoming' },
-            ].map((item, index) => (
+            {getSmartRecommendations().map((item, index) => (
               <div key={index} className={`p-4 lg:p-6 rounded-xl border-2 transition-all duration-300 ${item.status === 'completed' ? 'bg-green-50 border-green-200' :
                 item.status === 'active' ? 'bg-blue-50 border-blue-200' :
                   'bg-gray-50 border-gray-200'
@@ -285,6 +435,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
                   }`}>
                   {item.points}
                 </p>
+                {item.action && (
+                  <button onClick={item.action} className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                    Start Now <ChevronRight size={12} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -295,23 +450,27 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Weekly Goals</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { goal: 'Complete 5 Simulations', current: 3, target: 5, color: 'blue' },
-              { goal: 'Earn 1000 XP', current: 750, target: 1000, color: 'green' },
-              { goal: 'Maintain 7-day Streak', current: 5, target: 7, color: 'orange' },
+              { goal: 'Complete 5 Simulations', current: user.completedSimulations % 5, target: 5, color: 'blue' },
+              { goal: 'Earn 1000 XP (Weekly)', current: weeklyXP, target: 1000, color: 'green' },
+              { goal: 'Maintain 7-day Streak', current: user.dailyStreak, target: 7, color: 'orange' },
             ].map((goal, index) => {
-              const progress = (goal.current / goal.target) * 100;
+              const rawProgress = (goal.current / goal.target) * 100;
+              const progress = Math.min(rawProgress, 100);
+              const isComp = goal.current >= goal.target;
+
               return (
-                <div key={index} className="p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm">
+                <div key={index} className={`p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border shadow-sm transition-all ${isComp ? 'border-green-200 bg-green-50' : 'border-gray-200'}`}>
                   <h3 className="font-bold text-gray-900 mb-3">{goal.goal}</h3>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-600">{goal.current}/{goal.target}</span>
-                    <span className="text-sm font-bold text-gray-900">{Math.round(progress)}%</span>
+                    <span className={`text-sm font-bold ${isComp ? 'text-green-600' : 'text-gray-900'}`}>{Math.round(progress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                      className={`h-3 rounded-full transition-all duration-500 ${goal.color === 'blue' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
-                        goal.color === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                          'bg-gradient-to-r from-orange-500 to-red-500'
+                      className={`h-3 rounded-full transition-all duration-500 ${isComp ? 'bg-green-500' :
+                        goal.color === 'blue' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                          goal.color === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                            'bg-gradient-to-r from-orange-500 to-red-500'
                         }`}
                       style={{ width: `${progress}%` }}
                     />

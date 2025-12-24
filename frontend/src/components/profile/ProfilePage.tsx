@@ -17,9 +17,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAccuracy } from '../../_accuracy/accuracy-context';
+import { xpService } from '../../_xp/xp-service';
 
 const ProfilePage: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser } = useAuth();
     const { getToken } = useClerkAuth();
     const { accuracy } = useAccuracy();
     const [loading, setLoading] = useState(true);
@@ -287,8 +288,8 @@ const ProfilePage: React.FC = () => {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                                                 body: JSON.stringify({
-                                                    amount: 100,
-                                                    source: 'Test Quiz ' + new Date().toLocaleTimeString(),
+                                                    amount: 3000,
+                                                    source: 'Test Quiz (Mega Reward)',
                                                     score: Math.floor(Math.random() * 40) + 60 // Random score between 60 and 100
                                                 })
                                             });
@@ -324,12 +325,23 @@ const ProfilePage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Saved Case Laws */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8">
+                        {/* Saved Case Laws - LOCKED */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8 relative overflow-hidden group">
                             <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Saved Case Laws</h3>
-                            <div className="space-y-4">
+
+                            {/* Blur Overlay */}
+                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
+                                <div className="bg-gray-900/5 p-4 rounded-full mb-3">
+                                    <BookOpen className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <h4 className="text-lg font-bold text-gray-900">Coming Soon</h4>
+                                <p className="text-sm text-gray-600 font-medium">Case Law Bookmarks are under development</p>
+                            </div>
+
+                            {/* Background Content ( Blurred ) */}
+                            <div className="space-y-4 opacity-40 pointer-events-none select-none">
                                 {savedCaseLaws.map((caselaw, index) => (
-                                    <div key={index} className="flex items-center justify-between p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl hover:shadow-md transition-all duration-300">
+                                    <div key={index} className="flex items-center justify-between p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl">
                                         <div className="flex items-center gap-4">
                                             <BookOpen className="w-6 h-6 text-purple-600 flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
@@ -351,6 +363,7 @@ const ProfilePage: React.FC = () => {
                         <div className="bg-red-50/50 backdrop-blur-sm rounded-2xl shadow-lg border border-red-100 p-6 lg:p-8">
                             <h3 className="text-xl lg:text-2xl font-bold text-red-700 mb-6">Danger Zone</h3>
                             <div className="space-y-4">
+
                                 <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-red-100">
                                     <div>
                                         <h4 className="font-bold text-gray-900">Reset Progress</h4>
@@ -366,8 +379,16 @@ const ProfilePage: React.FC = () => {
                                                     headers: { Authorization: `Bearer ${token}` }
                                                 });
                                                 if (res.ok) {
-                                                    alert("Progress reset successfully. Reloading...");
-                                                    window.location.reload();
+                                                    // Seamless Reset
+                                                    xpService.reset();
+                                                    await updateUser({
+                                                        xp: 0,
+                                                        dailyStreak: 0,
+                                                        completedSimulations: 0,
+                                                        badges: [],
+                                                        accuracy: { audit: 0, tax: 0, caselaw: 0 }
+                                                    });
+                                                    alert("Progress reset successfully.");
                                                 } else {
                                                     alert("Failed to reset progress.");
                                                 }

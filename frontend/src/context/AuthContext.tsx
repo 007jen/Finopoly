@@ -80,6 +80,8 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
                 caselaw: typeof dbProfile.caselaw_accuracy === 'number' ? dbProfile.caselaw_accuracy : 0,
             },
             joinedDate: dbProfile.created_at || new Date().toISOString(),
+            correctAnswers: typeof dbProfile.correctAnswers === 'number' ? dbProfile.correctAnswers : 0,
+            totalQuestions: typeof dbProfile.totalQuestions === 'number' ? dbProfile.totalQuestions : 0,
         } as AppUserType;
     }
 
@@ -100,6 +102,8 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
         completedSimulations: 0,
         accuracy: { audit: 0, tax: 0, caselaw: 0 },
         joinedDate: new Date().toISOString(),
+        correctAnswers: 0,
+        totalQuestions: 0,
     } as AppUserType;
 };
 

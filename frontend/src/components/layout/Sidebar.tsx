@@ -48,7 +48,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       color: 'from-blue-500 to-blue-600',
       hoverColor: 'hover:from-blue-600 hover:to-blue-700',
       options: [
-        { id: 'audit-arena', label: 'Audit Arena', icon: Target },
         { id: 'simulations', label: 'Audit Simulations', icon: PlayCircle }
       ]
     },
@@ -58,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       icon: Calculator,
       color: 'from-green-500 to-green-600',
       hoverColor: 'hover:from-green-600 hover:to-green-700',
+      comingSoon: true,
       options: [
         { id: 'tax-simulation', label: 'Tax Simulation', icon: Calculator },
         { id: 'tax-cases', label: 'Tax Cases', icon: FileText }
@@ -69,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       icon: Scale,
       color: 'from-purple-500 to-purple-600',
       hoverColor: 'hover:from-purple-600 hover:to-purple-700',
+      comingSoon: true,
       options: [
         { id: 'caselaw-simulation', label: 'Case Law Simulation', icon: Scale },
         { id: 'caselaw-explorer', label: 'Case Law Explorer', icon: BookOpen }
@@ -77,6 +78,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   ];
 
   const handleModuleClick = (moduleId: string) => {
+    const module = modules.find(m => m.id === moduleId);
+    if (module?.comingSoon) return;
     setExpandedModule(expandedModule === moduleId ? null : moduleId);
   };
 
@@ -142,18 +145,27 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
                     <div key={module.id}>
                       <button
                         onClick={() => handleModuleClick(module.id)}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-300 group ${isExpanded
-                          ? `bg-gradient-to-r ${module.color} text-white shadow-xl transform scale-105`
-                          : `text-gray-700 hover:bg-gradient-to-r ${module.color} hover:text-white hover:shadow-lg hover:scale-105`
+                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-300 group ${(module as any).comingSoon
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100'
+                          : isExpanded
+                            ? `bg-gradient-to-r ${module.color} text-white shadow-xl transform scale-105`
+                            : `text-gray-700 hover:bg-gradient-to-r ${module.color} hover:text-white hover:shadow-lg hover:scale-105`
                           }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={`w-6 h-6 transition-all duration-300 ${isExpanded ? 'scale-110 rotate-3' : 'group-hover:scale-110 group-hover:rotate-3'
-                            }`} />
-                          <span className="font-semibold text-base">{module.name}</span>
+                          <Icon className={`w-6 h-6 transition-all duration-300 ${isExpanded ? 'scale-110 rotate-3' : 'group-hover:scale-110 group-hover:rotate-3'}`} />
+                          <div className="flex flex-col items-start">
+                            <span className="font-semibold text-base">{module.name}</span>
+                            {(module as any).comingSoon && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full mt-0.5">
+                                Coming Soon
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''
-                          }`} />
+                        {!(module as any).comingSoon && (
+                          <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                        )}
                       </button>
 
                       {isExpanded && (

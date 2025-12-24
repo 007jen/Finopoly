@@ -17,6 +17,8 @@ export interface User {
     caselaw: number;
   };
   joinedDate: string;
+  correctAnswers?: number;
+  totalQuestions?: number;
 }
 
 export interface Badge {
