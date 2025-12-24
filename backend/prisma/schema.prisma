@@ -125,6 +125,13 @@ model AuditCase {
   difficulty  Difficulty
   description String
 
+  // Dynamic Game Data
+  invoiceDetails  Json? // Stores { vendor, amount, date, etc. }
+  ledgerDetails   Json? // Stores { date, particulars, debit, etc. }
+  expectedAction  String // 'ACCEPT' or 'REJECT'
+  violationReason String? // If REJECT, why?
+  tags            String[] @default([])
+
   xpReward  Int     @default(150)
   timeLimit Int?
   isActive  Boolean @default(true)

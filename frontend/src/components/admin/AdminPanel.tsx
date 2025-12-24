@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard as Edit, Trash2, Upload, Users, BarChart3, FileText, Scale, Save, X, Calculator, Target, BookOpen, Image, File } from 'lucide-react';
 import UserManagement from './UserManagement';
 import ContentManagement from './ContentManagement';
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 
 // --- Safe Configuration ---
 const ADMIN_KEY_ENV = import.meta.env.VITE_ADMIN_KEY || 'FINOPOLY_ADMIN_2024';
@@ -29,6 +30,7 @@ const AdminPanel: React.FC = () => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<'content' | 'files' | 'analytics' | 'users'>('content');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { getToken } = useClerkAuth();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
 
@@ -43,7 +45,12 @@ const AdminPanel: React.FC = () => {
     correctAnswer: '',
     explanation: '',
     xpReward: 100,
-    timeLimit: 30
+    timeLimit: 30,
+    // Audit Specific
+    invoiceDetails: { vendor: '', amount: 0, tax: 0, total: 0, date: '', invoiceNo: '' },
+    ledgerDetails: { particulars: '', debit: 0, date: '' },
+    expectedAction: 'ACCEPT',
+    violationReason: ''
   });
 
   // --- Security Check ---
@@ -99,9 +106,43 @@ const AdminPanel: React.FC = () => {
 
   // --- Handlers ---
 
-  const handleCreateContent = () => {
-    // Migration Safe: Log payload for now.
-    console.log('[Admin] Creating content payload:', newContent);
+
+
+  const handleCreateContent = async () => {
+    // console.log('[Admin] Creating content payload:', newContent);
+    try {
+      const token = await getToken();
+      if (newContent.type === 'simulation' && newContent.module === 'audit') {
+        const res = await fetch('/api/audit/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title: newContent.title,
+            companyName: 'Swastik Enterprises', // Default for now
+            difficulty: newContent.difficulty,
+            description: newContent.description,
+            xpReward: newContent.xpReward,
+            timeLimit: newContent.timeLimit * 60, // convert mins to seconds
+            invoiceDetails: newContent.invoiceDetails,
+            ledgerDetails: newContent.ledgerDetails,
+            expectedAction: newContent.expectedAction,
+            violationReason: newContent.violationReason
+          })
+        });
+
+        if (!res.ok) throw new Error('Failed to create audit case');
+        alert('Audit Case Created!');
+      } else {
+        console.log("Only Audit Cases supported currently via API");
+      }
+    } catch (e) {
+      console.error("Create error", e);
+      alert('Error creating content');
+    }
+
     setShowCreateModal(false);
     // Reset form
     setNewContent({
@@ -115,7 +156,11 @@ const AdminPanel: React.FC = () => {
       correctAnswer: '',
       explanation: '',
       xpReward: 100,
-      timeLimit: 30
+      timeLimit: 30,
+      invoiceDetails: { vendor: '', amount: 0, tax: 0, total: 0, date: '', invoiceNo: '' },
+      ledgerDetails: { particulars: '', debit: 0, date: '' },
+      expectedAction: 'ACCEPT',
+      violationReason: ''
     });
   };
 
@@ -418,6 +463,72 @@ const AdminPanel: React.FC = () => {
                     />
                   </div>
                 </>
+              )}
+
+              {/* AUDIT CASE SPECIFIC GENERIC UI */}
+              {newContent.type === 'simulation' && newContent.module === 'audit' && (
+                <div className="space-y-4 border-t pt-4 mt-4 border-gray-200">
+                  <h3 className="font-bold text-gray-900">Audit Details</h3>
+
+                  {/* INVOICE SECTION */}
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">Invoice Data</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input placeholder="Vendor Name" className="p-2 border rounded"
+                        value={newContent.invoiceDetails.vendor}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, vendor: e.target.value } })} />
+                      <input placeholder="Invoice No" className="p-2 border rounded"
+                        value={newContent.invoiceDetails.invoiceNo}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, invoiceNo: e.target.value } })} />
+                      <input type="number" placeholder="Amount" className="p-2 border rounded"
+                        value={newContent.invoiceDetails.amount}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, amount: Number(e.target.value) } })} />
+                      <input type="date" className="p-2 border rounded"
+                        value={newContent.invoiceDetails.date}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, date: e.target.value } })} />
+                    </div>
+                  </div>
+
+                  {/* LEDGER SECTION */}
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">Ledger Entry</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input placeholder="Particulars" className="p-2 border rounded"
+                        value={newContent.ledgerDetails.particulars}
+                        onChange={e => setNewContent({ ...newContent, ledgerDetails: { ...newContent.ledgerDetails, particulars: e.target.value } })} />
+                      <input type="number" placeholder="Debit Amount" className="p-2 border rounded"
+                        value={newContent.ledgerDetails.debit}
+                        onChange={e => setNewContent({ ...newContent, ledgerDetails: { ...newContent.ledgerDetails, debit: Number(e.target.value) } })} />
+                      <input type="date" className="p-2 border rounded"
+                        value={newContent.ledgerDetails.date}
+                        onChange={e => setNewContent({ ...newContent, ledgerDetails: { ...newContent.ledgerDetails, date: e.target.value } })} />
+                    </div>
+                  </div>
+
+                  {/* EXPECTED ACTION */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Expected Action</label>
+                      <select className="w-full px-4 py-3 border border-gray-300 rounded-xl"
+                        value={newContent.expectedAction}
+                        onChange={(e) => setNewContent({ ...newContent, expectedAction: e.target.value })}
+                      >
+                        <option value="ACCEPT">ACCEPT</option>
+                        <option value="REJECT">REJECT</option>
+                      </select>
+                    </div>
+                    {newContent.expectedAction === 'REJECT' && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Violation Reason</label>
+                        <input className="w-full px-4 py-3 border border-gray-300 rounded-xl" placeholder="e.g. GST Mismatch"
+                          value={newContent.violationReason}
+                          onChange={(e) => setNewContent({ ...newContent, violationReason: e.target.value })}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

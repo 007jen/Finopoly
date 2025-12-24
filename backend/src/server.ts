@@ -11,6 +11,7 @@ import caseRoutes from "./routes/case.route";
 import caseReviewRoutes from "./routes/caseReview.routes";
 import progressRoutes from "./routes/progress.routes";
 import profileRoutes from "./routes/profile.routes";
+import auditRoutes from "./routes/audit.routes";
 const app = express();
 app.post(
     "/api/webhooks/clerk",
@@ -30,6 +31,7 @@ app.use("/api/cases", caseRoutes);
 app.use("/api/admin", caseReviewRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/audit", auditRoutes);
 
 // console.log("Case routes mounted");
 console.log("Progress routes mounted");

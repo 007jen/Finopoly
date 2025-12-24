@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, X, Flame, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { xpService } from '../../_xp/xp-service';
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 
 // --- Types ---
 type PaymentMode = 'CASH' | 'BANK' | 'UPI';
@@ -94,20 +95,67 @@ interface SimulationViewProps {
   onBack: () => void;
 }
 
-const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
+const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   // Game State
   const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
   const [score, setScore] = useState(24500);
   const [streak, setStreak] = useState(8);
   const [timeLeft, setTimeLeft] = useState(MAX_TIME);
-  const [gameState, setGameState] = useState<'PLAYING' | 'RESULT'>('PLAYING');
+  const [gameState, setGameState] = useState<'PLAYING' | 'RESULT' | 'FINISHED'>('PLAYING');
   const [result, setResult] = useState<'SUCCESS' | 'FAILURE' | null>(null);
 
   // NEW STATE: User remarks
   const [userDescription, setUserDescription] = useState('');
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const currentLevel = GAME_LEVELS[currentLevelIdx % GAME_LEVELS.length];
+  // DYNAMIC DATA
+  const [levels, setLevels] = useState<any[]>(GAME_LEVELS);
+  const [loading, setLoading] = useState(true);
+  const { getToken } = useClerkAuth();
+
+  useEffect(() => {
+    const fetchLevels = async () => {
+      try {
+        const token = await getToken();
+        // If caseId is provided, fetch specific case. Otherwise fetch random (legacy fallback)
+        const url = caseId ? `/api/audit/${caseId}/play` : '/api/audit/play?count=5';
+
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          cache: 'no-store'
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // If fetching single case, wrap in array. If random, it's already array.
+          const dataArray = Array.isArray(data) ? data : [data];
+
+          if (dataArray.length > 0) {
+            // Transform API data to match UI expected structure
+            const mapped = dataArray.map((item: any, idx: number) => ({
+              id: idx + 1,
+              invoice: item.invoiceDetails,
+              ledger: item.ledgerDetails,
+              expectedAction: item.expectedAction,
+              violationReason: item.violationReason
+            }));
+            setLevels(mapped);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load dynamic levels, using mock", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLevels();
+  }, [getToken, caseId]);
+
+  const currentLevel = levels[currentLevelIdx % levels.length];
 
   // Helper to format timer like "0:04s"
   const formatTimerStr = (time: number) => {
@@ -160,17 +208,23 @@ const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
       setStreak(0);
     }
 
-    // Auto advance loop
+    // Auto advance loop or Finish
     setTimeout(() => {
-      setGameState('PLAYING');
-      setResult(null);
-      setTimeLeft(MAX_TIME);
-      setUserDescription(''); // Reset description field
-      setCurrentLevelIdx(prev => prev + 1);
-      // Refocus the input for the next round automatically
-      setTimeout(() => descriptionInputRef.current?.focus(), 100);
-    }, 2000);
-  }, [currentLevel, streak, gameState, userDescription]);
+      // If it was the last level (or single case mode), finish game or show result
+      if (currentLevelIdx >= levels.length - 1) {
+        setResult(null);
+        setGameState('FINISHED');
+      } else {
+        setGameState('PLAYING');
+        setResult(null);
+        setTimeLeft(MAX_TIME);
+        setUserDescription(''); // Reset description field
+        setCurrentLevelIdx(prev => prev + 1);
+        // Refocus the input for the next round automatically
+        setTimeout(() => descriptionInputRef.current?.focus(), 100);
+      }
+    }, 3000); // Increased delay to read result
+  }, [currentLevel, streak, gameState, userDescription, levels.length, currentLevelIdx]);
 
   // Keyboard Shortcuts (Only work if description has text)
   useEffect(() => {
@@ -189,6 +243,18 @@ const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
 
 
   const isSubmitDisabled = userDescription.trim().length === 0 || gameState !== 'PLAYING';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-900 text-white">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold">Loading Audit Cases...</h2>
+          <p className="text-slate-400">Fetching latest files from the server</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-slate-900 text-white font-sans overflow-hidden relative pb-4">
@@ -264,13 +330,13 @@ const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
               </thead>
               <tbody>
                 <tr>
-                  <td className="p-1.5 font-medium">{currentLevel.invoice.description}</td>
-                  <td className="p-1.5 text-right font-mono font-bold">₹{currentLevel.invoice.amount.toLocaleString()}</td>
+                  <td className="p-1.5 font-medium">{currentLevel?.invoice?.description || "-"}</td>
+                  <td className="p-1.5 text-right font-mono font-bold">₹{(currentLevel?.invoice?.amount || 0).toLocaleString()}</td>
                 </tr>
-                {currentLevel.invoice.tax > 0 && (
+                {(currentLevel?.invoice?.tax || 0) > 0 && (
                   <tr>
                     <td className="p-1.5 text-slate-500">GST Total</td>
-                    <td className="p-1.5 text-right font-mono text-slate-500">₹{currentLevel.invoice.tax.toLocaleString()}</td>
+                    <td className="p-1.5 text-right font-mono text-slate-500">₹{(currentLevel?.invoice?.tax || 0).toLocaleString()}</td>
                   </tr>
                 )}
               </tbody>
@@ -278,7 +344,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
 
             <div className="flex justify-between items-center pt-2 border-t-2 border-slate-800">
               <p className="font-bold text-sm">Grand Total</p>
-              <p className="text-xl font-bold font-mono">₹{currentLevel.invoice.total.toLocaleString()}</p>
+              <p className="text-xl font-bold font-mono">₹{(currentLevel?.invoice?.total || 0).toLocaleString()}</p>
             </div>
 
             {/* Payment Mode Indicator */}
@@ -321,11 +387,11 @@ const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
 
                 {/* ACTIVE ROW */}
                 <tr className="bg-blue-900/60 border-l-4 border-blue-400 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]">
-                  <td className="p-2 text-white font-bold">{currentLevel.ledger.date}</td>
-                  <td className="p-2 text-white font-bold">{currentLevel.ledger.particulars}</td>
-                  <td className="p-2">{currentLevel.ledger.vchType}</td>
+                  <td className="p-2 text-white font-bold">{currentLevel?.ledger?.date || "-"}</td>
+                  <td className="p-2 text-white font-bold">{currentLevel?.ledger?.particulars || "Unknown"}</td>
+                  <td className="p-2">{currentLevel?.ledger?.vchType || "-"}</td>
                   <td className="p-2 text-right font-mono font-bold text-white text-sm">
-                    {currentLevel.ledger.debit?.toLocaleString()}
+                    {(currentLevel?.ledger?.debit || 0).toLocaleString()}
                   </td>
                 </tr>
                 <tr className="opacity-40">
@@ -365,6 +431,28 @@ const SimulationView: React.FC<SimulationViewProps> = ({ onBack }) => {
               </div>
               <div className="text-lg font-bold text-white text-center mt-2 bg-red-600 px-2">
                 {currentLevel.violationReason || "AUDIT Mismatch Detected"}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- GAME FINISHED OVERLAY --- */}
+        {gameState === 'FINISHED' && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-sm animate-in fade-in duration-500">
+            <div className="text-center p-8 max-w-md w-full">
+              <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/50">
+                <Check size={40} className="text-white" />
+              </div>
+              <h2 className="text-3xl font-bold mb-2 text-white">Audit Completed</h2>
+              <p className="text-slate-400 mb-8">Case file has been successfully processed and closed.</p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={onBack}
+                  className="w-full py-3 bg-white text-slate-900 rounded-lg font-bold hover:bg-slate-200 transition-colors"
+                >
+                  Return to Lobby
+                </button>
               </div>
             </div>
           </div>

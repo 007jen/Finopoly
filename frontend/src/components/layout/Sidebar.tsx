@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
       color: 'from-blue-500 to-blue-600',
       hoverColor: 'hover:from-blue-600 hover:to-blue-700',
       options: [
-        { id: 'simulations', label: 'Audit Simulations', icon: PlayCircle }
+        { id: 'audit-arena', label: 'Audit Simulations', icon: PlayCircle }
       ]
     },
     {

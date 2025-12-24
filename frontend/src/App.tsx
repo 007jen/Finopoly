@@ -11,7 +11,7 @@ import TopBar from './components/layout/TopBar';
 import Dashboard from './components/dashboard/Dashboard';
 import SimulationsList from './components/simulations/SimulationsList';
 import SimulationView from './components/simulations/SimulationView';
-import AuditArena from './components/simulations/AuditArena';
+import { AuditLobby } from './components/simulations/AuditLobby'; // Updated import
 import TaxSimulation from './components/simulations/TaxSimulation';
 import CaseLawModuleLive from './components/caselaws/CaseLawModuleLive';
 import CaseLawExplorer from './components/caselaw/CaseLawExplorer';
@@ -25,7 +25,7 @@ import { SignedIn, SignedOut } from '@clerk/clerk-react'
 
 const AppContent: React.FC = () => {
   const { showOnboarding, user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState(window.location.pathname === '/AdminPanel' ? 'admin' : 'dashboard');
+  const [activeTab, setActiveTab] = useState(window.location.pathname.toLowerCase().includes('/admin') ? 'admin' : 'dashboard');
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
   const [currentCaseDetail, setCurrentCaseDetail] = useState<string | null>(null);
 
@@ -74,7 +74,8 @@ const AppContent: React.FC = () => {
     // if (activeTab === 'admin' && user?.role === 'admin') {
     //   return <AdminPanel />;
     // }
-    if (window.location.pathname === '/AdminPanel' && activeTab === 'admin') {
+    // Show admin panel
+    if (activeTab === 'admin') {
       return <AdminPanel />;
     }
 
@@ -85,7 +86,7 @@ const AppContent: React.FC = () => {
       case 'simulations':
         return <SimulationsList onStartSimulation={handleStartSimulation} />;
       case 'audit-arena':
-        return <AuditArena />;
+        return <AuditLobby onStartAudit={handleStartSimulation} />; // Use AuditLobby
       case 'caselaw-simulation':
         return <CaseLawModuleLive />;
       case 'caselaw-explorer':

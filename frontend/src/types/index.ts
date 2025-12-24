@@ -32,11 +32,17 @@ export interface Badge {
 export interface AuditCase {
   id: string;
   title: string;
-  company: string;
+  companyName: string; // was company
   difficulty: 'Beginner' | 'Intermediate' | 'Pro';
   description: string;
-  documents: Document[];
-  tasks: Task[];
+
+  // Dynamic Game Data (Matching Backend)
+  invoiceDetails?: any;
+  ledgerDetails?: any;
+  expectedAction?: 'ACCEPT' | 'REJECT';
+  violationReason?: string;
+  tags?: string[];
+
   xpReward: number;
   timeLimit?: number;
 }

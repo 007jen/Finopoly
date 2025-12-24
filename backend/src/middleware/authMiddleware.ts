@@ -104,6 +104,24 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
 }
 
+export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        // Simple role check
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: "Forbidden: Admins only" });
+        }
+
+        next();
+    } catch (err) {
+        console.error("Admin Auth Error:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
 
 
 // export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
