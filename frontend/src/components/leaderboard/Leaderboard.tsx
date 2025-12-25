@@ -141,7 +141,7 @@ const Leaderboard: React.FC = () => {
             </div>
 
             {/* Rank 1 (Center) */}
-            <div className="flex flex-col items-center group w-28 md:w-40 z-10">
+            <div className="flex flex-col items-center group w-20 md:w-28 z-10">
               {rank1 ? (
                 <>
                   <div className="relative mb-4">
@@ -218,9 +218,9 @@ const Leaderboard: React.FC = () => {
             <div key={entry.id || index} className={`bg-white rounded-xl p-4 shadow-sm border ${isCurrentUser ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-100'}`}>
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm ${rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                    rank === 2 ? 'bg-gray-100 text-gray-700' :
-                      rank === 3 ? 'bg-orange-100 text-orange-700' :
-                        'bg-blue-50 text-blue-600'
+                  rank === 2 ? 'bg-gray-100 text-gray-700' :
+                    rank === 3 ? 'bg-orange-100 text-orange-700' :
+                      'bg-blue-50 text-blue-600'
                   }`}>
                   #{rank}
                 </div>

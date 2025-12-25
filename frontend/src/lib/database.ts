@@ -24,6 +24,8 @@ const MOCK_PROFILE = {
   audit_accuracy: 0,
   tax_accuracy: 0,
   caselaw_accuracy: 0,
+  correctAnswers: 0,
+  totalQuestions: 0,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -75,7 +77,9 @@ export const db = {
             avatar: null,
             xp: backendData.xp,
             current_level: backendData.level,
-            created_at: backendData.joinedAt
+            created_at: backendData.joinedAt,
+            correctAnswers: backendData.correctAnswers || 0,
+            totalQuestions: backendData.totalQuestions || 0
           };
         }
       } catch (e) {

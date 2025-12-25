@@ -47,9 +47,10 @@ const AdminPanel: React.FC = () => {
     xpReward: 100,
     timeLimit: 30,
     // Audit Specific
-    invoiceDetails: { vendor: '', amount: 0, tax: 0, total: 0, date: '', invoiceNo: '' },
-    ledgerDetails: { particulars: '', debit: 0, date: '' },
-    expectedAction: 'ACCEPT',
+    invoiceDetails: { vendor: '', amount: 0, tax: 0, total: 0, date: '', invoiceNo: '', description: '', paymentMode: 'BANK', gstin: '' },
+    ledgerDetails: { particulars: '', debit: 0, date: '', vchType: 'Journal', vchNo: '' },
+    expectedAction: 'ACCEPT', // Deprecated but kept for backward compatibility if needed, or derived
+    faultyField: '', // 'Vendor', 'Date', 'Amount', 'Tax', 'Compliance' or ''
     violationReason: ''
   });
 
@@ -128,7 +129,8 @@ const AdminPanel: React.FC = () => {
             timeLimit: newContent.timeLimit * 60, // convert mins to seconds
             invoiceDetails: newContent.invoiceDetails,
             ledgerDetails: newContent.ledgerDetails,
-            expectedAction: newContent.expectedAction,
+            expectedAction: newContent.faultyField ? 'REJECT' : 'ACCEPT',
+            faultyField: newContent.faultyField || null,
             violationReason: newContent.violationReason
           })
         });
@@ -157,9 +159,10 @@ const AdminPanel: React.FC = () => {
       explanation: '',
       xpReward: 100,
       timeLimit: 30,
-      invoiceDetails: { vendor: '', amount: 0, tax: 0, total: 0, date: '', invoiceNo: '' },
-      ledgerDetails: { particulars: '', debit: 0, date: '' },
+      invoiceDetails: { vendor: '', amount: 0, tax: 0, total: 0, date: '', invoiceNo: '', description: '', paymentMode: 'BANK', gstin: '' },
+      ledgerDetails: { particulars: '', debit: 0, date: '', vchType: 'Journal', vchNo: '' },
       expectedAction: 'ACCEPT',
+      faultyField: '',
       violationReason: ''
     });
   };
@@ -486,6 +489,22 @@ const AdminPanel: React.FC = () => {
                       <input type="date" className="p-2 border rounded"
                         value={newContent.invoiceDetails.date}
                         onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, date: e.target.value } })} />
+
+                      {/* NEW FIELDS */}
+                      <input placeholder="GSTIN" className="p-2 border rounded"
+                        value={newContent.invoiceDetails.gstin}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, gstin: e.target.value } })} />
+                      <input placeholder="Description (Service/Item)" className="p-2 border rounded"
+                        value={newContent.invoiceDetails.description}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, description: e.target.value } })} />
+                      <select className="p-2 border rounded"
+                        value={newContent.invoiceDetails.paymentMode}
+                        onChange={e => setNewContent({ ...newContent, invoiceDetails: { ...newContent.invoiceDetails, paymentMode: e.target.value as any } })}
+                      >
+                        <option value="BANK">Bank</option>
+                        <option value="CASH">Cash</option>
+                        <option value="UPI">UPI</option>
+                      </select>
                     </div>
                   </div>
 
@@ -502,25 +521,43 @@ const AdminPanel: React.FC = () => {
                       <input type="date" className="p-2 border rounded"
                         value={newContent.ledgerDetails.date}
                         onChange={e => setNewContent({ ...newContent, ledgerDetails: { ...newContent.ledgerDetails, date: e.target.value } })} />
+
+                      {/* NEW FIELDS */}
+                      <input placeholder="Voucher No (e.g. 505)" className="p-2 border rounded"
+                        value={newContent.ledgerDetails.vchNo}
+                        onChange={e => setNewContent({ ...newContent, ledgerDetails: { ...newContent.ledgerDetails, vchNo: e.target.value } })} />
+                      <select className="p-2 border rounded"
+                        value={newContent.ledgerDetails.vchType}
+                        onChange={e => setNewContent({ ...newContent, ledgerDetails: { ...newContent.ledgerDetails, vchType: e.target.value } })}
+                      >
+                        <option value="Journal">Journal</option>
+                        <option value="Payment">Payment</option>
+                        <option value="Receipt">Receipt</option>
+                        <option value="Purchase">Purchase</option>
+                      </select>
                     </div>
                   </div>
 
-                  {/* EXPECTED ACTION */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* FAULTY FIELD & REASON */}
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Expected Action</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Faulty Field (If any)</label>
                       <select className="w-full px-4 py-3 border border-gray-300 rounded-xl"
-                        value={newContent.expectedAction}
-                        onChange={(e) => setNewContent({ ...newContent, expectedAction: e.target.value })}
+                        value={newContent.faultyField}
+                        onChange={(e) => setNewContent({ ...newContent, faultyField: e.target.value })}
                       >
-                        <option value="ACCEPT">ACCEPT</option>
-                        <option value="REJECT">REJECT</option>
+                        <option value="">None (Clean Case)</option>
+                        <option value="Vendor">Vendor Mismatch</option>
+                        <option value="Date">Date Mismatch</option>
+                        <option value="Amount">Amount Mismatch</option>
+                        <option value="Tax">Tax/GST Mismatch</option>
+                        <option value="Compliance">Compliance (e.g. 40A(3), Limit)</option>
                       </select>
                     </div>
-                    {newContent.expectedAction === 'REJECT' && (
+                    {newContent.faultyField && (
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Violation Reason</label>
-                        <input className="w-full px-4 py-3 border border-gray-300 rounded-xl" placeholder="e.g. GST Mismatch"
+                        <input className="w-full px-4 py-3 border border-gray-300 rounded-xl" placeholder="Detailed explanation of failure..."
                           value={newContent.violationReason}
                           onChange={(e) => setNewContent({ ...newContent, violationReason: e.target.value })}
                         />

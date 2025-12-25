@@ -130,6 +130,7 @@ model AuditCase {
   ledgerDetails   Json? // Stores { date, particulars, debit, etc. }
   expectedAction  String // 'ACCEPT' or 'REJECT'
   violationReason String? // If REJECT, why?
+  faultyField     String? // 'Vendor', 'Date', 'Amount', 'Tax', 'Compliance' or null
   tags            String[] @default([])
 
   xpReward  Int     @default(150)

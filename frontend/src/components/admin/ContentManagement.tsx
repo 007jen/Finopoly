@@ -116,7 +116,8 @@ const ContentManagement: React.FC = () => {
           // Dynamic Data
           invoiceDetails: formData.invoiceDetails,
           ledgerDetails: formData.ledgerDetails,
-          expectedAction: formData.expectedAction,
+          expectedAction: formData.faultyField ? 'REJECT' : 'ACCEPT',
+          faultyField: formData.faultyField || null,
           violationReason: formData.violationReason,
           tags: formData.tags || []
         };
@@ -308,8 +309,9 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
       // Audit Defaults
       expectedAction: 'ACCEPT',
       violationReason: '',
-      invoiceDetails: { vendor: "Vendor Name", amount: 1000 },
-      ledgerDetails: { particulars: "Expense", debit: 1000 }
+      faultyField: '',
+      invoiceDetails: { vendor: "", amount: 0, tax: 0, total: 0, date: '', invoiceNo: '', description: '', paymentMode: 'BANK', gstin: '' },
+      ledgerDetails: { particulars: "", debit: 0, date: '', vchType: 'Journal', vchNo: '' }
     }
   );
 
@@ -505,35 +507,105 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                 </div>
               </div>
 
-              {/* Simplified JSON Editors for Invoice/Ledger for MVP - Ideally these should be structured forms */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">Invoice JSON</label>
-                <textarea
-                  value={JSON.stringify(formData.invoiceDetails || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setFormData({ ...formData, invoiceDetails: JSON.parse(e.target.value) });
-                    } catch (err) { /* ignore parse error while typing */ }
-                  }}
-                  rows={5}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-xs"
-                />
-                <p className="text-xs text-gray-500">Enter valid JSON for invoice details</p>
+              {/* GRANULAR AUDIT FIELDS */}
+              <div className="space-y-4 border-t pt-4 mt-4 border-gray-200">
+                <h3 className="font-bold text-gray-900">Audit Details</h3>
+
+                {/* INVOICE SECTION */}
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Invoice Data</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input placeholder="Vendor Name" className="p-2 border rounded"
+                      value={formData.invoiceDetails?.vendor || ''}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, vendor: e.target.value } })} />
+                    <input placeholder="Invoice No" className="p-2 border rounded"
+                      value={formData.invoiceDetails?.invoiceNo || ''}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, invoiceNo: e.target.value } })} />
+                    <input type="number" placeholder="Amount" className="p-2 border rounded"
+                      value={formData.invoiceDetails?.amount || 0}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, amount: Number(e.target.value) } })} />
+                    <input type="date" className="p-2 border rounded"
+                      value={formData.invoiceDetails?.date || ''}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, date: e.target.value } })} />
+
+                    {/* NEW FIELDS */}
+                    <input placeholder="GSTIN" className="p-2 border rounded"
+                      value={formData.invoiceDetails?.gstin || ''}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, gstin: e.target.value } })} />
+                    <input placeholder="Description (Service/Item)" className="p-2 border rounded"
+                      value={formData.invoiceDetails?.description || ''}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, description: e.target.value } })} />
+                    <select className="p-2 border rounded"
+                      value={formData.invoiceDetails?.paymentMode || 'BANK'}
+                      onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, paymentMode: e.target.value } })}
+                    >
+                      <option value="BANK">Bank</option>
+                      <option value="CASH">Cash</option>
+                      <option value="UPI">UPI</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* LEDGER SECTION */}
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs font-bold text-gray-500 uppercase mb-2">Ledger Entry</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input placeholder="Particulars" className="p-2 border rounded"
+                      value={formData.ledgerDetails?.particulars || ''}
+                      onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, particulars: e.target.value } })} />
+                    <input type="number" placeholder="Debit Amount" className="p-2 border rounded"
+                      value={formData.ledgerDetails?.debit || 0}
+                      onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, debit: Number(e.target.value) } })} />
+                    <input type="date" className="p-2 border rounded"
+                      value={formData.ledgerDetails?.date || ''}
+                      onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, date: e.target.value } })} />
+
+                    {/* NEW FIELDS */}
+                    <input placeholder="Voucher No (e.g. 505)" className="p-2 border rounded"
+                      value={formData.ledgerDetails?.vchNo || ''}
+                      onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, vchNo: e.target.value } })} />
+                    <select className="p-2 border rounded"
+                      value={formData.ledgerDetails?.vchType || 'Journal'}
+                      onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, vchType: e.target.value } })}
+                    >
+                      <option value="Journal">Journal</option>
+                      <option value="Payment">Payment</option>
+                      <option value="Receipt">Receipt</option>
+                      <option value="Purchase">Purchase</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* FAULTY FIELD & REASON */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Faulty Field (If any)</label>
+                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                      value={formData.faultyField || ''}
+                      onChange={(e) => setFormData({ ...formData, faultyField: e.target.value })}
+                    >
+                      <option value="">None (Clean Case)</option>
+                      <option value="Vendor">Vendor Mismatch</option>
+                      <option value="Date">Date Mismatch</option>
+                      <option value="Amount">Amount Mismatch</option>
+                      <option value="Tax">Tax/GST Mismatch</option>
+                      <option value="Compliance">Compliance (e.g. 40A(3), Limit)</option>
+                    </select>
+                  </div>
+                  {formData.faultyField && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Violation Reason</label>
+                      <input className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="Detailed explanation of failure..."
+                        value={formData.violationReason || ''}
+                        onChange={(e) => setFormData({ ...formData, violationReason: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">Ledger JSON</label>
-                <textarea
-                  value={JSON.stringify(formData.ledgerDetails || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setFormData({ ...formData, ledgerDetails: JSON.parse(e.target.value) });
-                    } catch (err) { /* ignore parse error while typing */ }
-                  }}
-                  rows={5}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-xs"
-                />
-              </div>
+              {/* HIDDEN LEGACY FIELDS (Calculated) */}
+              {/* expectedAction is derived from faultyField in handleSave, but displayed here for debug if needed */}
             </>
           )}
 

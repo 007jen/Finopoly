@@ -6,9 +6,9 @@ import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 const router = express.Router();
 
 // Public / Student Routes
-router.get('/play', requireAuth, getPlayableCases);
+router.get('/playable', requireAuth, getPlayableCases);
 router.get('/catalog', requireAuth, listCatalog);
-router.get('/:id/play', requireAuth, getPlayableCaseById);
+router.get('/playable/:id', requireAuth, getPlayableCaseById);
 
 // Admin Routes
 router.post('/create', requireAuth, requireAdmin, createAuditCase);

@@ -24,6 +24,7 @@ export class AuditService {
                 ledgerDetails: true,
                 expectedAction: true,
                 violationReason: true,
+                faultyField: true,
                 tags: true,
                 xpReward: true,
                 timeLimit: true
@@ -72,6 +73,7 @@ export class AuditService {
                 ledgerDetails: true,
                 expectedAction: true,
                 violationReason: true,
+                faultyField: true,
                 tags: true,
                 xpReward: true,
                 timeLimit: true

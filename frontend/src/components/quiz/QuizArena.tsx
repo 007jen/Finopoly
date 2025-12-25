@@ -26,6 +26,7 @@ const QuizArena: React.FC = () => {
   const [showResult, setShowResult] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
   const [score, setScore] = useState(0);
+  const [isShaking, setIsShaking] = useState(false);
 
   const quizModes = [
     {
@@ -147,6 +148,10 @@ const QuizArena: React.FC = () => {
         updateUserStats(user.name, 0, 0, 1);
       }
       incrementTotal(); // Update global accuracy
+
+      // Trigger Shake Animation
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 400);
     }
 
     setShowResult(true);
@@ -217,7 +222,7 @@ const QuizArena: React.FC = () => {
           </div>
 
           {/* Question Card */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8 lg:p-10">
+          <div className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8 lg:p-10 ${isShaking ? 'animate-shake border-red-300' : ''} ${showResult && selectedAnswer === sampleQuestions[selectedMode || 'mcq'][currentQuestion]?.correct ? 'animate-pop border-green-300' : ''}`}>
             <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-8">
               {currentQ?.question}
             </h2>

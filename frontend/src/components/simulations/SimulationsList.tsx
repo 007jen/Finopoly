@@ -9,8 +9,8 @@ interface SimulationsListProps {
 const SimulationsList: React.FC<SimulationsListProps> = ({ onStartSimulation }) => {
   const [filter, setFilter] = useState<'All' | 'Beginner' | 'Intermediate' | 'Pro'>('All');
 
-  const filteredCases = filter === 'All' 
-    ? mockAuditCases 
+  const filteredCases = filter === 'All'
+    ? mockAuditCases
     : mockAuditCases.filter(c => c.difficulty === filter);
 
   const getDifficultyColor = (difficulty: string) => {
@@ -29,10 +29,10 @@ const SimulationsList: React.FC<SimulationsListProps> = ({ onStartSimulation }) 
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Audit Simulations</h1>
           <p className="text-gray-600">Practice with real-world audit scenarios</p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-gray-500" />
-          <select 
+          <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
             className="border border-gray-300 rounded-lg px-3 py-2 bg-white"

@@ -250,7 +250,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         {/* Welcome Header */}
         <div className="text-center lg:text-left">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-            Hi, {user.name}! ✨
+            Welcome, {user.name}! ✨
           </h1>
           <p className="text-gray-600 text-lg lg:text-xl">Ready to continue your learning journey?</p>
         </div>
@@ -292,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
               <div>
                 <div className="flex items-center justify-between text-sm lg:text-base mb-3">
                   <span className="font-medium">Progress</span>
-                  <span className="font-bold">{lastActivity ? 'Resuming...' : '0%'}</span>
+                  <span className="font-bold">{lastActivity ? '' : '0%'}</span>
                 </div>
                 <div className="w-full bg-white bg-opacity-20 rounded-full h-3 lg:h-4">
                   <div className="bg-white h-3 lg:h-4 rounded-full shadow-sm transition-all duration-500" style={{ width: lastActivity ? '100%' : '5%' }}></div>

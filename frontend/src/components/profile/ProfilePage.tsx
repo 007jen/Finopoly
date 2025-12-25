@@ -143,6 +143,39 @@ const ProfilePage: React.FC = () => {
         { title: 'ICAI vs. Price Waterhouse', category: 'Audit', savedDate: '2024-01-23' },
     ];
 
+    const handleExportData = () => {
+        // Prepare CSV Data
+        const headers = ["Category", "Metric", "Value"];
+        const rows = [
+            ["Profile", "Name", user.name || "Unknown"],
+            ["Profile", "Email", user.email || "Unknown"],
+            ["Profile", "Role", user.role || "Student"],
+            ["Profile", "Joined", new Date(user.joinedDate).toLocaleDateString()],
+            ["Stats", "Total XP", (profileOverview?.xp ?? user.xp).toString()],
+            ["Stats", "Level", (profileOverview?.level ?? user.level).toString()],
+            ["Stats", "Badges Earned", user.badges.length.toString()],
+            ["Stats", "Current Streak", `${user.dailyStreak} days`],
+            ["Stats", "Completed Simulations", user.completedSimulations.toString()],
+            ["Stats", "Average Accuracy", `${accuracy}%`]
+        ];
+
+        // Convert to CSV String
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+        ].join("\n");
+
+        // Create Blob and Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `finopoly_stats_${user.name?.replace(/\s+/g, '_') || 'user'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="min-h-full bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30">
             <div className="max-w-7xl mx-auto p-4 lg:p-8">
@@ -186,7 +219,10 @@ const ProfilePage: React.FC = () => {
                                     <Share2 className="w-4 h-4" />
                                     Share Profile
                                 </button>
-                                <button className="flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300 font-bold">
+                                <button
+                                    onClick={handleExportData}
+                                    className="flex items-center justify-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300 font-bold"
+                                >
                                     <Download className="w-4 h-4" />
                                     Export Data
                                 </button>
