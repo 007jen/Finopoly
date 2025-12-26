@@ -3,6 +3,7 @@ import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle } from 'lucide-rea
 import { xpService } from '../../_xp/xp-service';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import confetti from 'canvas-confetti';
+import { api } from '../../lib/api';
 
 // --- Types ---
 type PaymentMode = 'CASH' | 'BANK' | 'UPI';
@@ -92,18 +93,15 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
         if (caseId) {
           // Fetch specific case (Single Play)
-          const res = await fetch(`/api/audit/playable/${caseId}`, {
+          const data = await api.get<any>(`/api/audit/playable/${caseId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (res.ok) fetchedData = [await res.json()];
-          else console.error("Failed to fetch specific case");
+          fetchedData = [data];
         } else {
-          // Fetch random set (Challenge Mode) - Fallback to mock if this fails initially?
-          // ideally backend implements getPlayableCases
-          const res = await fetch(`/api/audit/playable?count=5`, {
+          // Fetch random set (Challenge Mode)
+          fetchedData = await api.get<any[]>(`/api/audit/playable?count=5`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (res.ok) fetchedData = await res.json();
         }
 
         if (fetchedData.length > 0) {

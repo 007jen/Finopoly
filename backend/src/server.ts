@@ -20,7 +20,28 @@ app.post(
 );
 
 app.use(express.json());
-app.use(cors());
+// CORS Configuration
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:4173",
+    process.env.FRONTEND_URL // Production Vercel URL
+].filter(Boolean) as string[];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
+            callback(null, true);
+        } else {
+            // Temporarily allow all for debugging if needed, but best to warn
+            console.warn(`Blocked CORS request from: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 
 // ROUTES
 app.use("/api/auth", authRoutes);

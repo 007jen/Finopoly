@@ -3,6 +3,7 @@
 // otherwise returns deterministic mock values to avoid runtime crashes during demo.
 
 import { supabase, isSupabaseConfigured } from './supabase';
+import { api } from './api';
 
 /**
  * Mock / fallback data used when Supabase is not configured or calls fail.
@@ -54,34 +55,32 @@ export const db = {
     // Phase 2: If we have a token, prefer the Backend API
     if (token) {
       try {
-        const res = await fetch('/api/profile/overview', {
+        const backendData = await api.get<any>('/api/profile/overview', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.ok) {
-          const backendData = await res.json();
-          // Backend returns { xp, level, xpToNextLevel, joinedAt }
-          // We need to map this to the 'Profile' shape expected by AuthContext (database schema shape)
-          // AuthContext expects: { id, name, email, avatar, role, xp, level, daily_streak, ... }
-          // The /api/profile/overview returns limited data. 
-          // We might need to call a fuller endpoint or just merge with mock defaults for now?
-          // Actually, /api/profile/overview returns: { xp, level, xpToNextLevel, joinedAt }.
-          // It does NOT return badges yet (separate endpoint).
-          // It does NOT return name/email (Clerk has that).
-          // So we can return a hybrid object.
 
-          return {
-            ...MOCK_PROFILE,
-            id: userId,
-            name: null, // Force AuthContext to use Clerk Name
-            email: null, // Force AuthContext to use Clerk Email
-            avatar: null,
-            xp: backendData.xp,
-            current_level: backendData.level,
-            created_at: backendData.joinedAt,
-            correctAnswers: backendData.correctAnswers || 0,
-            totalQuestions: backendData.totalQuestions || 0
-          };
-        }
+        // Backend returns { xp, level, xpToNextLevel, joinedAt }
+        // We need to map this to the 'Profile' shape expected by AuthContext (database schema shape)
+        // AuthContext expects: { id, name, email, avatar, role, xp, level, daily_streak, ... }
+        // The /api/profile/overview returns limited data. 
+        // We might need to call a fuller endpoint or just merge with mock defaults for now?
+        // Actually, /api/profile/overview returns: { xp, level, xpToNextLevel, joinedAt }.
+        // It does NOT return badges yet (separate endpoint).
+        // It does NOT return name/email (Clerk has that).
+        // So we can return a hybrid object.
+
+        return {
+          ...MOCK_PROFILE,
+          id: userId,
+          name: null, // Force AuthContext to use Clerk Name
+          email: null, // Force AuthContext to use Clerk Email
+          avatar: null,
+          xp: backendData.xp,
+          current_level: backendData.level,
+          created_at: backendData.joinedAt,
+          correctAnswers: backendData.correctAnswers || 0,
+          totalQuestions: backendData.totalQuestions || 0
+        };
       } catch (e) {
         console.warn("db.getProfile: Backend fetch failed", e);
       }
@@ -222,12 +221,9 @@ export const db = {
   // Leaderboard
   async getLeaderboard(limit = 50) {
     try {
-      const res = await fetch('/api/leaderboard');
-      if (res.ok) {
-        const data = await res.json();
-        // Backend returns { leaderboard: [...] }
-        return data.leaderboard || [];
-      }
+      const data = await api.get<any>('/api/leaderboard');
+      // Backend returns { leaderboard: [...] }
+      return data.leaderboard || [];
     } catch (err) {
       console.warn('db.getLeaderboard: Backend fetch failed, falling back to mock/supabase', err);
     }
@@ -283,12 +279,10 @@ export const db = {
   async getUserBadges(userId: string, token?: string | null) {
     if (token) {
       try {
-        const res = await fetch('/api/profile/badges', {
+        const data = await api.get<any>('/api/profile/badges', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.ok) {
-          return await res.json();
-        }
+        return data;
       } catch (e) {
         console.warn("db.getUserBadges: Backend fetch failed", e);
       }

@@ -15,6 +15,7 @@ import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useXP } from '../../_xp/xp-context';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { RotateCcw } from 'lucide-react';
+import { api } from '../../lib/api';
 
 const ProgressModule: React.FC = () => {
   const { user } = useAuth();
@@ -41,34 +42,11 @@ const ProgressModule: React.FC = () => {
         const headers = { Authorization: `Bearer ${token}` };
 
         // Fetch all 3 endpoints parallelly
-        const responses = await Promise.all([
-          fetch("/api/progress/weekly-xp", { headers }),
-          fetch("/api/progress/streak", { headers }),
-          fetch("/api/progress/subjects", { headers })
+        const [xpData, streakRes, subjectsRes] = await Promise.all([
+          api.get<any>("/api/progress/weekly-xp", { headers }),
+          api.get<any>("/api/progress/streak", { headers }),
+          api.get<any>("/api/progress/subjects", { headers })
         ]);
-
-        // Check if ANY returned 401 -> abort immediately
-        if (responses.some(r => r.status === 401)) {
-          throw new Error("Unauthorized");
-        }
-
-        // Check if ANY returned 404 -> retry logic
-        if (responses.some(r => r.status === 404)) {
-          if (retryCount < MAX_RETRIES) {
-            timeoutId = setTimeout(() => {
-              setRetryCount((c: number) => c + 1);
-            }, 1000);
-            return;
-          } else {
-            throw new Error("User setup failed");
-          }
-        }
-
-        if (responses.some(r => !r.ok)) {
-          throw new Error("Failed to fetch progress data");
-        }
-
-        const [xpData, streakRes, subjectsRes] = await Promise.all(responses.map(r => r.json()));
 
         setWeeklyXpData(xpData);
         setStreakData(streakRes.activeDates || []); // API returns { activeDates: string[] }
@@ -77,8 +55,21 @@ const ProgressModule: React.FC = () => {
 
       } catch (err: any) {
         console.error("Fetch progress error", err);
+
+        const isAuthError = err.message?.includes("Unauthorized") || err.message?.includes("401");
         // Stop retrying if unauthorized OR retries exceeded
-        if (err.message === "Unauthorized" || retryCount >= MAX_RETRIES) {
+        if (isAuthError) {
+          // Maybe set error state? For now just stop loading.
+          setLoading(false);
+          return;
+        }
+
+        if (retryCount < MAX_RETRIES) {
+          timeoutId = setTimeout(() => {
+            setRetryCount((c: number) => c + 1);
+          }, 1000);
+        } else {
+          // Failed after retries
           setLoading(false);
         }
       }

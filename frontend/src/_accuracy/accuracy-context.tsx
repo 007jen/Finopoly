@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { api } from "../lib/api";
 
 interface AccuracyState {
     correctAnswers: number;
@@ -74,13 +75,8 @@ export const AccuracyProvider = ({ children }: { children: React.ReactNode }) =>
             const token = await getToken();
             if (!token) return;
 
-            await fetch('/api/progress/accuracy', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ isCorrect })
+            await api.post('/api/progress/accuracy', { isCorrect }, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             // Optimistic update handled by the specific increment functions below

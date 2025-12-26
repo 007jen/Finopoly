@@ -2,6 +2,8 @@
 export const XP_EVENT_NAME = 'xp-update';
 export const XP_RESET_EVENT_NAME = 'xp-reset';
 
+import { api } from '../lib/api';
+
 let getTokenFn: (() => Promise<string | null>) | null = null;
 
 export const xpService = {
@@ -24,19 +26,9 @@ export const xpService = {
             try {
                 const token = await getTokenFn();
                 if (token) {
-                    const res = await fetch('/api/progress/xp', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ amount, source })
+                    await api.post('/api/progress/xp', { amount, source }, {
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
-
-                    if (!res.ok) {
-                        const errText = await res.text();
-                        console.error(`[XP] Server sync failed: ${res.status} ${errText}`);
-                    }
                 } else {
                     console.warn('[XP] No token available for sync');
                 }
