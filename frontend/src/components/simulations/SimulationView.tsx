@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle } from 'lucide-react';
 import { xpService } from '../../_xp/xp-service';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useAuth } from '../../context/AuthContext';
 import confetti from 'canvas-confetti';
 import { api } from '../../lib/api';
 
@@ -83,6 +84,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const [levels, setLevels] = useState<Level[]>([]);
   const [loading, setLoading] = useState(true);
   const { getToken } = useClerkAuth();
+  const { refreshUser } = useAuth();
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -219,11 +221,18 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     setStreak(s => s + 1);
     triggerVictoryConfetti(); // BLAST CONFETTI
 
-    setTimeout(() => {
+    setTimeout(async () => {
       if (currentLevelIdx >= levels.length - 1) {
         setResult(null);
         setGameState('FINISHED');
         xpService.increment(500, 'Audit Challenge: Perfect Completion');
+        // Increment global simulation count
+        const token = await getToken();
+        api.post('/api/profile/simulations/increment', {}, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(() => {
+          refreshUser();
+        }).catch(console.error);
       } else {
         setGameState('PLAYING');
         setResult(null);

@@ -6,7 +6,9 @@ import {
     getProfileStats,
     resetProgress,
     deleteAccount,
-    getUserBadges
+
+    getUserBadges,
+    incrementSimulations
 } from "../controllers/profile.controller";
 
 const router = Router();
@@ -22,5 +24,6 @@ router.post("/reset", resetProgress);
 router.delete("/delete", deleteAccount);
 
 router.get("/badges", getUserBadges);
+router.post("/simulations/increment", incrementSimulations);
 
 export default router;

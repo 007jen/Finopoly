@@ -40,8 +40,9 @@ model User {
   lastActivityDate DateTime?
 
   // Accuracy Tracking
-  correctAnswers Int @default(0)
-  totalQuestions Int @default(0)
+  correctAnswers       Int @default(0)
+  totalQuestions       Int @default(0)
+  completedSimulations Int @default(0)
 
   preferredAreas String[] @default([])
 

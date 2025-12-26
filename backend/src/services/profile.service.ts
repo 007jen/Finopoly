@@ -8,7 +8,9 @@ export class ProfileService {
                 xp: true,
                 createdAt: true,
                 correctAnswers: true,
+
                 totalQuestions: true,
+                completedSimulations: true,
             },
         });
         if (!user) {
@@ -24,9 +26,12 @@ export class ProfileService {
             xpToNextLevel: Math.max(nextLevelThreshold - user.xp, 0),
             joinedAt: user.createdAt,
             correctAnswers: user.correctAnswers,
-            totalQuestions: user.totalQuestions
+
+            totalQuestions: user.totalQuestions,
+            completedSimulations: user.completedSimulations
         };
-    }
+    };
+
 
     static async getProfileTimeline(userId: string) {
         const activities = await prisma.activity.findMany({
@@ -118,5 +123,13 @@ export class ProfileService {
             earnedDate: ub.earnedAt.toISOString(),
             xpRequirement: ub.badge.xpRequirement
         }));
+    }
+    static async incrementCompletedSimulations(userId: string) {
+        return prisma.user.update({
+            where: { id: userId },
+            data: {
+                completedSimulations: { increment: 1 }
+            }
+        });
     }
 }

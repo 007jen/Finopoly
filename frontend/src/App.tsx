@@ -147,7 +147,7 @@ const AppContent: React.FC = () => {
                     {[
                       { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
                       { id: 'quiz-arena', icon: Zap, label: 'Quiz' },
-                      { id: 'simulations', icon: PlayCircle, label: 'Learn' },
+                      { id: 'audit-arena', icon: PlayCircle, label: 'Learn' },
                       { id: 'leaderboard', icon: Trophy, label: 'Ranks' },
                       { id: 'profile', icon: User, label: 'Profile' }
                     ].map((item) => {

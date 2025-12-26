@@ -88,3 +88,16 @@ export const getUserBadges = async (req: Request, res: Response) => {
         return res.status(500).json({ error: "Failed to fetch user badges", details: (err as any).message });
     }
 };
+
+export const incrementSimulations = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        await ProfileService.incrementCompletedSimulations(userId);
+        return res.json({ message: "Simulation count incremented" });
+    } catch (err) {
+        console.error("incrementSimulations error", err);
+        return res.status(500).json({ error: "Failed to increment simulations" });
+    }
+};

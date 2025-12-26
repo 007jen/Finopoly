@@ -15,12 +15,14 @@ import { useAuth } from '../../context/AuthContext';
 import { xpService } from '../../_xp/xp-service';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
+import { QUIZ_QUESTIONS, QuizQuestion } from '../../data/quizQuestions';
 
 const QuizArena: React.FC = () => {
   const { user } = useAuth();
   const { updateUserStats } = useLeaderboard();
   const { incrementCorrect, incrementTotal } = useAccuracy();
   const [selectedMode, setSelectedMode] = useState<'mcq' | 'truefalse' | 'simulation' | null>(null);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showResult, setShowResult] = useState(false);
@@ -61,49 +63,24 @@ const QuizArena: React.FC = () => {
     }
   ];
 
-  const sampleQuestions = {
-    mcq: [
-      {
-        question: "Which of the following is NOT a fundamental audit assertion?",
-        options: ["Existence", "Completeness", "Accuracy", "Profitability"],
-        correct: "Profitability",
-        explanation: "Profitability is not a fundamental audit assertion. The basic assertions are existence, completeness, accuracy, valuation, rights & obligations, and presentation."
-      },
-      {
-        question: "Under which section of the Companies Act 2013 is audit committee mandatory?",
-        options: ["Section 177", "Section 178", "Section 179", "Section 180"],
-        correct: "Section 177",
-        explanation: "Section 177 of the Companies Act 2013 mandates the constitution of audit committee for certain classes of companies."
-      }
-    ],
-    truefalse: [
-      {
-        question: "An auditor can accept gifts from the client without affecting independence.",
-        options: ["True", "False"],
-        correct: "False",
-        explanation: "Accepting gifts from clients can compromise auditor independence and is generally prohibited under professional ethics."
-      }
-    ],
-    simulation: [
-      {
-        question: "You are auditing a manufacturing company and notice significant inventory write-offs in Q4. The management claims it's due to obsolescence. What should be your primary concern?",
-        options: [
-          "Verify the physical existence of written-off inventory",
-          "Check if write-offs are properly authorized and documented",
-          "Assess the reasonableness of obsolescence claims",
-          "All of the above"
-        ],
-        correct: "All of the above",
-        explanation: "In this scenario, all aspects need to be verified - physical existence, proper authorization, and reasonableness of obsolescence claims."
-      }
-    ]
-  };
+
 
   const handleModeSelect = (mode: 'mcq' | 'truefalse' | 'simulation') => {
     setSelectedMode(mode);
   };
 
   const startQuiz = () => {
+    // Filter questions based on selected mode
+    let typeFilter = '';
+    if (selectedMode === 'mcq') typeFilter = 'MCQ';
+    else if (selectedMode === 'truefalse') typeFilter = 'TRUE_FALSE';
+    else if (selectedMode === 'simulation') typeFilter = 'SCENARIO';
+
+    const filtered = QUIZ_QUESTIONS.filter(q => q.type === typeFilter);
+    // Shuffle and pick 10 (or less if not enough)
+    const shuffled = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 10);
+
+    setQuestions(shuffled);
     setQuizStarted(true);
     setCurrentQuestion(0);
     setScore(0);
@@ -116,10 +93,9 @@ const QuizArena: React.FC = () => {
   };
 
   const submitAnswer = () => {
-    const questions = selectedMode ? sampleQuestions[selectedMode] : [];
     const currentQ = questions[currentQuestion];
 
-    if (selectedAnswer === currentQ?.correct) {
+    if (selectedAnswer === currentQ?.correctAnswer) {
       setScore(score + 1);
 
       // Award XP based on mode
@@ -178,10 +154,9 @@ const QuizArena: React.FC = () => {
     setShowResult(false);
   };
 
-  if (quizStarted && selectedMode) {
-    const questions = sampleQuestions[selectedMode];
+  if (quizStarted && selectedMode && questions.length > 0) {
     const currentQ = questions[currentQuestion];
-    const isCorrect = selectedAnswer === currentQ?.correct;
+    const isCorrect = selectedAnswer === currentQ?.correctAnswer;
 
     return (
       <div className="min-h-full bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30">
@@ -222,7 +197,12 @@ const QuizArena: React.FC = () => {
           </div>
 
           {/* Question Card */}
-          <div className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8 lg:p-10 ${isShaking ? 'animate-shake border-red-300' : ''} ${showResult && selectedAnswer === sampleQuestions[selectedMode || 'mcq'][currentQuestion]?.correct ? 'animate-pop border-green-300' : ''}`}>
+          <div className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8 lg:p-10 ${isShaking ? 'animate-shake border-red-300' : ''} ${showResult && selectedAnswer === currentQ?.correctAnswer ? 'animate-pop border-green-300' : ''}`}>
+            {currentQ?.scenario && (
+              <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg text-gray-700 italic">
+                "{currentQ.scenario}"
+              </div>
+            )}
             <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-8">
               {currentQ?.question}
             </h2>
@@ -234,9 +214,9 @@ const QuizArena: React.FC = () => {
                   className={`flex items-center gap-4 p-5 lg:p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${selectedAnswer === option
                     ? 'border-blue-500 bg-blue-50 shadow-lg'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
-                    } ${showResult && option === currentQ.correct
+                    } ${showResult && option === currentQ.correctAnswer
                       ? 'border-green-500 bg-green-50'
-                      : showResult && selectedAnswer === option && option !== currentQ.correct
+                      : showResult && selectedAnswer === option && option !== currentQ.correctAnswer
                         ? 'border-red-500 bg-red-50'
                         : ''
                     }`}
@@ -251,10 +231,10 @@ const QuizArena: React.FC = () => {
                     className="text-blue-600 scale-125"
                   />
                   <span className="flex-1 font-medium text-gray-800">{option}</span>
-                  {showResult && option === currentQ.correct && (
+                  {showResult && option === currentQ.correctAnswer && (
                     <CheckCircle className="w-6 h-6 text-green-600" />
                   )}
-                  {showResult && selectedAnswer === option && option !== currentQ.correct && (
+                  {showResult && selectedAnswer === option && option !== currentQ.correctAnswer && (
                     <XCircle className="w-6 h-6 text-red-600" />
                   )}
                 </label>

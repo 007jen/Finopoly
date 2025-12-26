@@ -32,7 +32,8 @@ export interface Badge {
 export interface AuditCase {
   id: string;
   title: string;
-  companyName: string; // was company
+  company: string;
+  companyName?: string; // was company
   difficulty: 'Beginner' | 'Intermediate' | 'Pro';
   description: string;
 
@@ -45,6 +46,9 @@ export interface AuditCase {
 
   xpReward: number;
   timeLimit?: number;
+
+  tasks: Task[];
+  documents: Document[];
 }
 
 export interface Document {

@@ -6,13 +6,9 @@ import {
   Award,
   Clock,
   Target,
-  Users,
   Zap,
-  Trophy,
   Star,
-  ChevronRight,
-  Calendar,
-  CheckCircle
+  ChevronRight
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -105,9 +101,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
 
   const getResumeAction = () => {
     const type = lastActivity?.type || '';
-    if (type.includes('audit') || type.includes('tax')) return 'simulations';
+    if (type.includes('audit') || type.includes('tax')) return 'audit-arena';
     if (type.includes('quiz')) return 'quiz-arena';
-    return 'simulations';
+    return 'audit-arena';
   }
 
 
@@ -115,7 +111,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
 
   const getSmartRecommendations = () => {
     const recs = [];
-    const currentHour = new Date().getHours();
 
     // 1. Morning Routine / First Login (Mock time logic)
     if (user.xp < 100) {
@@ -142,7 +137,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         activity: 'Suggested: Vouching Racer (Time Limited)',
         points: 'Up to 500 XP',
         status: 'active',
-        action: () => setActiveTab('simulations')
+        action: () => setActiveTab('audit-arena')
       });
     } else {
       recs.push({
@@ -150,7 +145,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         activity: 'Learn Basics: Audit Simulations',
         points: '+100 XP / Level',
         status: 'upcoming',
-        action: () => setActiveTab('simulations')
+        action: () => setActiveTab('audit-arena')
       });
     }
 
@@ -212,7 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
       title: 'Continue Ongoing Simulation',
       description: 'Fixed Assets Audit - ABC Pvt Ltd',
       progress: 65,
-      action: () => setActiveTab('simulations'),
+      action: () => setActiveTab('audit-arena'),
       icon: Play,
       color: 'from-blue-500 to-indigo-500',
       highlight: true
@@ -296,7 +291,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
               </div>
             </div>
             <button
-              onClick={() => setActiveTab(lastActivity ? getResumeAction() : 'simulations')}
+              onClick={() => setActiveTab(lastActivity ? getResumeAction() : 'audit-arena')}
               className="w-full lg:w-auto bg-white bg-opacity-20 hover:bg-opacity-30 px-8 py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 font-bold text-lg hover:scale-105 shadow-lg"
             >
               <Play className="w-6 h-6" />
