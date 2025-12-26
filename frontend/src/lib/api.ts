@@ -2,8 +2,8 @@
 
 // 1. Determine the Base URL based on environment
 // ⚠️ Hardcoded to force connection to Render Backend
-const BASE_URL = "https://finopoly-api.onrender.com";
-// const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// const BASE_URL = "https://finopoly-api.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 type RequestOptions = RequestInit & {
     headers?: Record<string, string>;
