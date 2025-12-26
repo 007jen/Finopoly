@@ -24,6 +24,15 @@ async function internalFetch<T>(url: string, options: RequestOptions = {}): Prom
         credentials: "include", // CRITICAL: This sends cookies/sessions to the backend
     };
 
+    console.log("🚀 DEBUG: Fetching URL:", fullUrl); // <--- ADD THIS LINE
+    console.log("🚀 DEBUG: Full Config:", config); // <--- ADD THIS LINE
+    try {
+        const response = await fetch(fullUrl, config);
+    }
+    catch (error) {
+
+    }
+
     try {
         const response = await fetch(fullUrl, config);
 
@@ -59,4 +68,6 @@ export const api = {
 
     delete: <T>(url: string, options?: RequestOptions) =>
         internalFetch<T>(url, { ...options, method: "DELETE" }),
+
+
 };
