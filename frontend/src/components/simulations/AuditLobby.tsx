@@ -20,9 +20,12 @@ interface AuditLobbyProps {
 
 export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
     const { getToken } = useClerkAuth();
+    const [error, setError] = useState<string | null>(null);
     const [cases, setCases] = useState<AuditCaseCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'All' | 'Beginner' | 'Intermediate' | 'Advanced'>('All');
+
+
 
     useEffect(() => {
         loadCatalog();
@@ -35,8 +38,9 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setCases(data);
-        } catch (error) {
-            console.error("Failed to load catalog", error);
+        } catch (err: any) {
+            console.error("Failed to load catalog", err);
+            setError(err.message || "Failed to load audit cases");
         } finally {
             setLoading(false);
         }
@@ -81,6 +85,11 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
             {loading ? (
                 <div className="flex items-center justify-center h-64">
                     <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            ) : error ? (
+                <div className="text-center py-20 text-red-500 bg-white rounded-xl border border-red-200">
+                    <p className="font-bold">Error loading cases:</p>
+                    <p>{error}</p>
                 </div>
             ) : filteredCases.length === 0 ? (
                 <div className="text-center py-20 text-gray-500 bg-white rounded-xl border border-gray-200">
