@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { Clock, Users, Award, ArrowRight, Filter } from 'lucide-react';
+import { api } from '../../lib/api';
 
 interface AuditCaseCard {
     id: string;
@@ -30,13 +31,10 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
     const loadCatalog = async () => {
         try {
             const token = await getToken();
-            const res = await fetch('/api/audit/catalog', {
+            const data = await api.get<AuditCaseCard[]>('/api/audit/catalog', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (res.ok) {
-                const data = await res.json();
-                setCases(data);
-            }
+            setCases(data);
         } catch (error) {
             console.error("Failed to load catalog", error);
         } finally {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard as Edit, Trash2, Save, X, FileText, Scale, Calculator } from 'lucide-react';
 import { db } from '../../lib/database';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { api } from '../../lib/api';
 
 type ContentType = 'caselaw' | 'audit' | 'tax';
 
@@ -17,6 +18,8 @@ const ContentManagement: React.FC = () => {
     loadContent();
   }, [contentType]);
 
+
+
   const loadContent = async () => {
     setLoading(true);
     try {
@@ -24,24 +27,21 @@ const ContentManagement: React.FC = () => {
       if (contentType === 'caselaw') {
         data = await db.getCaseLaws();
       } else if (contentType === 'audit') {
-        // fetch from new API
         const token = await getToken();
-        const res = await fetch('/api/audit/list', {
+        // Use api.get
+        const rawData = await api.get<any[]>('/api/audit/list', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.ok) {
-          const rawData = await res.json();
-          // Map backend camelCase to frontend snake_case
-          data = rawData.map((item: any) => ({
-            ...item,
-            xp_reward: item.xpReward,
-            time_limit: item.timeLimit,
-            is_active: item.isActive,
-            company: item.companyName
-          }));
-        } else {
-          console.error("Failed to load audit cases");
-        }
+
+        // Map backend camelCase to frontend snake_case
+        data = rawData.map((item: any) => ({
+          ...item,
+          xp_reward: item.xpReward,
+          time_limit: item.timeLimit,
+          is_active: item.isActive,
+          company: item.companyName
+        }));
+
       } else {
         data = await db.getTaxSimulations();
       }
@@ -61,13 +61,10 @@ const ContentManagement: React.FC = () => {
         await db.deleteCaseLaw(id);
       } else if (contentType === 'audit') {
         const token = await getToken();
-        const res = await fetch(`/api/audit/${id}`, {
-          method: 'DELETE',
+        await api.delete(`/api/audit/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error("Failed to delete audit case");
       } else {
-        // Tax deletion not dynamically implemented yet, likely mock
         alert("Tax simulation deletion not supported yet.");
         return;
       }
@@ -77,6 +74,8 @@ const ContentManagement: React.FC = () => {
       alert('Error deleting item');
     }
   };
+
+  // ...
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
@@ -89,21 +88,18 @@ const ContentManagement: React.FC = () => {
   };
 
   const handleSave = async (formData: any) => {
-    // if (!user) return; // Removed usage of user object, using token instead
     try {
       if (contentType === 'caselaw') {
+        // ... existing logic
         if (editingItem) {
           await db.updateCaseLaw(editingItem.id, formData);
         } else {
-          // Legacy creation requires user.id, but since we switched to Clerk auth here, 
-          // we might need to adjust, but let's focus on Audit for now.
           await db.createCaseLaw(formData, 'legacy-user-id');
         }
       } else if (contentType === 'audit') {
         const token = await getToken();
 
-        // Map frontend snake_case to backend camelCase
-        // Strictly construct payload to avoid sending unknown fields (snake_case) to Prisma
+        // Construct payload...
         const payload = {
           title: formData.title,
           companyName: formData.company,
@@ -112,8 +108,6 @@ const ContentManagement: React.FC = () => {
           xpReward: formData.xp_reward,
           timeLimit: formData.time_limit,
           isActive: formData.is_active,
-
-          // Dynamic Data
           invoiceDetails: formData.invoiceDetails,
           ledgerDetails: formData.ledgerDetails,
           expectedAction: formData.faultyField ? 'REJECT' : 'ACCEPT',
@@ -123,27 +117,15 @@ const ContentManagement: React.FC = () => {
         };
 
         if (editingItem && editingItem.id) {
-          // UPDATE
-          const res = await fetch(`/api/audit/${editingItem.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
+          // UPDATE using api.put
+          await api.put(`/api/audit/${editingItem.id}`, payload, {
+            headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!res.ok) throw new Error("Failed to update audit case");
         } else {
-          // CREATE
-          const res = await fetch('/api/audit/create', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
+          // CREATE using api.post
+          await api.post('/api/audit/create', payload, {
+            headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!res.ok) throw new Error("Failed to create audit case");
         }
       } else {
         await db.createTaxSimulation(formData, 'legacy-user-id');

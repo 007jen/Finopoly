@@ -8,6 +8,7 @@ import { CreditCard as Edit, Trash2, Upload, Users, BarChart3, FileText, Scale, 
 import UserManagement from './UserManagement';
 import ContentManagement from './ContentManagement';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { api } from '../../lib/api';
 
 // --- Safe Configuration ---
 const ADMIN_KEY_ENV = import.meta.env.VITE_ADMIN_KEY || 'FINOPOLY_ADMIN_2024';
@@ -114,28 +115,24 @@ const AdminPanel: React.FC = () => {
     try {
       const token = await getToken();
       if (newContent.type === 'simulation' && newContent.module === 'audit') {
-        const res = await fetch('/api/audit/create', {
-          method: 'POST',
+        await api.post('/api/audit/create', {
+          title: newContent.title,
+          companyName: 'Swastik Enterprises', // Default for now
+          difficulty: newContent.difficulty,
+          description: newContent.description,
+          xpReward: newContent.xpReward,
+          timeLimit: newContent.timeLimit * 60, // convert mins to seconds
+          invoiceDetails: newContent.invoiceDetails,
+          ledgerDetails: newContent.ledgerDetails,
+          expectedAction: newContent.faultyField ? 'REJECT' : 'ACCEPT',
+          faultyField: newContent.faultyField || null,
+          violationReason: newContent.violationReason
+        }, {
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            title: newContent.title,
-            companyName: 'Swastik Enterprises', // Default for now
-            difficulty: newContent.difficulty,
-            description: newContent.description,
-            xpReward: newContent.xpReward,
-            timeLimit: newContent.timeLimit * 60, // convert mins to seconds
-            invoiceDetails: newContent.invoiceDetails,
-            ledgerDetails: newContent.ledgerDetails,
-            expectedAction: newContent.faultyField ? 'REJECT' : 'ACCEPT',
-            faultyField: newContent.faultyField || null,
-            violationReason: newContent.violationReason
-          })
+          }
         });
 
-        if (!res.ok) throw new Error('Failed to create audit case');
         alert('Audit Case Created!');
       } else {
         console.log("Only Audit Cases supported currently via API");

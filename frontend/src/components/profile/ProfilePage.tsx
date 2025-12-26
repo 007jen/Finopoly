@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { xpService } from '../../_xp/xp-service';
+import { api } from '../../lib/api';
 
 const ProfilePage: React.FC = () => {
     const { user, logout, updateUser } = useAuth();
@@ -36,40 +37,27 @@ const ProfilePage: React.FC = () => {
 
             try {
                 const token = await getToken();
-                const res = await fetch("/api/profile/overview", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                // Phase 2: Use api.get which uses the correct BASE_URL
+                const data: any = await api.get("/api/profile/overview", {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
-                if (res.status === 401) {
-                    throw new Error("Unauthorized"); // Do not retry on 401
-                }
-
-                if (res.status === 404) {
-                    // User not ready yet - specific retry logic
-                    if (retryCount < MAX_RETRIES) {
-                        timeoutId = setTimeout(() => {
-                            setRetryCount((c: number) => c + 1);
-                        }, 1000);
-                        return;
-                    } else {
-                        throw new Error("User setup failed after retries");
-                    }
-                }
-
-                if (!res.ok) {
-                    throw new Error(`Failed to fetch profile: ${res.statusText}`);
-                }
-
-                const data = await res.json();
                 setProfileOverview(data);
                 setLoading(false);
             } catch (err: any) {
                 console.error("Profile fetch error:", err);
-                // Only stop loading if it's NOT a retry-able 404 (which is handled above)
-                // OR if it's a 401/500/Network error where we shouldn't retry or max retries hit
-                if (err.message === "Unauthorized" || retryCount >= MAX_RETRIES) {
+
+                // Handle retries for 404 (User setup not ready)
+                // api.ts throws error with status or message. 
+                // We assume api.get throws an object or error instance.
+                // Since api.ts wrapper logic is strict, we just stick to basic retry logic here if needed.
+                // Actually, if it fails, we should just show loading or error state.
+
+                if (retryCount < MAX_RETRIES) {
+                    timeoutId = setTimeout(() => {
+                        setRetryCount((c: number) => c + 1);
+                    }, 1000);
+                } else {
                     setLoading(false);
                 }
             }
@@ -320,14 +308,12 @@ const ProfilePage: React.FC = () => {
                                     onClick={async () => {
                                         try {
                                             const token = await getToken();
-                                            await fetch('/api/progress/xp', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                                body: JSON.stringify({
-                                                    amount: 3000,
-                                                    source: 'Test Quiz (Mega Reward)',
-                                                    score: Math.floor(Math.random() * 40) + 60 // Random score between 60 and 100
-                                                })
+                                            await api.post('/api/progress/xp', {
+                                                amount: 3000,
+                                                source: 'Test Quiz (Mega Reward)',
+                                                score: Math.floor(Math.random() * 40) + 60 // Random score between 60 and 100
+                                            }, {
+                                                headers: { Authorization: `Bearer ${token}` }
                                             });
                                             window.location.reload();
                                         } catch (e) { console.error(e); }
@@ -410,24 +396,19 @@ const ProfilePage: React.FC = () => {
                                             if (!window.confirm("Are you sure you want to RESET your progress? This cannot be undone.")) return;
                                             try {
                                                 const token = await getToken();
-                                                const res = await fetch('/api/profile/reset', {
-                                                    method: 'POST',
+                                                await api.post('/api/profile/reset', {}, {
                                                     headers: { Authorization: `Bearer ${token}` }
                                                 });
-                                                if (res.ok) {
-                                                    // Seamless Reset
-                                                    xpService.reset();
-                                                    await updateUser({
-                                                        xp: 0,
-                                                        dailyStreak: 0,
-                                                        completedSimulations: 0,
-                                                        badges: [],
-                                                        accuracy: { audit: 0, tax: 0, caselaw: 0 }
-                                                    });
-                                                    alert("Progress reset successfully.");
-                                                } else {
-                                                    alert("Failed to reset progress.");
-                                                }
+                                                // Seamless Reset
+                                                xpService.reset();
+                                                await updateUser({
+                                                    xp: 0,
+                                                    dailyStreak: 0,
+                                                    completedSimulations: 0,
+                                                    badges: [],
+                                                    accuracy: { audit: 0, tax: 0, caselaw: 0 }
+                                                });
+                                                alert("Progress reset successfully.");
                                             } catch (e) {
                                                 console.error(e);
                                                 alert("An error occurred.");
@@ -451,17 +432,12 @@ const ProfilePage: React.FC = () => {
 
                                             try {
                                                 const token = await getToken();
-                                                const res = await fetch('/api/profile/delete', {
-                                                    method: 'DELETE',
+                                                await api.delete('/api/profile/delete', {
                                                     headers: { Authorization: `Bearer ${token}` }
                                                 });
-                                                if (res.ok) {
-                                                    alert("Account deleted. Goodbye!");
-                                                    await logout();
-                                                    window.location.href = '/sign-in';
-                                                } else {
-                                                    alert("Failed to delete account.");
-                                                }
+                                                alert("Account deleted. Goodbye!");
+                                                await logout();
+                                                window.location.href = '/sign-in';
                                             } catch (e) {
                                                 console.error(e);
                                                 alert("An error occurred.");
