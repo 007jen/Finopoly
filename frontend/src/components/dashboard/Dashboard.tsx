@@ -14,6 +14,7 @@ import {
   Calendar,
   CheckCircle
 } from 'lucide-react';
+import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { db } from '../../lib/database';
@@ -41,32 +42,27 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
       const token = await getToken();
       if (token) {
         // Weekly XP
-        const xpRes = await fetch("/api/progress/weekly-xp", { headers: { Authorization: `Bearer ${token}` } });
-        if (xpRes.ok) {
-          const data = await xpRes.json();
-          setWeeklyXP(data.totalXp || 0);
-        } else {
-          setWeeklyXP(0);
-        }
+        // Use api.get but we need to pass Authorization header manually if api.ts doesn't handle Clerk token auto-magic (it doesn't).
+        // But api.ts adds credentials: include.
+        // Wait, does api.ts allow custom headers? Yes.
+        const xpData: any = await api.get("/api/progress/weekly-xp", { headers: { Authorization: `Bearer ${token}` } });
+        setWeeklyXP(xpData.totalXp || 0);
 
         // Last Activity (Timeline)
-        const timelineRes = await fetch("/api/profile/timeline", { headers: { Authorization: `Bearer ${token}` } });
-        if (timelineRes.ok) {
-          const activities = await timelineRes.json(); // Returns array sorted by latest
-          if (activities && activities.length > 0) {
-            setLastActivity(activities[0]);
-          }
+        const activities: any = await api.get("/api/profile/timeline", { headers: { Authorization: `Bearer ${token}` } });
+        if (activities && activities.length > 0) {
+          setLastActivity(activities[0]);
         }
       }
-    } catch (e) { console.error("Dashboard data fetch failed", e); }
+    } catch (e) {
+      console.error("Dashboard data fetch failed", e);
+      setWeeklyXP(0); // Fallback
+    }
 
     // 2. Fetch Leaderboard (Public)
     try {
-      const res = await fetch("/api/leaderboard");
-      if (res.ok) {
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-      }
+      const lbData: any = await api.get("/api/leaderboard");
+      setLeaderboard(lbData.leaderboard || []);
     } catch (e) { console.error("Leaderboard fetch failed", e); }
   }, [getToken]);
 
