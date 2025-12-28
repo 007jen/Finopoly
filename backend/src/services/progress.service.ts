@@ -92,6 +92,26 @@ export class ProgressService {
             else if (s.includes("tax")) type = "tax";
             else if (s.includes("case")) type = "caselaw";
 
+            // IDEMPOTENCY CHECK (Time-Window Based)
+            // Prevents duplicate XP awards if specific events fire multiple times (e.g. on refresh)
+            const recentWindowSeconds = amount > 200 ? 20 : 2;
+            const recentThreshold = new Date(Date.now() - recentWindowSeconds * 1000);
+
+            const duplicate = await tx.activity.findFirst({
+                where: {
+                    userId,
+                    title: source.substring(0, 50),
+                    xpEarned: amount,
+                    createdAt: { gt: recentThreshold }
+                }
+            });
+
+            if (duplicate) {
+                console.log(`[XP] Duplicate event detected (Window: ${recentWindowSeconds}s). Ignoring.`);
+                const u = await tx.user.findUnique({ where: { id: userId } });
+                return { user: u, activity: duplicate, newBadges: [] };
+            }
+
             // 1. Create activity log
             const activityContent = {
                 userId,
@@ -220,6 +240,159 @@ export class ProgressService {
             audit: formatSubject(subjects.audit),
             tax: formatSubject(subjects.tax),
             caseLaw: formatSubject(subjects.caselaw) // Note: camelCase 'caseLaw' in frontend vs 'caselaw' in DB/enum
+        };
+    }
+    static async getDailyGoals(userId: string) {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        // 1. Fetch User & Today's Activities
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                activities: {
+                    where: {
+                        createdAt: { gte: todayStart, lte: todayEnd }
+                    }
+                }
+            }
+        });
+
+        if (!user) throw new Error("User not found");
+
+        let streakUpdated = false;
+        const lastActive = user.lastActivityDate ? new Date(user.lastActivityDate) : new Date(0);
+        const isCheckInDone = lastActive.toDateString() === new Date().toDateString();
+
+        // 2. AUTO-CHECK-IN LOGIC
+        // Atomic Update: Only update if lastActivityDate is NOT today.
+        // This prevents race conditions (double XP) if multiple requests come in simultaneously.
+
+        const updateResult = await prisma.user.updateMany({
+            where: {
+                id: userId,
+                OR: [
+                    { lastActivityDate: { lt: todayStart } },
+                    { lastActivityDate: null }
+                ]
+            },
+            data: {
+                streak: { increment: 1 },
+                xp: { increment: 50 },
+                lastActivityDate: new Date()
+            }
+        });
+
+        if (updateResult.count > 0) {
+            streakUpdated = true;
+            // Only log activity if we actually updated the user (won the race)
+            await prisma.activity.create({
+                data: {
+                    userId,
+                    activityType: 'quiz',
+                    activityId: `daily-checkin-${Date.now()}`,
+                    title: 'Daily Check-in',
+                    xpEarned: 50
+                }
+            });
+
+            // Re-fetch user to get updated values for response
+            const updatedUser = await prisma.user.findUnique({
+                where: { id: userId },
+                include: { activities: { where: { createdAt: { gte: todayStart, lte: todayEnd } } } }
+            });
+            if (updatedUser) {
+                // Update local 'user' variable with new state so response is correct
+                user.activities = updatedUser.activities;
+                user.streak = updatedUser.streak;
+            }
+        }
+
+        // 3. Analyze Completion
+        const hasSimulation = user.activities.some(a =>
+            a.activityType === 'audit' || a.activityType === 'tax'
+        );
+
+        const hasQuiz = user.activities.some(a =>
+            a.activityType === 'quiz' || a.activityType === 'caselaw'
+        );
+
+        const hasRealQuiz = user.activities.some(a =>
+            (a.activityType === 'quiz' || a.activityType === 'caselaw') && !a.title?.includes('Check-in')
+        );
+
+        return {
+            goals: {
+                streak: true,
+                simulation: hasSimulation,
+                quiz: hasRealQuiz
+            },
+            meta: {
+                streakUpdated,
+                currentStreak: streakUpdated ? user.streak + 1 : user.streak
+            }
+        };
+    }
+
+    static async getWeeklyGoals(userId: string) {
+        const now = new Date();
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+        // Fetch User (for Streak) and Weekly Activities
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                activities: {
+                    where: {
+                        createdAt: { gte: weekStart, lte: weekEnd }
+                    }
+                }
+            }
+        });
+
+        if (!user) throw new Error("User not found");
+
+        // 1. Calculate Weekly Simulations
+        const weeklySimulations = user.activities.filter(a =>
+            a.activityType === 'audit' || a.activityType === 'tax'
+        ).length;
+
+        // 2. Calculate Weekly XP
+        const weeklyXP = user.activities.reduce((sum, a) => sum + a.xpEarned, 0);
+
+        // 3. Current Streak (from User profile directly)
+        const currentStreak = user.streak;
+
+        return {
+            goals: [
+                {
+                    id: 'weekly-sims',
+                    label: 'Complete 5 Simulations',
+                    current: weeklySimulations,
+                    target: 5,
+                    color: 'blue',
+                    unit: ''
+                },
+                {
+                    id: 'weekly-xp',
+                    label: 'Earn 1000 XP (Weekly)',
+                    current: weeklyXP,
+                    target: 1000,
+                    color: 'green',
+                    unit: 'XP'
+                },
+                {
+                    id: 'weekly-streak',
+                    label: 'Maintain 7-day Streak',
+                    current: currentStreak,
+                    target: 7,
+                    color: 'orange',
+                    unit: 'days'
+                }
+            ]
         };
     }
 }

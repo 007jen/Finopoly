@@ -1,221 +1,180 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Shield, TrendingUp, Award, Zap, Play } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { SignIn, SignUp } from '@clerk/clerk-react';
+import { Shield, TrendingUp, Award, Zap } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
-  const { login, signup, verifyEmail } = useAuth(); // Added verifyEmail
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isSignup, setIsSignup] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
-  const [pendingVerification, setPendingVerification] = useState(false); // New state
-  const [code, setCode] = useState(''); // New state
+  const [isSignup, setIsSignup] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsAnimating(true);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsSignup(params.get('mode') === 'signup');
+  }, []);
 
-    try {
-      if (isSignup) {
-        await signup(email, password, name);
-      } else {
-        await login(email, password);
-      }
-    } catch (err: any) {
-      if (err.message === "VERIFICATION_NEEDED") {
-        setPendingVerification(true);
-        setError("Please check your email for a verification code.");
-      } else {
-        setError(err.message || 'An error occurred');
-      }
-      setIsAnimating(false);
+  /* Premium Glass Appearance Configuration */
+  const glassAppearance = {
+    layout: {
+      socialButtonsPlacement: 'top' as const,
+      socialButtonsVariant: 'blockButton' as const,
+    },
+    variables: {
+      colorBackground: 'transparent',
+      colorText: 'white',
+      colorPrimary: '#818cf8', // Indigo-400
+      colorTextSecondary: 'rgba(255, 255, 255, 0.7)',
+      colorInputBackground: 'rgba(255, 255, 255, 0.05)',
+      colorInputText: 'white',
+      borderRadius: '1rem',
+      fontFamily: '"Outfit", sans-serif',
+    },
+    elements: {
+      // Remove any inner box/card visuals so it's purely content
+      rootBox: "w-full !bg-transparent !shadow-none !border-none p-0",
+      card: "w-full !bg-transparent !shadow-none !border-none p-0",
+
+      // Header styling - Sync fonts
+      headerTitle: "text-white font-bold text-2xl tracking-tight font-sans",
+      headerSubtitle: "text-indigo-200 text-sm font-medium font-sans",
+
+      // Social buttons
+      socialButtonsBlockButton: "bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-indigo-500/30 transition-all duration-300 h-10 font-sans",
+      socialButtonsBlockButtonText: "text-white font-medium text-sm",
+      socialButtonsBlockButtonArrow: "text-indigo-400",
+      socialButtonsBlockButtonBadge: "!hidden invisible display-none", // Force hide with multiple strategies
+
+      // Divider
+      dividerLine: "bg-white/10",
+      dividerText: "text-white/40 uppercase text-xs tracking-widest font-sans",
+
+      // Form fields
+      formFieldLabel: "text-indigo-100 text-xs font-semibold uppercase tracking-wide ml-1 mb-1.5 font-sans",
+      formFieldInput: "bg-white/5 border border-white/10 text-white placeholder-white/20 focus:border-indigo-500/50 focus:ring-indigo-500/20 focus:bg-white/10 transition-all duration-300 rounded-xl h-11 font-sans",
+
+      // Footer/Links
+      footerActionText: "text-white/50",
+      footerActionLink: "text-indigo-400 hover:text-indigo-300 font-semibold",
+
+      // Primary Button
+      formButtonPrimary: "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:via-purple-500 hover:to-indigo-500 border-none shadow-lg shadow-indigo-500/20 text-white font-bold tracking-wide uppercase text-sm h-11 transition-all duration-300 bg-[length:200%_auto] hover:bg-right font-sans",
+
+      identityPreviewText: "text-white",
+      identityPreviewEditButton: "text-indigo-400 hover:text-indigo-300",
+      footer: "hidden",
+      main: "gap-6",
     }
   };
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsAnimating(true);
-    try {
-      await verifyEmail(code);
-      // If successful, auth state changes and redirects
-    } catch (err: any) {
-      setError(err.message || 'Verification failed');
-      setIsAnimating(false);
-    }
-  };
-
-  /* handleDemoLogin removed */
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-20 lg:-top-40 -right-20 lg:-right-40 w-40 lg:w-80 h-40 lg:h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-20 lg:-bottom-40 -left-20 lg:-left-40 w-40 lg:w-80 h-40 lg:h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-        <div className="absolute top-20 lg:top-40 left-20 lg:left-40 w-30 lg:w-60 h-30 lg:h-60 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#1e1b4b] to-slate-900 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+      <style>{`
+        /* NUCLEAR OPTION: Force All Clerk Containers to be Transparent */
+        .cl-card, 
+        .cl-rootBox, 
+        .cl-main, 
+        .cl-header, 
+        .cl-component,
+        .cl-signIn-start,
+        .cl-signUp-start,
+        .cl-card > div,
+        .cl-rootBox > div {
+          background-color: transparent !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+        
+        /* Force Hide "Last Used" Badge */
+        .cl-socialButtonsBlockButtonBadge, 
+        .cl-badge, 
+        span[class*="badge"] {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+        }
+        
+        /* Hide default footer */
+        .cl-footer {
+          display: none !important;
+        }
+        
+        /* Ensure specific inputs still have their intended style */
+        .cl-formFieldInput {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+      `}</style>
+
+      {/* Animated Background Elements - Smoother & More Ambient */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[100px] opacity-40 animate-pulse"></div>
+        <div className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[100px] opacity-30 animate-pulse animation-delay-4000"></div>
+        <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[80px] opacity-30 animate-pulse animation-delay-2000"></div>
       </div>
 
-      {/* Floating Icons */}
+      {/* Floating Icons - Subtle movement */}
       <div className="absolute inset-0 pointer-events-none">
-        <TrendingUp className="absolute top-10 lg:top-20 left-10 lg:left-20 w-6 lg:w-8 h-6 lg:h-8 text-blue-300 opacity-30 animate-bounce" style={{ animationDelay: '0s' }} />
-        <Award className="absolute top-16 lg:top-32 right-16 lg:right-32 w-5 lg:w-6 h-5 lg:h-6 text-yellow-300 opacity-40 animate-bounce" style={{ animationDelay: '1s' }} />
-        <Zap className="absolute bottom-20 lg:bottom-32 left-16 lg:left-32 w-6 lg:w-7 h-6 lg:h-7 text-purple-300 opacity-35 animate-bounce" style={{ animationDelay: '2s' }} />
-        <Shield className="absolute bottom-16 lg:bottom-20 right-10 lg:right-20 w-6 lg:w-8 h-6 lg:h-8 text-indigo-300 opacity-30 animate-bounce" style={{ animationDelay: '3s' }} />
+        <TrendingUp className="absolute top-[15%] left-[10%] w-8 h-8 text-indigo-400/20 animate-bounce delay-0 duration-[3000ms]" />
+        <Award className="absolute top-[25%] right-[15%] w-6 h-6 text-purple-400/20 animate-bounce delay-1000 duration-[4000ms]" />
+        <Zap className="absolute bottom-[20%] left-[15%] w-7 h-7 text-yellow-400/20 animate-bounce delay-2000 duration-[3500ms]" />
+        <Shield className="absolute bottom-[25%] right-[10%] w-9 h-9 text-blue-400/20 animate-bounce delay-500 duration-[4500ms]" />
       </div>
 
-      {/* Login Card - Properly Contained */}
-      <div className="w-full max-w-md mx-auto relative z-10">
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-6 lg:p-8 border border-white/20">
-          <div className="text-center mb-8">
-            <div className="w-16 lg:w-20 h-16 lg:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl transform hover:scale-105 transition-transform duration-300">
-              <Shield className="w-8 lg:w-10 h-8 lg:h-10 text-white" />
-            </div>
-            <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-3">
-              Finopoly
-            </h1>
-            <p className="text-white/80 text-base lg:text-lg font-semibold mb-2">Master Finance Through Play</p>
-            <p className="text-white/60 text-sm lg:text-base">Join thousands learning Audit, Tax & Case Law</p>
+      <div className="relative z-10 flex flex-col items-center max-w-md w-full mx-auto">
+        {/* Branding Header - Tighter Integration */}
+        <div className="text-center mb-8 transform hover:scale-105 transition-transform duration-500 cursor-default">
+          <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/20 border border-white/10 backdrop-blur-sm group">
+            <Shield className="w-8 h-8 text-white group-hover:rotate-12 transition-transform duration-300" />
+          </div>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-white drop-shadow-sm tracking-tight mb-1">
+            Finopoly
+          </h1>
+          <p className="text-indigo-200/60 text-sm font-medium tracking-wide uppercase">Master Finance Through Play</p>
+        </div>
+
+        {/* Unified Glass Card Container */}
+        <div className="w-full bg-slate-900/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] rounded-[2rem] p-8 overflow-hidden relative group">
+
+          {/* Subtle automated glow effect on hover */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+          <div className="w-full">
+            {isSignup ? (
+              <SignUp
+                appearance={glassAppearance}
+                signInUrl="/?mode=login"
+              />
+            ) : (
+              <SignIn
+                appearance={glassAppearance}
+                signUpUrl="/?mode=signup"
+              />
+            )}
           </div>
 
-          {!pendingVerification ? (
-            <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-              {error && (
-                <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm">
-                  {error}
-                </div>
-              )}
-
-              {isSignup && (
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    className="w-full bg-white/10 backdrop-blur-sm border border-white/30 text-white placeholder-white/50 px-4 py-3 rounded-xl focus:outline-none focus:border-white/50 transition-all"
-                  />
-                </div>
-              )}
-
-              <div>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full bg-white/10 backdrop-blur-sm border border-white/30 text-white placeholder-white/50 px-4 py-3 rounded-xl focus:outline-none focus:border-white/50 transition-all"
-                />
-              </div>
-
-              <div>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8} // Clerk default
-                  className="w-full bg-white/10 backdrop-blur-sm border border-white/30 text-white placeholder-white/50 px-4 py-3 rounded-xl focus:outline-none focus:border-white/50 transition-all"
-                />
-              </div>
-
-              {/* Added for invisible captcha fallback */}
-              <div id="clerk-captcha"></div>
-
-              <button
-                type="submit"
-                disabled={isAnimating}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center justify-center gap-3 font-bold shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
-              >
-                {isAnimating ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <Mail className="w-5 h-5" />
-                )}
-                {isSignup ? 'Sign Up' : 'Log In'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsSignup(!isSignup)}
-                className="w-full text-white/70 hover:text-white text-sm transition-colors"
-              >
-                {isSignup ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerify} className="space-y-4 mb-6">
-              <div className="bg-blue-500/20 border border-blue-500/50 text-blue-200 px-4 py-3 rounded-xl text-sm mb-4">
-                Code sent to {email}
-              </div>
-
-              {error && (
-                <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <input
-                  type="text"
-                  placeholder="Verification Code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  required
-                  className="w-full bg-white/10 backdrop-blur-sm border border-white/30 text-white placeholder-white/50 px-4 py-3 rounded-xl focus:outline-none focus:border-white/50 transition-all"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isAnimating}
-                className="w-full bg-gradient-to-r from-green-500 to-teal-600 text-white px-6 py-4 rounded-xl hover:from-green-600 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-3 font-bold shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50"
-              >
-                {isAnimating ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  "Verify Email"
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPendingVerification(false)}
-                className="w-full text-white/70 hover:text-white text-sm transition-colors"
-                disabled={isAnimating}
-              >
-                Back to Sign Up
-              </button>
-            </form>
-          )}
-
-          {/* Stats Section - Properly Spaced */}
-          <div className="text-center">
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-xl lg:text-2xl font-bold text-white">10K+</div>
-                <div className="text-xs lg:text-sm text-white/60 font-medium">Students</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl lg:text-2xl font-bold text-white">500+</div>
-                <div className="text-xs lg:text-sm text-white/60 font-medium">Case Studies</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl lg:text-2xl font-bold text-white">95%</div>
-                <div className="text-xs lg:text-sm text-white/60 font-medium">Success Rate</div>
-              </div>
-            </div>
-            <p className="text-white/50 text-xs lg:text-sm leading-relaxed">
-              Transform your finance career with gamified learning
+          {/* Integrated Footer - Now inside the card */}
+          <div className="mt-6 pt-6 border-t border-white/5 flex flex-col items-center gap-3">
+            <p className="text-indigo-200/60 text-sm font-medium">
+              {isSignup ? "Already have an account?" : "Don't have an account?"}
             </p>
+            <button
+              onClick={() => {
+                const newMode = isSignup ? 'login' : 'signup';
+                window.history.pushState({}, '', `/?mode=${newMode}`);
+                setIsSignup(!isSignup);
+              }}
+              className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm border border-white/5 hover:border-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+            >
+              {isSignup ? (
+                <>Key into the Vault <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span></>
+              ) : (
+                <>Create new Account <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span></>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Bottom copyright/trust seal */}
+        <p className="mt-8 text-white/20 text-xs font-medium tracking-widest uppercase">
+          Secured by Clerk • 2024 Finopoly
+        </p>
       </div>
     </div>
   );

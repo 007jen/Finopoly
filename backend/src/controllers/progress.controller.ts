@@ -1,6 +1,37 @@
 import { ProgressService } from "../services/progress.service";
 import { Request, Response } from 'express';
 
+// Weekly Goals
+export const getWeeklyGoals = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const goals = await ProgressService.getWeeklyGoals(userId);
+        return res.json(goals);
+    } catch (err: any) {
+        console.error("getWeeklyGoals error", err);
+        return res.status(500).json({ error: "Failed to fetch weekly goals", details: err.message });
+    }
+};
+
+export const getDailyGoals = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const goals = await ProgressService.getDailyGoals(userId);
+        return res.json(goals);
+    } catch (err: any) {
+        console.error("getDailyGoals error", err);
+        return res.status(500).json({ error: "Failed to fetch daily goals", details: err.message });
+    }
+};
+
 export const getWeeklyXp = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.id;

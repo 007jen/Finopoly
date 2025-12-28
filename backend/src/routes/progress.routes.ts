@@ -5,12 +5,18 @@ import {
     getStreakCalendar,
     getSubjectAccuracy,
     addXp,
-    updateAccuracy
+    updateAccuracy,
+    getDailyGoals,
+    getWeeklyGoals
 } from "../controllers/progress.controller";
 
 const router = Router();
 
 router.use(requireAuth);
+
+// Daily Goals (Auto-checkin)
+router.get('/goals', getDailyGoals);
+router.get('/weekly-goals', getWeeklyGoals);
 
 router.get("/weekly-xp", getWeeklyXp);
 router.get("/streak", getStreakCalendar);

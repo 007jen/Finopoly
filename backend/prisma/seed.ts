@@ -52,8 +52,31 @@ async function main() {
         },
     });
 
+    // Seed Badges
+    const badges = [
+        { name: "Novice Auditor", xp: 500, description: "Earned 500 XP", icon: "🥉" },
+        { name: "Apprentice", xp: 1000, description: "Earned 1000 XP", icon: "🥈" },
+        { name: "Audit Pro", xp: 2500, description: "Earned 2500 XP", icon: "🥇" },
+        { name: "Master of Coin", xp: 5000, description: "Earned 5000 XP", icon: "💎" },
+        { name: "Grandmaster", xp: 10000, description: "Earned 10000 XP", icon: "👑" }
+    ];
+
+    for (const b of badges) {
+        await prisma.badge.upsert({
+            where: { name: b.name },
+            update: {},
+            create: {
+                name: b.name,
+                description: b.description,
+                xpRequirement: b.xp,
+                icon: b.icon
+            }
+        });
+    }
+
     console.log("Admin user seeded");
     console.log("Cases seeded: ", case1.title, case2.title);
+    console.log("Badges seeded: ", badges.map(b => b.name).join(", "));
 }
 
 main()

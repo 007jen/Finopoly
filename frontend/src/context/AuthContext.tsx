@@ -5,22 +5,19 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as AppUserType } from '../types';
-import { useUser, useSignIn, useSignUp, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
+import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { db } from '../lib/database';
 // Safe abstraction for data layer interaction if needed
 import { getUserBadges } from '../lib/data-layer';
 
 interface AuthContextType {
     user: AppUserType | null;
-    login: (email: string, password: string) => Promise<void>;
-    signup: (email: string, password: string, name: string) => Promise<void>;
     logout: () => Promise<void>;
     updateUser: (userData: Partial<AppUserType>) => Promise<void>;
     refreshUser: () => Promise<void>;
     isAuthenticated: boolean;
     showOnboarding: boolean;
     completeOnboarding: (onboardingData: { role: string; level: string; preferredAreas: string[] }) => Promise<void>;
-    verifyEmail: (code: string) => Promise<void>;
     loading: boolean;
 }
 
@@ -110,8 +107,6 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user: clerkUser, isLoaded: userLoaded } = useUser();
     const { getToken } = useClerkAuth();
-    const { signIn, isLoaded: signInLoaded } = useSignIn();
-    const { signUp, isLoaded: signUpLoaded, setActive } = useSignUp();
     const { signOut } = useClerk();
 
     const [user, setUser] = useState<AppUserType | null>(null);
@@ -196,59 +191,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // --- Auth Actions ---
 
-    const login = async (email: string, password: string) => {
-        if (!signInLoaded) throw new Error('Auth client not ready');
-        try {
-            const result = await signIn.create({ identifier: email, password });
-            if (result.status !== 'complete') {
-                console.warn('[Auth] Login incomplete:', result);
-            }
-        } catch (err: any) {
-            console.error('[Auth] Login error:', err);
-            throw new Error(err.errors?.[0]?.message || err.message || 'Login failed');
-        }
-    };
-
-    const signup = async (email: string, password: string, name: string) => {
-        if (!signUpLoaded) throw new Error('Auth client not ready');
-        try {
-            const result = await signUp.create({
-                emailAddress: email,
-                password,
-                firstName: name.split(' ')[0] || '',
-                lastName: name.split(' ').slice(1).join(' ') || '',
-            });
-
-            if (result.status === 'complete') {
-                if (setActive) await setActive({ session: result.createdSessionId });
-            } else if (result.status === 'missing_requirements') {
-                await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-                throw new Error('VERIFICATION_NEEDED');
-            } else {
-                throw new Error('Signup failed');
-            }
-        } catch (err: any) {
-            if (err.message === 'VERIFICATION_NEEDED') throw err;
-            console.error('[Auth] Signup error:', err);
-            throw new Error(err.errors?.[0]?.message || err.message || 'Signup failed');
-        }
-    };
-
-    const verifyEmail = async (code: string) => {
-        if (!signUpLoaded) return;
-        try {
-            const result = await signUp.attemptEmailAddressVerification({ code });
-            if (result.status === 'complete') {
-                if (setActive) await setActive({ session: result.createdSessionId });
-            } else {
-                throw new Error('Verification failed');
-            }
-        } catch (err: any) {
-            console.error('[Auth] Verification failed:', err);
-            throw new Error(err.errors?.[0]?.message || 'Verification failed');
-        }
-    };
-
     const logout = async () => {
         try {
             await signOut();
@@ -263,8 +205,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[Auth] updateUser (Phase 1 Stub):', userData);
         // Optimistic update
         setUser(prev => prev ? { ...prev, ...userData } : null);
-
-        // In Phase 2: await db.updateProfile(user.id, userData);
     };
 
     const refreshUser = async () => {
@@ -310,15 +250,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <AuthContext.Provider
             value={{
                 user,
-                login,
-                signup,
                 logout,
                 updateUser,
                 refreshUser,
                 isAuthenticated: !!user,
                 showOnboarding,
                 completeOnboarding,
-                verifyEmail,
                 loading,
             }}
         >

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Play,
   TrendingUp,
@@ -8,7 +8,8 @@ import {
   Target,
   Zap,
   Star,
-  ChevronRight
+  ChevronRight,
+  Check
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -24,12 +25,12 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { getToken } = useClerkAuth();
   const { accuracy } = useAccuracy();
 
   const [leaderboard, setLeaderboard] = React.useState<any[]>([]);
-  const [weeklyXP, setWeeklyXP] = React.useState(0);
+
   const [lastActivity, setLastActivity] = React.useState<any>(null);
 
   const fetchData = React.useCallback(async () => {
@@ -41,8 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         // Use api.get but we need to pass Authorization header manually if api.ts doesn't handle Clerk token auto-magic (it doesn't).
         // But api.ts adds credentials: include.
         // Wait, does api.ts allow custom headers? Yes.
-        const xpData: any = await api.get("/api/progress/weekly-xp", { headers: { Authorization: `Bearer ${token}` } });
-        setWeeklyXP(xpData.totalXp || 0);
+
 
         // Last Activity (Timeline)
         const activities: any = await api.get("/api/profile/timeline", { headers: { Authorization: `Bearer ${token}` } });
@@ -52,7 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
       }
     } catch (e) {
       console.error("Dashboard data fetch failed", e);
-      setWeeklyXP(0); // Fallback
+
     }
 
     // 2. Fetch Leaderboard (Public)
@@ -72,7 +72,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
     };
 
     const handleXPReset = () => {
-      setWeeklyXP(0);
+
       setLastActivity(null);
       fetchData(); // Refetch to confirm
     }
@@ -109,64 +109,114 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
 
   if (!user) return null;
 
-  const getSmartRecommendations = () => {
+  // Gamification State
+  const [dailyGoals, setDailyGoals] = useState({
+    streak: false,
+    simulation: false,
+    quiz: false
+  });
+  const [weeklyGoals, setWeeklyGoals] = useState<any[]>([]);
+
+
+  // Fetch Daily Goals from Backend (Handles Auto-Checkin)
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchDailyGoals = async () => {
+      if (!user) return;
+      try {
+        const token = await getToken();
+        const response = await api.get(`/api/progress/goals?_t=${Date.now()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }) as any;
+        const data = response; // API wrapper returns parsed JSON directly
+        // console.log("Daily Goals Data:", data); // Debug log
+
+        if (mounted && data) {
+          setDailyGoals(data.goals);
+          if (data.meta?.streakUpdated) {
+            refreshUser();
+          }
+          // Confetti removed per user request
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch daily goals", err);
+      }
+    };
+
+    fetchDailyGoals();
+
+    return () => { mounted = false; };
+  }, [user, getToken, refreshUser]);
+
+  /* Removed unused weeklyXP state and legacy fetch */
+
+  // Fetch Weekly Goals
+  useEffect(() => {
+    const fetchWeekly = async () => {
+      if (!user) return;
+      try {
+        const token = await getToken();
+        const response = await api.get('/api/progress/weekly-goals', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }) as any;
+        if (response && response.goals) {
+          setWeeklyGoals(response.goals);
+        }
+      } catch (err) {
+        console.error("Failed to fetch weekly goals", err);
+      }
+    };
+    fetchWeekly();
+  }, [user, getToken]);
+
+  const getDynamicRecommendations = () => {
     const recs = [];
+    const { streak, simulation, quiz } = dailyGoals;
 
-    // 1. Morning Routine / First Login (Mock time logic)
-    if (user.xp < 100) {
-      recs.push({
-        time: 'Now',
-        activity: 'Start Your Journey: Take the First Quiz',
-        points: '+150 XP Reward',
-        status: 'active',
-        action: () => setActiveTab('quiz-arena')
-      });
-    } else {
-      recs.push({
-        time: '09:00 AM',
-        activity: 'Daily Login Streak',
-        points: `+50 XP (Day ${user.dailyStreak})`,
-        status: 'completed'
-      });
+    // GOAL 1: CHECK-IN
+    recs.push({
+      label: 'GOAL 1: CHECK-IN',
+      title: 'Keep the Streak Alive',
+      subtitle: `${user.dailyStreak} Day Streak 🔥`, // This will update after refreshUser()
+      action: null,
+      status: streak ? 'completed' : 'active',
+      points: '+50 XP'
+    });
+
+    // GOAL 2: SIMULATION
+    let simStatus = 'locked';
+    if (streak) {
+      simStatus = simulation ? 'completed' : 'active';
     }
 
-    // 2. Core Activity Recommendation (Based on XP)
-    if (user.xp > 500) {
-      recs.push({
-        time: 'Now',
-        activity: 'Suggested: Vouching Racer (Time Limited)',
-        points: 'Up to 500 XP',
-        status: 'active',
-        action: () => setActiveTab('audit-arena')
-      });
-    } else {
-      recs.push({
-        time: 'Now',
-        activity: 'Learn Basics: Audit Simulations',
-        points: '+100 XP / Level',
-        status: 'upcoming',
-        action: () => setActiveTab('audit-arena')
-      });
+    recs.push({
+      label: 'GOAL 2: SIMULATION',
+      title: 'Complete a Simulation',
+      subtitle: 'Practice real-world auditing',
+      action: simStatus === 'active' ? () => setActiveTab('audit-arena') : undefined,
+      status: simStatus,
+      points: '+150 XP'
+    });
+
+    // GOAL 3: QUIZ
+    let quizStatus = 'locked';
+    if (streak && simulation) {
+      quizStatus = quiz ? 'completed' : 'active';
     }
 
-    // 3. Challenge / Discovery
-    if (accuracy && accuracy > 80) {
-      recs.push({
-        time: 'Tonight',
-        activity: 'Advanced Audit Challenge',
-        points: 'Double XP Event',
-        status: 'upcoming',
-        action: () => setActiveTab('audit-arena')
-      });
-    } else {
-      recs.push({
-        time: 'Tip',
-        activity: 'Review Case Laws to boost Accuracy',
-        points: '+50 XP',
-        status: 'upcoming',
-        action: () => alert("Case Laws Coming Soon!")
-      });
-    }
+    recs.push({
+      label: 'GOAL 3: CHALLENGE',
+      title: 'Take a Quick Quiz',
+      subtitle: 'Boost your accuracy stats',
+      action: quizStatus === 'active' ? () => setActiveTab('quiz-arena') : undefined,
+      status: quizStatus,
+      points: 'Double XP'
+    });
 
     return recs;
   };
@@ -407,7 +457,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         <div className="bg-white/80 backdrop-blur-sm p-6 lg:p-8 rounded-2xl shadow-lg border border-white/50">
           <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Today's Learning Activity</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {getSmartRecommendations().map((item, index) => (
+            {getDynamicRecommendations().map((item, index) => (
               <div key={index} className={`p-4 lg:p-6 rounded-xl border-2 transition-all duration-300 ${item.status === 'completed' ? 'bg-green-50 border-green-200' :
                 item.status === 'active' ? 'bg-blue-50 border-blue-200' :
                   'bg-gray-50 border-gray-200'
@@ -417,20 +467,20 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
                     item.status === 'active' ? 'bg-blue-500 animate-pulse' :
                       'bg-gray-400'
                     }`}></div>
-                  <span className="text-sm font-semibold text-gray-600">{item.time}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{item.label}</span>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">{item.activity}</h3>
-                <p className={`text-sm font-semibold ${item.status === 'completed' ? 'text-green-600' :
-                  item.status === 'active' ? 'text-blue-600' :
-                    'text-gray-500'
-                  }`}>
-                  {item.points}
-                </p>
-                {item.action && (
-                  <button onClick={item.action} className="mt-2 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                    Start Now <ChevronRight size={12} />
-                  </button>
-                )}
+                <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
+                <p className="text-sm text-gray-600 mb-3">{item.subtitle}</p>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className={`text-xs font-bold ${item.status === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>
+                    {item.points}
+                  </span>
+                  {item.action && (
+                    <button onClick={item.action} className="text-xs font-bold text-gray-900 hover:text-blue-700 flex items-center gap-1 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all">
+                      Go <ChevronRight size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -440,20 +490,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         <div className="bg-white/80 backdrop-blur-sm p-6 lg:p-8 rounded-2xl shadow-lg border border-white/50">
           <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Weekly Goals</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { goal: 'Complete 5 Simulations', current: user.completedSimulations % 5, target: 5, color: 'blue' },
-              { goal: 'Earn 1000 XP (Weekly)', current: weeklyXP, target: 1000, color: 'green' },
-              { goal: 'Maintain 7-day Streak', current: user.dailyStreak, target: 7, color: 'orange' },
-            ].map((goal, index) => {
+            {weeklyGoals.map((goal, index) => {
               const rawProgress = (goal.current / goal.target) * 100;
               const progress = Math.min(rawProgress, 100);
               const isComp = goal.current >= goal.target;
 
               return (
                 <div key={index} className={`p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border shadow-sm transition-all ${isComp ? 'border-green-200 bg-green-50' : 'border-gray-200'}`}>
-                  <h3 className="font-bold text-gray-900 mb-3">{goal.goal}</h3>
+                  <h3 className="font-bold text-gray-900 mb-3">{goal.label}</h3>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-600">{goal.current}/{goal.target}</span>
+                    <span className="text-sm text-gray-600">{goal.current}/{goal.target} {goal.unit}</span>
                     <span className={`text-sm font-bold ${isComp ? 'text-green-600' : 'text-gray-900'}`}>{Math.round(progress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
@@ -471,6 +517,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
             })}
           </div>
         </div>
+
       </div>
     </div>
   );

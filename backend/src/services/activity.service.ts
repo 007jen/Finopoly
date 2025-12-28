@@ -87,6 +87,7 @@
 
 import { prisma } from "../utils/prisma";
 import { ActivityType } from "@prisma/client";
+import { BadgeService } from "./badge.service";
 
 /**
  * Converts a Date to a UTC calendar day (YYYY-MM-DD)
@@ -190,19 +191,29 @@ export async function recordActivity({
             },
         });
 
+        // INCREMENT LOGIC
+        const isSimulation = type === 'audit' || type === 'tax';
+
         const updatedUser = await tx.user.update({
             where: { id: userId },
             data: {
                 xp: { increment: xpReward },
                 streak: newStreak,
                 lastActivityDate: new Date(),
+                completedSimulations: isSimulation ? { increment: 1 } : undefined
             },
         });
+
+        // 🏅 BADGE CHECK
+        // We pass the transaction client 'tx' so it's part of the same atomic operation
+        const newBadges = await BadgeService.checkAndAwardBadges(tx as any, userId, updatedUser.xp);
 
         return {
             xpEarned: xpReward,
             totalXp: updatedUser.xp,
             streak: updatedUser.streak,
+            newBadges: newBadges, // Return this so we can show a popup!
+            simulationsCompleted: updatedUser.completedSimulations
         };
     });
 }
