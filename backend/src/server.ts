@@ -12,6 +12,7 @@ import caseReviewRoutes from "./routes/caseReview.routes";
 import progressRoutes from "./routes/progress.routes";
 import profileRoutes from "./routes/profile.routes";
 import auditRoutes from "./routes/audit.routes";
+
 const app = express();
 app.post(
     "/api/webhooks/clerk",
@@ -42,6 +43,11 @@ app.use(cors({
     },
     credentials: true
 }));
+
+// Simple Health Check Endpoint
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // ROUTES
 app.use("/api/auth", authRoutes);
