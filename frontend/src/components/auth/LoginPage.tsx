@@ -66,7 +66,7 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#1e1b4b] to-slate-900 flex items-center justify-center p-4 relative overflow-hidden font-sans">
       <style>{`
-        /* NUCLEAR OPTION: Force All Clerk Containers to be Transparent */
+        /* NUCLEAR OPTION: Force All Clerk Containers to be Transparent & Responsive */
         .cl-card, 
         .cl-rootBox, 
         .cl-main, 
@@ -80,6 +80,21 @@ const LoginPage: React.FC = () => {
           background: transparent !important;
           box-shadow: none !important;
           border: none !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        
+        /* Force inputs to shrink if needed */
+        .cl-formFieldInput {
+           width: 100% !important;
+           max-width: 100% !important;
+        }
+
+        /* Force Social Buttons to wrap if needed or stack */
+        .cl-socialButtons {
+           display: flex !important;
+           flex-direction: column !important;
+           gap: 0.5rem !important;
         }
         
         /* Force Hide "Last Used" Badge */
@@ -117,7 +132,7 @@ const LoginPage: React.FC = () => {
         <Shield className="absolute bottom-[25%] right-[10%] w-9 h-9 text-blue-400/20 animate-bounce delay-500 duration-[4500ms]" />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center max-w-md w-full mx-auto px-6 md:px-0">
+      <div className="relative z-10 flex flex-col items-center max-w-md w-full mx-auto px-3 md:px-0">
         {/* Branding Header - Tighter Integration */}
         <div className="text-center mb-6 md:mb-8 transform hover:scale-105 transition-transform duration-500 cursor-default">
           <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/20 border border-white/10 backdrop-blur-sm group">
