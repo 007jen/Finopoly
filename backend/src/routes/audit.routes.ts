@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { getPlayableCases, getPlayableCaseById, listCatalog, createAuditCase, listAuditCases, updateAuditCase, deleteAuditCase } from '../controllers/audit.controller';
+import { getPlayableCases, getPlayableCaseById, listCatalog, createAuditCase, listAuditCases, updateAuditCase, deleteAuditCase, completeSession } from '../controllers/audit.controller';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 // Public / Student Routes
 router.get('/playable', requireAuth, getPlayableCases);
 router.get('/catalog', requireAuth, listCatalog);
+router.post('/complete', requireAuth, completeSession);
 router.get('/playable/:id', requireAuth, getPlayableCaseById);
 
 // Admin Routes

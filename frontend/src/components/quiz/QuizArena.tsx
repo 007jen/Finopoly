@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Zap,
   Clock,
-  Trophy,
   Star,
   Play,
   Target,
@@ -99,15 +97,11 @@ const QuizArena: React.FC = () => {
       setScore(score + 1);
 
       // Award XP based on mode
-      let xpEarned = 0;
       if (selectedMode === 'mcq') {
-        xpEarned = 100;
         xpService.increment(100, `Quiz: MCQ Correct Answer`);
       } else if (selectedMode === 'truefalse') {
-        xpEarned = 50;
         xpService.increment(50, `Quiz: T/F Correct Answer`);
       } else if (selectedMode === 'simulation') {
-        xpEarned = 150;
         xpService.increment(150, `Quiz: Simulation Correct Answer`);
       }
 
@@ -296,49 +290,6 @@ const QuizArena: React.FC = () => {
           <p className="text-gray-600 text-lg lg:text-xl">Challenge yourself with different quiz formats</p>
         </div>
 
-        {/* XP Display */}
-        {/* XP Display */}
-        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-6 lg:p-8 text-white shadow-xl">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="flex-1">
-              <h2 className="text-2xl lg:text-3xl font-bold mb-2">Your XP Balance</h2>
-              <div className="flex items-center gap-3 mb-4">
-                <Star className="w-8 h-8" />
-                <span className="text-3xl lg:text-4xl font-bold" data-xp-display>{user?.xp.toLocaleString()}</span>
-                <span className="text-xl font-medium opacity-90 ml-1">XP</span>
-                <span className="ml-auto text-lg font-bold bg-white/20 px-3 py-1 rounded-lg">Level <span data-level-display>1</span></span>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full bg-black/20 rounded-full h-4 relative overflow-hidden">
-                <div
-                  className="bg-white h-full rounded-full transition-all duration-700 ease-out shadow-sm"
-                  data-xp-progress
-                  style={{ width: '0%' }}
-                />
-              </div>
-              <div className="flex justify-between mt-2 text-sm font-medium opacity-90">
-                <span>Current Level Progress</span>
-                <span><span data-xp-next>100</span> XP to next level</span>
-              </div>
-            </div>
-
-            <div className="text-center lg:ml-8 hidden lg:block">
-              <Zap className="w-16 h-16 mb-3 mx-auto" />
-              <p className="text-lg opacity-90 font-semibold max-w-[200px]">Earn more XP by completing quizzes!</p>
-
-              {/* Testing ONLY */}
-              <button
-                onClick={() => xpService.reset()}
-                className="mt-2 text-xs bg-white/10 hover:bg-white/20 px-2 py-1 rounded text-white/50 hover:text-white transition-colors"
-                title="Reset XP to 0 (Testing)"
-              >
-                Reset XP
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Quiz Mode Selection */}
         {!selectedMode ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -440,35 +391,6 @@ const QuizArena: React.FC = () => {
           </div>
         )}
 
-        {/* Recent Scores */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8">
-          <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Recent Quiz Scores</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {[
-              { mode: 'Multiple Choice', score: '14/15', xp: 200, date: '2 hours ago', accuracy: 93 },
-              { mode: 'True/False', score: '18/20', xp: 150, date: '1 day ago', accuracy: 90 },
-              { mode: 'Case Simulation', score: '8/10', xp: 300, date: '2 days ago', accuracy: 80 },
-              { mode: 'Tax Quiz', score: '12/15', xp: 180, date: '3 days ago', accuracy: 80 },
-            ].map((quiz, index) => (
-              <div key={index} className="flex items-center justify-between p-4 lg:p-5 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:shadow-md transition-all duration-300">
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-base lg:text-lg truncate">{quiz.mode}</p>
-                  <div className="flex items-center gap-4 mt-1">
-                    <p className="text-sm text-gray-600">Score: <span className="font-semibold">{quiz.score}</span></p>
-                    <p className="text-sm text-gray-600">Accuracy: <span className="font-semibold">{quiz.accuracy}%</span></p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-yellow-600 mb-1">
-                    <Star className="w-4 h-4" />
-                    <span className="font-bold">+{quiz.xp} XP</span>
-                  </div>
-                  <p className="text-xs text-gray-500">{quiz.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );

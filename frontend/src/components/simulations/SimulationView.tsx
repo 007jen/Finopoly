@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle, Shield } from 'lucide-react';
-import { xpService } from '../../_xp/xp-service';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAuth } from '../../context/AuthContext';
 import confetti from 'canvas-confetti';
@@ -214,7 +213,18 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     frame();
   };
 
+  // Prevent double-firing of completion logic (e.g. rapid clicks)
+  const isProcessingRef = useRef(false);
+
+  useEffect(() => {
+    // Reset processing lock when level changes
+    isProcessingRef.current = false;
+  }, [currentLevelIdx]);
+
   const handleLevelComplete = (success: boolean) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+
     setGameState('RESULT');
     setResult('SUCCESS');
     setScore(s => s + 5000);
@@ -225,19 +235,23 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
       if (currentLevelIdx >= levels.length - 1) {
         setResult(null);
         setGameState('FINISHED');
-        xpService.increment(500, 'Audit Challenge: Perfect Completion');
-        // Increment global simulation count
-        const token = await getToken();
-        api.post('/api/profile/simulations/increment', {}, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(() => {
-          refreshUser();
-        }).catch(console.error);
+
+        // 3. Frontend (React) - User Requested Logic
+        try {
+          const token = await getToken();
+          await api.post('/api/audit/complete', {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          refreshUser(); // Update UI to show new counts
+        } catch (error) {
+          console.error("Failed to complete session:", error);
+        }
       } else {
         setGameState('PLAYING');
         setResult(null);
         setTimeLeft(MAX_TIME);
         setCurrentLevelIdx(prev => prev + 1);
+        // Lock is reset by the useEffect above
       }
     }, 1500);
   };
@@ -458,14 +472,16 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
               <div className="flex w-full md:w-auto gap-3">
                 <button
                   onClick={() => handleStepDecision(activeField, 'FRAUD')}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all active:scale-95"
+                  disabled={gameState !== 'PLAYING'}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <AlertCircle size={18} /> Reject
                 </button>
 
                 <button
                   onClick={() => handleStepDecision(activeField, 'VALID')}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 hover:shadow-blue-500/30 transition-all active:scale-95"
+                  disabled={gameState !== 'PLAYING'}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 hover:shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Check size={18} /> Verify
                 </button>

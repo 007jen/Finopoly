@@ -79,7 +79,8 @@ export const db = {
           current_level: backendData.level,
           created_at: backendData.joinedAt,
           correctAnswers: backendData.correctAnswers || 0,
-          totalQuestions: backendData.totalQuestions || 0
+          totalQuestions: backendData.totalQuestions || 0,
+          completedSimulations: backendData.completedSimulations || 0
         };
       } catch (e) {
         console.warn("db.getProfile: Backend fetch failed", e);

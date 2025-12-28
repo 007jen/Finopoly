@@ -70,7 +70,7 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
             currentLevel: typeof dbProfile.current_level === 'number' ? dbProfile.current_level : 1,
             dailyStreak: typeof dbProfile.daily_streak === 'number' ? dbProfile.daily_streak : 0,
             badges: [], // Filled later
-            completedSimulations: dbProfile.completed_simulations || 0,
+            completedSimulations: dbProfile.completedSimulations || 0,
             accuracy: {
                 audit: typeof dbProfile.audit_accuracy === 'number' ? dbProfile.audit_accuracy : 0,
                 tax: typeof dbProfile.tax_accuracy === 'number' ? dbProfile.tax_accuracy : 0,
@@ -113,81 +113,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        let mounted = true;
+    const loadProfile = React.useCallback(async () => {
+        // Wait for Clerk to initialize
+        if (!userLoaded) return;
 
-        const loadProfile = async () => {
-            // Wait for Clerk to initialize
-            if (!userLoaded) return;
+        try {
+            if (clerkUser) {
+                // console.log('[Auth] Loading profile for:', clerkUser.id);
 
-            try {
-                if (clerkUser) {
-                    console.log('[Auth] Loading profile for:', clerkUser.id);
+                let profile = null;
+                let badges: any[] = [];
 
-                    let profile = null;
-                    let badges: any[] = [];
-
-                    // 1. Fetch Profile (Safe DB Call)
-                    try {
-                        const token = await getToken();
-                        // Call backend via db layer, passing token
-                        profile = await db.getProfile(clerkUser.id, token);
-                    } catch (e) {
-                        console.error('[Auth] Profile fetch error (should be caught by db layer):', e);
-                        profile = null;
-                    }
-
-                    // 2. Fetch Badges (Safe DB Call)
-                    try {
-                        // db.getUserBadges handles the internal Supabase vs Mock switch
-                        const token = await getToken();
-                        badges = await db.getUserBadges(clerkUser.id, token);
-                    } catch (e) {
-                        // If db abstraction failed, try raw data-layer fallback
-                        console.error('[Auth] Badge fetch error:', e);
-                        badges = await getUserBadges(clerkUser.id).catch(() => []);
-                    }
-
-                    // 3. Map Data
-                    const mappedUser = mapClerkUserToUser(clerkUser, profile);
-
-                    // 4. Attach Badges with Safety Checks
-                    mappedUser.badges = (badges || []).map((ub: any) => {
-                        // Handle hybrid Mock vs Real structure
-                        // Supabase 'user_badges' table joins with 'badges'. Mocks might just be 'Badge[]'
-                        const badgeData = ub?.badges ? ub.badges : ub;
-                        return {
-                            id: badgeData?.id || 'badge_err',
-                            name: badgeData?.name || 'Unknown Badge',
-                            description: badgeData?.description || '',
-                            icon: badgeData?.icon || '',
-                            earnedDate: ub?.earned_at || new Date().toISOString(),
-                        };
-                    });
-
-                    if (mounted) {
-                        setUser(mappedUser);
-                        // Trigger onboarding if needed, checking strict role logic
-                        if (!mappedUser.role || (mappedUser.role === 'Student' && !mappedUser.preferredAreas?.length)) {
-                            // Logic to toggle onboarding if desired:
-                            // setShowOnboarding(true);
-                        }
-                    }
-                } else {
-                    // Unauthenticated
-                    if (mounted) setUser(null);
+                // 1. Fetch Profile (Safe DB Call)
+                try {
+                    const token = await getToken();
+                    // Call backend via db layer, passing token
+                    profile = await db.getProfile(clerkUser.id, token);
+                } catch (e) {
+                    console.error('[Auth] Profile fetch error (should be caught by db layer):', e);
+                    profile = null;
                 }
-            } catch (err) {
-                console.error('[Auth] Critical auth error:', err);
-                if (mounted) setUser(null);
-            } finally {
-                if (mounted) setLoading(false);
-            }
-        };
 
+                // 2. Fetch Badges (Safe DB Call)
+                try {
+                    // db.getUserBadges handles the internal Supabase vs Mock switch
+                    const token = await getToken();
+                    badges = await db.getUserBadges(clerkUser.id, token);
+                } catch (e) {
+                    // If db abstraction failed, try raw data-layer fallback
+                    console.error('[Auth] Badge fetch error:', e);
+                    badges = await getUserBadges(clerkUser.id).catch(() => []);
+                }
+
+                // 3. Map Data
+                const mappedUser = mapClerkUserToUser(clerkUser, profile);
+
+                // 4. Attach Badges with Safety Checks
+                mappedUser.badges = (badges || []).map((ub: any) => {
+                    const badgeData = ub?.badges ? ub.badges : ub;
+                    return {
+                        id: badgeData?.id || 'badge_err',
+                        name: badgeData?.name || 'Unknown Badge',
+                        description: badgeData?.description || '',
+                        icon: badgeData?.icon || '',
+                        earnedDate: ub?.earned_at || new Date().toISOString(),
+                    };
+                });
+
+                // console.log("[AuthContext] MAPPED USER RESULT:", mappedUser); // DEBUG LOG
+                // console.log("[AuthContext] Simulations Count:", mappedUser.completedSimulations); // DEBUG LOG
+
+                setUser(mappedUser);
+                // Trigger onboarding if needed, checking strict role logic
+                if (!mappedUser.role || (mappedUser.role === 'Student' && !mappedUser.preferredAreas?.length)) {
+                    // Logic to toggle onboarding if desired:
+                    // setShowOnboarding(true);
+                }
+            } else {
+                // Unauthenticated
+                setUser(null);
+            }
+        } catch (err) {
+            console.error('[Auth] Critical auth error:', err);
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [userLoaded, clerkUser, getToken]);
+
+    // Initial Load
+    useEffect(() => {
         loadProfile();
-        return () => { mounted = false; };
-    }, [userLoaded, clerkUser]);
+    }, [loadProfile]);
 
     // --- Auth Actions ---
 
@@ -212,6 +209,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (clerkUser && typeof clerkUser.reload === 'function') {
                 await clerkUser.reload();
             }
+            // THIS IS THE FIX: Fetch DB data too!
+            await loadProfile();
         } catch (err) {
             console.warn('[Auth] refreshUser warning:', err);
         }
