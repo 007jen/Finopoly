@@ -1,319 +1,262 @@
-// src/components/leaderboard/Leaderboard.tsx
-// Phase 1 Migration: Safe Leaderboard
-// Uses the data-layer abstraction to fetch leaderboard data.
-// Handles both Mock (Phase 1) and Real (Phase 2+) data shapes gracefully.
+import React, { useState, useEffect } from "react";
+import { Trophy, Medal, Crown, TrendingUp, Shield, Star, Search } from "lucide-react";
+import { db } from "../../lib/database"; // Using existing DB abstraction
 
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Crown, TrendingUp, Award, ChevronDown } from 'lucide-react';
-import { db } from '../../lib/database';
-
-
-// Normalized Interface for View Layer
-interface LeaderboardEntry {
+// --- Types ---
+interface LeaderboardUser {
+  rank: number;
   id: string;
-  username: string;
+  name: string;
   xp: number;
-  avatarUrl?: string;
-  badges?: any[];
-  rank?: number;
+  badges: number;
+  specialty: string;
+  avatar?: string;
 }
 
-// Mock Data for Rising Talents (Static UI Feature) -> REMOVED per requirements
-const mockRisingTalents: any[] = [];
-
-import { useXP } from '../../_xp/xp-context';
-
-const Leaderboard: React.FC = () => {
-  const { user } = useAuth();
-  const { xp: currentXp } = useXP(); // Decoupled from leaderboard fetch, used for display only
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+const Leaderboard = () => {
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
+  // Fetch Data
   useEffect(() => {
     let mounted = true;
     const fetchData = async () => {
       try {
-        // Fetch via safe DB wrapper which now hits /api/leaderboard
-        const data: any[] = await db.getLeaderboard();
+        const rawData: any[] = await db.getLeaderboard();
 
-        // Normalize Data from Backend { rank, userId, name, xp, level }
-        const normalized = data.map((d: any) => ({
-          id: d.userId || d.id || 'unknown',
-          username: d.name || d.username || 'Anonymous',
-          xp: d.xp || 0,
-          avatarUrl: '', // Backend doesn't send avatar yet
-          badges: d.badges || [], // Now receiving badges from backend
-          rank: d.rank
-        }));
+        // Normalize Data
+        const normalized = rawData.map((d: any, index: number) => {
+          // Map preferredAreas to specialty or fallback
+          const specialty = (d.preferredAreas && d.preferredAreas.length > 0)
+            ? d.preferredAreas[0]
+            : "Finance Rookie";
+
+          return {
+            rank: index + 1,
+            id: d.userId || d.id,
+            name: d.name || "Anonymous",
+            xp: d.xp || 0,
+            badges: d.badges ? d.badges.length : 0,
+            specialty: specialty,
+            avatar: d.avatar,
+          };
+        });
 
         if (mounted) {
-          setLeaderboardData(normalized);
+          setUsers(normalized);
           setLoading(false);
         }
       } catch (err) {
-        console.error('Leaderboard fetch failed', err);
-        if (mounted) {
-          setLeaderboardData([]);
-          setLoading(false);
-        }
+        console.error("Failed to load leaderboard", err);
+        if (mounted) setLoading(false);
       }
     };
-
     fetchData();
     return () => { mounted = false; };
-  }, []); // Run ONCE on mount, do not depend on user/xp
+  }, []);
 
-  const topThree = leaderboardData.slice(0, 3);
-  const rank1 = topThree[0];
-  const rank2 = topThree[1];
-  const rank3 = topThree[2];
+  // Filter Logic
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-  // Helper for UI demo
-  const getSpecialty = (index: number) => {
-    const specialties = ["Audit Master", "Tax Expert", "GST Specialist", "Law Wielder", "Compliance Pro"];
-    return specialties[index % specialties.length];
-  };
-
-  const getBadgesCount = (index: number) => {
-    return leaderboardData[index]?.badges?.length || 0;
-  };
-
-  if (loading) {
-    return <div className="p-10 text-center text-gray-500 font-medium">Loading Leaderboard...</div>;
-  }
+  const topThree = filteredUsers.slice(0, 3);
+  const restOfUsers = filteredUsers.slice(3);
 
   return (
-    <div className="min-h-full bg-[#F8F9FA] p-4 lg:p-6 space-y-6 font-sans">
+    <div className="min-h-full bg-gray-50 p-4 md:p-6 lg:p-8 space-y-6 lg:space-y-8 font-sans">
+      {/* --- Header Section --- */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Global Leaderboard</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">Compete with finance learners worldwide.</p>
+        </div>
 
-      {/* 1. Brand Banner Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0052D4] via-[#4364F7] to-[#6FB1FC] p-6 lg:p-10 text-white shadow-lg">
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Crown className="w-8 h-8 text-yellow-300 fill-current" />
-              <h1 className="text-3xl font-bold tracking-tight">Global Leaderboard</h1>
-            </div>
-            <p className="text-blue-100 max-w-lg text-sm lg:text-base opacity-90">
-              Compete with finance learners worldwide and climb to the top.
-            </p>
-          </div>
-
-          {/* Your Rank Card */}
-          {user && (
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 min-w-[160px] text-center">
-              <p className="text-blue-100 text-xs font-semibold uppercase tracking-wider mb-1">Your XP</p>
-              <div className="text-4xl font-extrabold text-white mb-1">{currentXp.toLocaleString()}</div>
-              <div className="inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold">
-                Rank #{leaderboardData.findIndex(u => u.id === user.id) + 1 || '-'}
-              </div>
-            </div>
-          )}
+        {/* Search Bar */}
+        <div className="relative group w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Find a learner..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+          />
         </div>
       </div>
 
-      {/* 2. Split Top Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* --- Podium Section (Top 3) --- */}
+      {!loading && topThree.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end mb-8 md:mb-12 min-h-[auto] md:min-h-[300px]">
+          {/* Rank 2 (Silver) */}
+          <div className="order-2 md:order-1">
+            <PodiumCard user={topThree[1]} rank={2} color="bg-slate-300" iconColor="text-slate-400" />
+          </div>
 
-        {/* Left: Top Performers (Podium) - Span 2 */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-8">Top Performers</h2>
+          {/* Rank 1 (Gold) - Center & Taller */}
+          <div className="order-1 md:order-2 md:-mt-16 z-10">
+            <PodiumCard user={topThree[0]} rank={1} isWinner={true} color="bg-yellow-400" iconColor="text-yellow-500" />
+          </div>
 
-          <div className="flex justify-center items-end h-[300px] gap-4 md:gap-12 pb-4">
-
-            {/* Rank 2 (Left) */}
-            <div className="flex flex-col items-center group w-24 md:w-32">
-              {rank2 ? (
-                <>
-                  <div className="relative mb-3">
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center text-gray-600 font-bold overflow-hidden shadow-sm">
-                      {rank2.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="absolute -bottom-2 inset-x-0 mx-auto w-6 h-6 bg-gray-500 text-white text-xs flex items-center justify-center rounded-full font-bold border-2 border-white">2</div>
-                  </div>
-                  <div className="text-center mb-2">
-                    <div className="font-bold text-gray-800 text-sm truncate w-full">{rank2.username}</div>
-                    <div className="text-xs text-blue-600 font-bold">{rank2.xp.toLocaleString()} XP</div>
-                  </div>
-                </>
-              ) : <div className="h-16 w-16 opacity-0" />}
-              <div className="w-full bg-gradient-to-t from-gray-300 to-gray-200 rounded-t-lg h-[140px] opacity-80 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-
-            {/* Rank 1 (Center) */}
-            <div className="flex flex-col items-center group w-20 md:w-28 z-10">
-              {rank1 ? (
-                <>
-                  <div className="relative mb-4">
-                    <Crown className="absolute -top-8 left-0 right-0 mx-auto text-yellow-500 w-8 h-8 fill-yellow-400 animate-bounce" />
-                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-yellow-100 border-[3px] border-yellow-400 flex items-center justify-center text-yellow-700 font-bold overflow-hidden shadow-md">
-                      {rank1.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="absolute -bottom-3 inset-x-0 mx-auto w-8 h-8 bg-yellow-500 text-white text-sm flex items-center justify-center rounded-full font-black border-2 border-white">1</div>
-                  </div>
-                  <div className="text-center mb-2">
-                    <div className="font-bold text-gray-900 text-base truncate w-full">{rank1.username}</div>
-                    <div className="text-sm text-blue-600 font-bold">{rank1.xp.toLocaleString()} XP</div>
-                  </div>
-                </>
-              ) : <div className="h-24 w-24 opacity-0" />}
-              <div className="w-full bg-gradient-to-t from-yellow-300 to-yellow-200 rounded-t-lg h-[180px] shadow-lg"></div>
-            </div>
-
-            {/* Rank 3 (Right) */}
-            <div className="flex flex-col items-center group w-24 md:w-32">
-              {rank3 ? (
-                <>
-                  <div className="relative mb-3">
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-orange-100 border-2 border-orange-300 flex items-center justify-center text-orange-600 font-bold overflow-hidden shadow-sm">
-                      {rank3.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="absolute -bottom-2 inset-x-0 mx-auto w-6 h-6 bg-orange-500 text-white text-xs flex items-center justify-center rounded-full font-bold border-2 border-white">3</div>
-                  </div>
-                  <div className="text-center mb-2">
-                    <div className="font-bold text-gray-800 text-sm truncate w-full">{rank3.username}</div>
-                    <div className="text-xs text-blue-600 font-bold">{rank3.xp.toLocaleString()} XP</div>
-                  </div>
-                </>
-              ) : <div className="h-16 w-16 opacity-0" />}
-              <div className="w-full bg-gradient-to-t from-orange-300 to-orange-200 rounded-t-lg h-[110px] opacity-80 group-hover:opacity-100 transition-opacity"></div>
-            </div>
-
+          {/* Rank 3 (Bronze) */}
+          <div className="order-3 md:order-3">
+            <PodiumCard user={topThree[2]} rank={3} color="bg-orange-300" iconColor="text-orange-400" />
           </div>
         </div>
+      )}
 
-        {/* Right: Rising Talents */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="w-5 h-5 text-orange-500" />
-            <h2 className="text-lg font-bold text-gray-800">Rising Talents</h2>
+      {/* --- Loading State --- */}
+      {loading && (
+        <div className="text-center py-20 text-gray-400 animate-pulse">
+          Loading global rankings...
+        </div>
+      )}
+
+      {/* --- The List (Rank 4+) --- */}
+      {!loading && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+          {/* DESKTOP TABLE VIEW (Hidden on Mobile) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="py-4 px-6 w-16 text-center">#</th>
+                  <th className="py-4 px-6">Learner</th>
+                  <th className="py-4 px-6">Specialty</th>
+                  <th className="py-4 px-6 text-center">Badges</th>
+                  <th className="py-4 px-6 text-right">XP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {restOfUsers.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="hover:bg-gray-50 transition-colors group cursor-default"
+                  >
+                    <td className="py-4 px-6 text-center font-medium text-gray-400 group-hover:text-indigo-600">
+                      {user.rank}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold text-sm uppercase">
+                          {user.name.charAt(0)}
+                        </div>
+                        <span className="font-medium text-gray-900">{user.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                        <Shield className="h-3 w-3" />
+                        {user.specialty}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <div className="inline-flex items-center justify-center gap-1 text-gray-600">
+                        <Medal className="h-4 w-4 text-orange-400" />
+                        <span className="text-sm">{user.badges}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <span className="font-bold text-gray-900">{user.xp.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400 ml-1">XP</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <div className="space-y-6 flex-1">
-            {mockRisingTalents.map((talent, i) => (
-              <div key={i} className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
-                <div className={`w-10 h-10 rounded-full ${talent.avatarColor} text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
-                  {talent.name.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <div className="font-bold text-gray-900 text-sm">{talent.name}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{talent.xpChange} XP</span>
-                    <span className="text-[10px] text-gray-400">Jumped {talent.rankJump} ranks</span>
+          {/* MOBILE CARD VIEW (Visible only on Mobile) */}
+          <div className="md:hidden divide-y divide-gray-50">
+            {restOfUsers.map((user) => (
+              <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  {/* Rank */}
+                  <div className="text-sm font-bold text-gray-400 w-6 text-center">
+                    #{user.rank}
                   </div>
+
+                  {/* Avatar */}
+                  <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold text-sm uppercase shadow-sm border border-indigo-100">
+                    {user.name.charAt(0)}
+                  </div>
+
+                  {/* Info */}
+                  <div>
+                    <div className="font-semibold text-gray-900 text-sm">{user.name}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-medium border border-indigo-100">
+                        {user.specialty}
+                      </span>
+                      <span className="flex items-center text-[10px] text-gray-500">
+                        <Medal className="w-3 h-3 text-orange-400 mr-0.5" />
+                        {user.badges}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* XP */}
+                <div className="text-right">
+                  <span className="block font-bold text-gray-900 text-sm">{user.xp.toLocaleString()}</span>
+                  <span className="text-[10px] text-gray-400 font-medium">XP</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-      </div>
-
-      {/* 3. Global Leaderboard - Mobile Cards (< 640px) */}
-      <div className="sm:hidden space-y-3">
-        {leaderboardData.map((entry, index) => {
-          const rank = index + 1;
-          const isCurrentUser = user && (user.id === entry.id || user.name === entry.username);
-          return (
-            <div key={entry.id || index} className={`bg-white rounded-xl p-4 shadow-sm border ${isCurrentUser ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-100'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm ${rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                  rank === 2 ? 'bg-gray-100 text-gray-700' :
-                    rank === 3 ? 'bg-orange-100 text-orange-700' :
-                      'bg-blue-50 text-blue-600'
-                  }`}>
-                  #{rank}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-900 truncate">{entry.username}</h3>
-                    {isCurrentUser && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">YOU</span>}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                    <span>{entry.badges?.length || 0} Badges</span>
-                    <span>•</span>
-                    <span className="text-gray-400">{getSpecialty(index)}</span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="block font-bold text-blue-600">{entry.xp.toLocaleString()}</span>
-                  <span className="text-[10px] text-gray-400 font-medium">XP</span>
-                </div>
-              </div>
+          {/* Empty State */}
+          {filteredUsers.length === 0 && (
+            <div className="p-12 text-center text-gray-400">
+              <Search className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p>No learners found matching "{search}"</p>
             </div>
-          );
-        })}
-      </div>
-
-      {/* 3. Global Leaderboard Table - Tablet/Desktop (> 640px) */}
-      <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800">Global Leaderboard</h2>
-          <button className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-blue-100 transition-colors">
-            Top 100 <ChevronDown className="w-3 h-3" />
-          </button>
+          )}
         </div>
+      )}
+    </div>
+  );
+};
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-400 font-semibold">
-                <th className="px-6 py-4 w-20 text-center">Rank</th>
-                <th className="px-6 py-4">Learner</th>
-                <th className="px-6 py-4 text-right">XP</th>
-                <th className="px-6 py-4 text-center">Badges</th>
-                <th className="px-6 py-4 text-right">Specialty</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-sm">
-              {leaderboardData.map((entry, index) => {
-                const rank = index + 1;
-                // Highlight logic: Match Clerk ID OR Match Name (for Mock Mode)
-                const isCurrentUser = user && (user.id === entry.id || user.name === entry.username);
+// --- Sub-Component: Podium Card ---
+const PodiumCard = ({ user, rank, isWinner = false, color, iconColor }: { user?: LeaderboardUser; rank: number; isWinner?: boolean; color: string; iconColor: string }) => {
+  if (!user) return <div className="hidden md:block h-full opacity-0"></div>; // Hide empty placeholders on mobile
 
-                // Rank Icon Logic
-                let rankIcon = null;
-                if (rank === 1) rankIcon = <Award className="w-5 h-5 text-yellow-500 fill-current" />;
-                if (rank === 2) rankIcon = <Award className="w-5 h-5 text-gray-400 fill-current" />;
-                if (rank === 3) rankIcon = <Award className="w-5 h-5 text-orange-400 fill-current" />;
+  return (
+    <div className={`relative flex flex-col items-center p-6 rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 transition-transform hover:-translate-y-1 duration-300 ${isWinner ? 'ring-4 ring-indigo-50 shadow-indigo-100' : ''}`}>
+      <div className="absolute top-4 left-4 text-xs font-bold text-gray-300 md:hidden">#{rank}</div>
 
-                return (
-                  <tr key={entry.id || index} className={`hover:bg-blue-50/30 transition-colors group ${isCurrentUser ? 'bg-blue-50/50' : ''}`}>
-                    <td className="px-6 py-4 text-center font-bold text-gray-500">
-                      {rankIcon ? <div className="flex justify-center">{rankIcon}</div> : `#${rank}`}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm border border-gray-100 ${isCurrentUser ? 'bg-blue-600 text-white' : 'bg-gray-800 text-white'}`}>
-                          {entry.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-bold text-gray-900">{entry.username}</div>
-                          {isCurrentUser && <div className="text-[10px] text-blue-600 font-bold uppercase">You</div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold text-blue-600">
-                      {entry.xp.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-block bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-100">
-                        {getBadgesCount(index)} badges
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-gray-600 font-medium">
-                      {getSpecialty(index)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Crown Icon for #1 */}
+      {isWinner && (
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+          <Crown className="h-10 w-10 text-yellow-400 fill-yellow-400 animate-bounce" />
+        </div>
+      )}
+
+      {/* Avatar Circle */}
+      <div className={`relative mb-4 ${isWinner ? 'h-24 w-24' : 'h-16 w-16'}`}>
+        <div className={`absolute inset-0 rounded-full opacity-20 ${color}`}></div>
+        <div className="absolute inset-0 rounded-full border-2 border-white shadow-sm bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-2xl font-bold text-gray-700 uppercase">
+          {user.name.charAt(0)}
+        </div>
+        {/* Rank Badge (Desktop only or adjusted) */}
+        <div className={`absolute -bottom-2 inset-x-0 mx-auto w-8 h-8 rounded-full flex items-center justify-center text-white font-bold shadow-sm border-2 border-white ${isWinner ? 'bg-yellow-400' : rank === 2 ? 'bg-slate-400' : 'bg-orange-400'}`}>
+          {rank}
         </div>
       </div>
 
+      {/* Info */}
+      <div className="text-center">
+        <h3 className={`font-bold text-gray-900 ${isWinner ? 'text-lg' : 'text-base'}`}>{user.name}</h3>
+        <p className="text-xs text-indigo-600 font-medium mt-1 mb-3">{user.specialty}</p>
+
+        <div className="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+          <Star className={`h-4 w-4 ${iconColor} fill-current`} />
+          <span className="font-bold text-gray-700 text-sm">{user.xp} XP</span>
+        </div>
+      </div>
     </div>
   );
 };

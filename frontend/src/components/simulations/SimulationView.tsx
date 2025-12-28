@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle, Shield } from 'lucide-react';
 import { xpService } from '../../_xp/xp-service';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAuth } from '../../context/AuthContext';
@@ -320,144 +320,163 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const activeField = auditOrder[auditStep];
 
   return (
-    <div className={`flex flex-col items-center justify-start min-h-screen bg-slate-900 text-white font-sans overflow-hidden relative pb-4 
-        ${isShaking ? 'animate-[shake_0.5s_cubic-bezier(.36,.07,.19,.97)_both]' : ''}`}>
+    <div className="flex flex-col h-screen bg-slate-900 text-white font-sans overflow-hidden relative">
 
-      {/* HEADER */}
-      <div className="w-full max-w-6xl flex justify-between items-start p-4 bg-slate-800 border-b-4 border-slate-700 shadow-lg z-10 relative">
-        <div className="flex-1">
-          <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-white mb-1 transition-colors">
-            <ArrowLeft size={16} />
-            <span className="text-xs font-bold uppercase">Exit Audit</span>
-          </button>
-          <h1 className="text-lg font-bold text-slate-200 leading-tight">Mehta & Co. Chartered Accountants</h1>
-          <p className="text-sm text-slate-400">Client: Swastik Enterprises - Tax Audit</p>
-        </div>
-
-        {/* TIMER */}
-        <div className="absolute left-1/2 top-4 -translate-x-1/2">
-          <div className={`px-4 py-1.5 rounded-md font-mono font-bold text-sm transition-colors duration-300 shadow-inner ${timeLeft < 5 ? 'bg-red-600 animate-pulse' : 'bg-red-800/80'}`}>
-            {Math.ceil(timeLeft)}s remaining
+      {/* 1. HEADER (Fixed) */}
+      <div className="flex-none p-2 md:p-4 bg-slate-800 border-b-4 border-slate-700 shadow-lg z-20 relative">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-4 md:gap-0">
+          <div className="flex-1 w-full md:w-auto text-center md:text-left">
+            <button onClick={onBack} className="flex items-center justify-center md:justify-start gap-2 text-slate-400 hover:text-white mb-1 transition-colors">
+              <ArrowLeft size={16} />
+              <span className="text-xs font-bold uppercase">Exit Audit</span>
+            </button>
+            <h1 className="text-lg md:text-xl font-bold text-slate-200 leading-tight truncate">Mehta & Co. Chartered Accountants</h1>
+            <p className="text-xs md:text-sm text-slate-400">Client: Swastik Enterprises - Tax Audit</p>
           </div>
-        </div>
 
-        {/* STATS */}
-        <div className="flex gap-6 items-center flex-1 justify-end">
-          <div className="text-center">
-            <p className="text-[10px] text-slate-400 uppercase">Billable Value</p>
-            <p className="text-xl font-mono font-bold text-yellow-400">₹{score.toLocaleString()}</p>
+          {/* TIMER */}
+          <div className="order-first md:order-none md:absolute md:left-1/2 md:top-4 md:-translate-x-1/2 w-full md:w-auto flex justify-center">
+            <div className={`px-4 py-1.5 rounded-md font-mono font-bold text-sm transition-colors duration-300 shadow-inner ${timeLeft < 5 ? 'bg-red-600 animate-pulse' : 'bg-red-800/80'}`}>
+              {Math.ceil(timeLeft)}s remaining
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-[10px] text-slate-400 uppercase">Streak</p>
-            <div className="flex items-center gap-1 justify-center text-orange-500 font-bold text-lg">
-              <Flame size={18} fill="currentColor" />
-              <span>x{streak}</span>
+
+          {/* STATS */}
+          <div className="flex gap-4 md:gap-6 items-center flex-1 justify-center md:justify-end w-full md:w-auto">
+            <div className="text-center">
+              <p className="text-[10px] text-slate-400 uppercase">Billable Value</p>
+              <p className="text-lg md:text-xl font-mono font-bold text-yellow-400">₹{score.toLocaleString()}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-slate-400 uppercase">Streak</p>
+              <div className="flex items-center gap-1 justify-center text-orange-500 font-bold text-lg">
+                <Flame size={18} fill="currentColor" />
+                <span>x{streak}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* DOCUMENT AREA */}
-      <div className="flex w-full max-w-6xl flex-1 gap-4 p-4 relative min-h-[400px]">
-        {/* INVOICE CARD */}
-        <div className="flex-1 bg-slate-100 text-slate-900 rounded-lg shadow-xl overflow-hidden relative border-l-8 border-yellow-500">
-          <div className="bg-yellow-500 p-2 flex justify-between text-xs font-bold">
-            <span>PAYMENT VOUCHER</span>
-            <span>ORIGINAL</span>
-          </div>
-          <div className="p-4 space-y-2">
-            <div className="flex justify-between">
-              <h2 className="font-bold text-lg">{currentLevel.invoice.vendor}</h2>
-              <span className="font-mono text-sm">{currentLevel.invoice.date}</span>
-            </div>
-            <div className="text-xs text-slate-500">{currentLevel.invoice.gstin}</div>
-            <div className="py-2 border-y border-slate-300 my-2">
-              <div className="flex justify-between text-sm">
-                <span>{currentLevel.invoice.description}</span>
-                <span className="font-mono font-bold">₹{currentLevel.invoice.amount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-500 mt-1">
-                <span>GST (18%)</span>
-                <span className="font-mono">₹{currentLevel.invoice.tax.toLocaleString()}</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center bg-slate-200 p-2 rounded">
-              <span className="font-bold text-sm">TOTAL</span>
-              <span className="font-bold text-xl font-mono">₹{currentLevel.invoice.total.toLocaleString()}</span>
-            </div>
-            <div className="mt-2 text-xs font-bold text-slate-500 uppercase">
-              Paid via: <span className="text-slate-900">{currentLevel.invoice.paymentMode}</span>
-            </div>
-          </div>
-        </div>
+      {/* 2. SCROLLABLE CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-40 md:pb-24 scroll-smooth">
+        <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* LEDGER CARD */}
-        <div className="flex-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden flex flex-col">
-          <div className="bg-slate-900 p-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Tally Prime View
-          </div>
-          <div className="p-4 font-mono text-xs text-green-400">
-            <div className="grid grid-cols-4 gap-4 border-b border-slate-600 pb-2 mb-2 text-slate-500">
-              <span>Date</span>
-              <span className="col-span-2">Particulars</span>
-              <span className="text-right">Debit</span>
+          {/* DOCUMENT AREA */}
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+            {/* INVOICE CARD */}
+            <div className="flex-1 bg-slate-100 text-slate-900 rounded-lg shadow-xl overflow-hidden relative border-l-8 border-yellow-500 w-full shrink-0">
+              <div className="bg-yellow-500 p-2 flex justify-between text-xs font-bold">
+                <span>PAYMENT VOUCHER</span>
+                <span>ORIGINAL</span>
+              </div>
+              <div className="p-4 space-y-2">
+                <div className="flex justify-between flex-wrap gap-2">
+                  <h2 className="font-bold text-lg break-words">{currentLevel.invoice.vendor}</h2>
+                  <span className="font-mono text-sm whitespace-nowrap">{currentLevel.invoice.date}</span>
+                </div>
+                <div className="text-xs text-slate-500">{currentLevel.invoice.gstin}</div>
+                <div className="py-2 border-y border-slate-300 my-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="break-words mr-2">{currentLevel.invoice.description}</span>
+                    <span className="font-mono font-bold">₹{currentLevel.invoice.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500 mt-1">
+                    <span>GST (18%)</span>
+                    <span className="font-mono">₹{currentLevel.invoice.tax.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center bg-slate-200 p-2 rounded">
+                  <span className="font-bold text-sm">TOTAL</span>
+                  <span className="font-bold text-xl font-mono">₹{currentLevel.invoice.total.toLocaleString()}</span>
+                </div>
+                <div className="mt-2 text-xs font-bold text-slate-500 uppercase">
+                  Paid via: <span className="text-slate-900">{currentLevel.invoice.paymentMode}</span>
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-4 gap-4 bg-slate-700/50 p-1 rounded">
-              <span>{currentLevel.ledger.date}</span>
-              <span className="col-span-2">{currentLevel.ledger.particulars}</span>
-              <span className="text-right">{(currentLevel.ledger.debit || 0).toLocaleString()}</span>
+
+            {/* LEDGER CARD */}
+            <div className="flex-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden flex flex-col w-full min-h-[300px]">
+              <div className="bg-slate-900 p-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Tally Prime View
+              </div>
+
+              {/* Scrollable Table Container */}
+              <div className="flex-1 p-4 font-mono text-xs text-green-400 overflow-x-auto">
+                <div className="min-w-[400px]"> {/* Force min width to prevent squashing */}
+                  <div className="grid grid-cols-[1fr,2fr,1fr] gap-4 border-b border-slate-600 pb-2 mb-2 text-slate-500">
+                    <span>Date</span>
+                    <span>Particulars</span>
+                    <span className="text-right">Debit</span>
+                  </div>
+                  <div className="grid grid-cols-[1fr,2fr,1fr] gap-4 bg-slate-700/50 p-2 rounded hover:bg-slate-700 transition-colors">
+                    <span>{currentLevel.ledger.date}</span>
+                    <span>{currentLevel.ledger.particulars}</span>
+                    <span className="text-right">{(currentLevel.ledger.debit || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 mt-auto border-t border-slate-700/50">
+                <div className="flex items-start gap-3 text-yellow-500 text-xs bg-yellow-900/10 p-3 rounded border border-yellow-700/30">
+                  <ShieldAlert size={16} className="mt-0.5 shrink-0" />
+                  <span className="leading-relaxed">Verify 40A(3) Compliance and GST Input Credit eligibility.</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="p-4 mt-auto">
-            <div className="flex items-start gap-2 text-yellow-500 text-xs bg-yellow-900/20 p-2 rounded border border-yellow-700/50">
-              <ShieldAlert size={14} className="mt-0.5" />
-              <span>Verify 40A(3) Compliance and GST Input Credit eligibility.</span>
-            </div>
-          </div>
+
+          <div className="h-8 md:h-0"></div> {/* Extra spacer for mobile scroll */}
         </div>
       </div>
 
-      {/* CHECKLIST UI - SINGLE CARD RANDOM POP */}
-      <div className="w-full max-w-4xl px-4 pb-4 z-20">
-        <div className="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="grid grid-cols-[1fr,auto,auto] gap-2 p-3 bg-slate-900/50 border-b border-slate-700 text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <span className="pl-2">Pending Audit Parameter ({auditStep + 1}/{AUDIT_FIELDS.length})</span>
-            <span className="w-24 text-center">Status</span>
-            <span className="w-24 text-center">Action</span>
-          </div>
-
+      {/* 3. CHECKLIST UI & ACTIONS (Fixed Bottom) */}
+      <div className="fixed bottom-0 left-0 w-full bg-slate-800 border-t border-slate-700 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] z-50 p-4 md:p-6 pb-6 safe-area-inset-bottom">
+        <div className="max-w-6xl mx-auto">
           {activeField && (
-            <div key={activeField} className="grid grid-cols-[1fr,auto,auto] gap-4 p-4 items-center animate-in zoom-in-95 duration-300">
-              <span className="font-semibold pl-2 text-lg text-white flex items-center gap-2">
-                {activeField} Check
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              </span>
+            <div className="flex flex-col md:flex-row items-center gap-4 justify-between animate-in slide-in-from-bottom-5 duration-300">
 
-              <div className="flex gap-4">
-                <button
-                  onClick={() => handleStepDecision(activeField, 'VALID')}
-                  className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold bg-slate-700 text-slate-200 hover:bg-green-600 hover:text-white hover:scale-105 transition-all shadow-lg"
-                >
-                  <Check size={16} /> Valid
-                </button>
+              {/* Question / Parameter */}
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                  <Shield size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Pending Audit Parameter ({auditStep + 1}/{AUDIT_FIELDS.length})</p>
+                  <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                    {activeField} Check
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    </span>
+                  </h3>
+                </div>
+              </div>
 
+              {/* Actions */}
+              <div className="flex w-full md:w-auto gap-3">
                 <button
                   onClick={() => handleStepDecision(activeField, 'FRAUD')}
-                  className="flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold bg-slate-700 text-slate-200 hover:bg-red-600 hover:text-white hover:scale-105 transition-all shadow-lg"
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all active:scale-95"
                 >
-                  <AlertCircle size={16} /> Fraud
+                  <AlertCircle size={18} /> Reject
+                </button>
+
+                <button
+                  onClick={() => handleStepDecision(activeField, 'VALID')}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 hover:shadow-blue-500/30 transition-all active:scale-95"
+                >
+                  <Check size={18} /> Verify
                 </button>
               </div>
-
-              <div className="w-6" /> {/* Spacer */}
             </div>
           )}
-
-          <div className="p-2 bg-slate-900/50 text-center text-[10px] text-slate-400">
-            * Verify the displayed parameter. Next check will appear automatically if valid.
-          </div>
         </div>
       </div>
+
+      {/* Victory Confetti Canvas (Invisible but active) */}
+      <canvas id="confetti-canvas" className="fixed inset-0 pointer-events-none z-[100]"></canvas>
 
       {/* --- OVERLAYS --- */}
       {result === 'SUCCESS' && (
@@ -491,8 +510,8 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
               <Check size={40} className="text-white" />
             </div>
-            <h2 className="text-3xl font-bold mb-4 text-white">Audit Certified!</h2>
-            <div className="bg-white/10 p-4 rounded-lg mb-6"><span className="text-xl font-bold">+500 XP</span></div>
+            <h2 className="text-3xl font-bold mb-4 text-white">Promotion Secure!</h2>
+            <p className="text-green-100 text-lg mb-8">You completed the case with perfect accuracy.</p>
             <button onClick={onBack} className="w-full py-3 bg-white text-green-900 rounded-lg font-bold">
               Return to Lobby
             </button>
@@ -503,5 +522,6 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     </div>
   );
 };
+
 
 export default SimulationView;

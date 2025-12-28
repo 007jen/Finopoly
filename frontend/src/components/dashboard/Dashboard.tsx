@@ -287,7 +287,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
 
   return (
     <div className="min-h-full bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30">
-      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 lg:space-y-8">
         {/* Welcome Header */}
         <div className="text-center lg:text-left">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
@@ -351,7 +351,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         </div>
 
         {/* Action Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {actionCards.map((card, index) => {
             const Icon = card.icon;
             return (
