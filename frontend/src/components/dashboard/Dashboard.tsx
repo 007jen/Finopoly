@@ -304,7 +304,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
               <div key={index} className={`bg-gradient-to-br ${stat.bgColor} p-6 lg:p-8 rounded-2xl shadow-lg border border-white/50 hover:shadow-xl transition-all duration-300 group`}>
                 <div className="flex flex-col lg:flex-row items-center lg:items-start lg:justify-between">
                   <div className="text-center lg:text-left mb-4 lg:mb-0">
-                    <p className="text-xs lg:text-sm font-semibold text-gray-600 mb-2">{stat.label}</p>
+                    <div className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 leading-tight">
+                      {stat.label.split(' ').map((word, i) => (
+                        <span key={i} className="block">{word}</span>
+                      ))}
+                    </div>
                     <p className="text-2xl lg:text-3xl font-bold text-gray-900 group-hover:scale-105 transition-transform">{stat.value}</p>
                   </div>
                   <div className={`w-12 lg:w-16 h-12 lg:h-16 bg-gradient-to-br ${stat.color} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle, Shield } from 'lucide-react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAuth } from '../../context/AuthContext';
@@ -62,20 +62,12 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const [result, setResult] = useState<'SUCCESS' | 'FAILURE' | null>(null);
 
   // Animation State
-  const [isShaking, setIsShaking] = useState(false);
 
   // CHECKLIST STATE
   const [auditStep, setAuditStep] = useState(0);
   const [auditOrder, setAuditOrder] = useState<AuditField[]>([]);
   // We don't really need a full record of selections if we are replacing them, 
   // but it might be useful for tracking what happened.
-  const [selections, setSelections] = useState<Record<AuditField, FieldStatus>>({
-    Vendor: null,
-    Date: null,
-    Amount: null,
-    Tax: null,
-    Compliance: null
-  });
 
   const AUDIT_FIELDS: AuditField[] = ['Vendor', 'Date', 'Amount', 'Tax', 'Compliance'];
 
@@ -139,14 +131,6 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
     // 2. Reset Step
     setAuditStep(0);
-    // 3. Reset Selections
-    setSelections({
-      Vendor: null,
-      Date: null,
-      Amount: null,
-      Tax: null,
-      Compliance: null
-    });
   }, [currentLevelIdx]);
 
   useEffect(() => {
@@ -168,6 +152,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
           setResult('FAILURE');
           if (currentLevel) currentLevel.violationReason = "Time's up! Audit incomplete.";
           setGameState('GAME_OVER');
+          logAttempt(false); // Log failure to backend
           return 0;
         }
         return prev - 0.1;
@@ -177,14 +162,6 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     return () => clearInterval(timer);
   }, [gameState, currentLevel]);
 
-  // Shake Effect on Failure
-  useEffect(() => {
-    if (result === 'FAILURE') {
-      setIsShaking(true);
-      const timer = setTimeout(() => setIsShaking(false), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [result]);
 
   const triggerVictoryConfetti = () => {
     const duration = 3000;
@@ -221,46 +198,54 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     isProcessingRef.current = false;
   }, [currentLevelIdx]);
 
+  const logAttempt = async (isSuccess: boolean) => {
+    try {
+      const token = await getToken();
+      await api.post('/api/audit/complete', {
+        caseId,
+        score: isSuccess ? 100 : 0,
+        success: isSuccess
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      refreshUser();
+    } catch (error) {
+      console.error("Failed to log activity:", error);
+    }
+  };
+
   const handleLevelComplete = (success: boolean) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
-    setGameState('RESULT');
-    setResult('SUCCESS');
-    setScore(s => s + 5000);
-    setStreak(s => s + 1);
-    triggerVictoryConfetti(); // BLAST CONFETTI
+    if (success) {
+      setGameState('RESULT');
+      setResult('SUCCESS');
+      setScore(s => s + 5000);
+      setStreak(s => s + 1);
+      triggerVictoryConfetti();
 
-    setTimeout(async () => {
-      if (currentLevelIdx >= levels.length - 1) {
-        setResult(null);
-        setGameState('FINISHED');
-
-        // 3. Frontend (React) - User Requested Logic
-        try {
-          const token = await getToken();
-          await api.post('/api/audit/complete', {}, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          refreshUser(); // Update UI to show new counts
-        } catch (error) {
-          console.error("Failed to complete session:", error);
+      setTimeout(async () => {
+        if (currentLevelIdx >= levels.length - 1) {
+          setResult(null);
+          setGameState('FINISHED');
+          await logAttempt(true);
+        } else {
+          setGameState('PLAYING');
+          setResult(null);
+          setTimeLeft(MAX_TIME);
+          setCurrentLevelIdx(prev => prev + 1);
         }
-      } else {
-        setGameState('PLAYING');
-        setResult(null);
-        setTimeLeft(MAX_TIME);
-        setCurrentLevelIdx(prev => prev + 1);
-        // Lock is reset by the useEffect above
-      }
-    }, 1500);
+      }, 1500);
+    } else {
+      // Failure handled in handleStepDecision or Timer
+    }
   };
 
   const handleStepDecision = (field: AuditField, choice: FieldStatus) => {
     if (gameState !== 'PLAYING' || !currentLevel) return;
 
-    // 1. Record the visual selection
-    setSelections(prev => ({ ...prev, [field]: choice }));
+    // 1. Record the visual selection (logic here if needed)
 
     // 2. Validate IMMEDIATELY
     const isFaultyField = currentLevel.faultyField === field;
@@ -306,6 +291,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
       setStreak(0);
       currentLevel.violationReason = gameOverReason;
       setGameState('GAME_OVER');
+      logAttempt(false); // Log failure to backend
     }
   };
 

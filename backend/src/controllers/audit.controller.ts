@@ -1,6 +1,7 @@
 
 import { Request, Response } from 'express';
 import { AuditService } from '../services/audit.service';
+import { recordActivity } from '../services/activity.service';
 import { prisma } from '../utils/prisma';
 
 export const getPlayableCases = async (req: Request, res: Response) => {
@@ -116,16 +117,22 @@ export const completeSession = async (req: Request, res: Response) => {
 
         // Direct update as requested ("Check my prisma/schema.prisma logic")
         // console.log(`[${reqId}] --> Attempting Prisma Update for:`, userId);
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: {
-                completedSimulations: { increment: 1 },
-                xp: { increment: 100 }
-            }
+
+        const { caseId, score, success = true } = req.body;
+        if (!caseId) {
+            return res.status(400).json({ error: "caseId is required" });
+        }
+
+        const result = await recordActivity({
+            userId,
+            type: 'audit',
+            referenceId: caseId,
+            score: score || 0,
+            success: Boolean(success)
         });
 
-        // console.log(`[${reqId}] --> Prisma Update Result:`, updatedUser);
-        res.json({ message: 'Session completed', user: updatedUser });
+        // console.log(`[${reqId}] --> Activity Recorded Result:`, result);
+        res.json({ message: 'Session completed', ...result });
     } catch (error) {
         console.error('Error completing audit session:', error);
         res.status(500).json({ error: 'Failed to record session completion' });

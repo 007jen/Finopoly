@@ -77,6 +77,7 @@ export const db = {
           avatar: null,
           xp: backendData.xp,
           current_level: backendData.level,
+          daily_streak: backendData.streak || 0,
           created_at: backendData.joinedAt,
           correctAnswers: backendData.correctAnswers || 0,
           totalQuestions: backendData.totalQuestions || 0,

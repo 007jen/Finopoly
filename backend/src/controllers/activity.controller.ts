@@ -43,7 +43,7 @@ export const completeActivity = async (req: Request, res: Response) => {
     }
 
     // PRESENCE VALIDATION
-    const { type, referenceId } = req.body;
+    const { type, referenceId, score } = req.body;
     if (!type || !referenceId) {
         return res.status(400).json({ error: "Missing required fields" });
     }
@@ -58,6 +58,7 @@ export const completeActivity = async (req: Request, res: Response) => {
             userId,
             type,
             referenceId,
+            score: score || 0
         });
 
         return res.json(result);

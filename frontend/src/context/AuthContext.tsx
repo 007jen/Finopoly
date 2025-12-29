@@ -68,7 +68,7 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
             preferredAreas: dbProfile.preferred_areas || [],
             xp: typeof dbProfile.xp === 'number' ? dbProfile.xp : 0,
             currentLevel: typeof dbProfile.current_level === 'number' ? dbProfile.current_level : 1,
-            dailyStreak: typeof dbProfile.daily_streak === 'number' ? dbProfile.daily_streak : 0,
+            dailyStreak: typeof dbProfile.daily_streak === 'number' ? dbProfile.daily_streak : (typeof dbProfile.streak === 'number' ? dbProfile.streak : 0),
             badges: [], // Filled later
             completedSimulations: dbProfile.completedSimulations || 0,
             accuracy: {

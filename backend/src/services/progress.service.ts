@@ -6,8 +6,8 @@ export class ProgressService {
 
     static async getWeeklyXp(userId: string) {
         const now = new Date()
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        const weekStart = startOfWeek(now, { weekStartsOn: 0 });
+        const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
 
         const user = await prisma.user.findUnique({
             where: { id: userId }
@@ -167,79 +167,29 @@ export class ProgressService {
 
 
     static async getSubjectAccuracy(userId: string) {
-        // Query activities that are of type audit, tax, or caselaw
-        // Note: The schema enum is ActivityType. 
-        // We need to cast the string array to the Enum type or let Prisma handle it if the strings match.
-        // Schema: audit, tax, caselaw, quiz
-        const activities = await prisma.activity.findMany({
-            where: {
-                userId,
-                activityType: { in: ["audit", "tax", "caselaw"] }
-            },
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
             select: {
-                activityType: true,
-                score: true
+                auditCorrect: true,
+                auditTotal: true,
+                taxCorrect: true,
+                taxTotal: true,
+                caselawCorrect: true,
+                caselawTotal: true
             }
         });
 
-        // Initialize accumulator
-        const subjects: Record<string, { totalScore: number; attempts: number }> = {
-            audit: { totalScore: 0, attempts: 0 },
-            tax: { totalScore: 0, attempts: 0 },
-            caselaw: { totalScore: 0, attempts: 0 }
+        if (!user) return { audit: 0, tax: 0, caseLaw: 0 };
+
+        const calc = (correct: number, total: number) => {
+            if (total === 0) return 0;
+            return Math.round((correct / total) * 100);
         };
-
-        // Aggregate scores
-        for (const activity of activities) {
-            if (activity.score === null) continue;
-
-            // activity.activityType is the Enum (audit, tax, caselaw) 
-            // capable of being used as index if we trust the return
-            const type = activity.activityType;
-            if (subjects[type]) {
-                subjects[type].totalScore += (activity.score || 0);
-                subjects[type].attempts += 1;
-            }
-        }
-
-        // Helper to format
-        const formatSubject = (subject: { totalScore: number; attempts: number }) => {
-            if (subject.attempts === 0) {
-                // Return 0 if no attempts, but can return null if UI wants to handle "No Data" differently
-                // For now, matching previous behavior of returning numbers
-                return 0; // The UI expects a number percentage
-            }
-            return Math.round(subject.totalScore / subject.attempts);
-        };
-
-        // Update: The UI seems to expect { audit: number, tax: number, ... } 
-        // based on the previous mock: return { audit: 0 ... }
-        // The user's snippet returned objects { accuracy: number, attempts: number }.
-        // I should check what the Frontend expects.
-        // Frontend code: `accuracyData = { audit: subjectData?.audit ?? ... }`
-        // And rendering: `item.accuracy * 2.51` -> implies it expects a simple NUMBER.
-        // User's snippet returned valid object structure but existing frontend code expects number.
-        // Let's stick to returning simple valid numbers for now to avoid breaking Frontend 
-        // OR update to return the object and usage.
-
-        // Wait, looking at Profile/Progress code:
-        // `const accuracyData = { audit: subjectData?.audit ?? ... }`
-        // Then it uses `item.accuracy`.
-        // If subjectData.audit is a number, it works.
-        // If subjectData.audit is { accuracy: 50 }, then accuracyData.audit is that object.
-        // Then `item.accuracy` would be `accuracyData.audit`.
-        // BUT the mapping says: `{[ { subject: 'Audit', accuracy: accuracyData.audit ... } ]}`
-        // So `item.accuracy` becomes the value.
-        // IF `accuracyData.audit` is an object, then inside the map `item.accuracy` is that object.
-        // Then `item.accuracy * 2.51` = Object * 2.51 = NaN.
-
-        // CONCLUSION: The Frontend expects a direct NUMBER for the percentage.
-        // I will adapt the user's logic to return just the percentage number.
 
         return {
-            audit: formatSubject(subjects.audit),
-            tax: formatSubject(subjects.tax),
-            caseLaw: formatSubject(subjects.caselaw) // Note: camelCase 'caseLaw' in frontend vs 'caselaw' in DB/enum
+            audit: calc(user.auditCorrect, user.auditTotal),
+            tax: calc(user.taxCorrect, user.taxTotal),
+            caseLaw: calc(user.caselawCorrect, user.caselawTotal)
         };
     }
     static async getDailyGoals(userId: string) {
@@ -338,8 +288,8 @@ export class ProgressService {
 
     static async getWeeklyGoals(userId: string) {
         const now = new Date();
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+        const weekStart = startOfWeek(now, { weekStartsOn: 0 });
+        const weekEnd = endOfWeek(now, { weekStartsOn: 0 });
 
         // Fetch User (for Streak) and Weekly Activities
         const user = await prisma.user.findUnique({

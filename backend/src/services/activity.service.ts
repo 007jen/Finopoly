@@ -100,10 +100,14 @@ export async function recordActivity({
     userId,
     type,
     referenceId,
+    score = 0,
+    success = true,
 }: {
     userId: string;
     type: ActivityType;
     referenceId: string;
+    score?: number;
+    success?: boolean;
 }) {
     return prisma.$transaction(async (tx) => {
         // 🔒 Re-fetch user INSIDE transaction
@@ -161,7 +165,12 @@ export async function recordActivity({
                 throw new Error("Unsupported activity type");
         }
 
-        // 📅 STREAK LOGIC (UTC DAY BASED)
+        // � HANDLE FAILURE: No XP reward on failure
+        if (!success) {
+            xpReward = 0;
+        }
+
+        // �📅 STREAK LOGIC (UTC DAY BASED)
         const today = toUTCDay(new Date());
         const lastDay = user.lastActivityDate
             ? toUTCDay(user.lastActivityDate)
@@ -187,7 +196,7 @@ export async function recordActivity({
                 activityType: type,
                 activityId: referenceId,
                 xpEarned: xpReward,
-                score: 0,
+                score,
             },
         });
 
@@ -200,7 +209,15 @@ export async function recordActivity({
                 xp: { increment: xpReward },
                 streak: newStreak,
                 lastActivityDate: new Date(),
-                completedSimulations: isSimulation ? { increment: 1 } : undefined
+                completedSimulations: (isSimulation && success) ? { increment: 1 } : undefined,
+
+                // Update Subject Counters
+                auditCorrect: (type === 'audit' && success) ? { increment: 1 } : undefined,
+                auditTotal: (type === 'audit') ? { increment: 1 } : undefined,
+                taxCorrect: (type === 'tax' && success) ? { increment: 1 } : undefined,
+                taxTotal: (type === 'tax') ? { increment: 1 } : undefined,
+                caselawCorrect: (type === 'caselaw' && success) ? { increment: 1 } : undefined,
+                caselawTotal: (type === 'caselaw') ? { increment: 1 } : undefined,
             },
         });
 

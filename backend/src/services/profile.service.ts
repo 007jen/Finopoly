@@ -8,7 +8,7 @@ export class ProfileService {
                 xp: true,
                 createdAt: true,
                 correctAnswers: true,
-
+                streak: true,
                 totalQuestions: true,
                 completedSimulations: true,
             },
@@ -26,7 +26,7 @@ export class ProfileService {
             xpToNextLevel: Math.max(nextLevelThreshold - user.xp, 0),
             joinedAt: user.createdAt,
             correctAnswers: user.correctAnswers,
-
+            streak: user.streak,
             totalQuestions: user.totalQuestions,
             completedSimulations: user.completedSimulations
         };
