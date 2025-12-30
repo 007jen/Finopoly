@@ -5,8 +5,8 @@ interface AccuracyState {
     correctAnswers: number;
     totalAnswers: number;
     accuracy: number;
-    incrementCorrect: () => void;
-    incrementTotal: () => void;
+    incrementCorrect: (localOnly?: boolean) => void;
+    incrementTotal: (localOnly?: boolean) => void;
     resetAccuracy: () => void;
 }
 
@@ -85,15 +85,15 @@ export const AccuracyProvider = ({ children }: { children: React.ReactNode }) =>
         }
     }
 
-    const incrementCorrect = () => {
+    const incrementCorrect = (localOnly: boolean = false) => {
         setCorrect((prev) => prev + 1);
         setTotal((prev) => prev + 1);
-        syncWithBackend(true);
+        if (!localOnly) syncWithBackend(true);
     };
 
-    const incrementTotal = () => {
+    const incrementTotal = (localOnly: boolean = false) => {
         setTotal((prev) => prev + 1);
-        syncWithBackend(false);
+        if (!localOnly) syncWithBackend(false);
     };
 
     const resetAccuracy = () => {

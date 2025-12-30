@@ -12,7 +12,8 @@ import caseReviewRoutes from "./routes/caseReview.routes";
 import progressRoutes from "./routes/progress.routes";
 import profileRoutes from "./routes/profile.routes";
 import auditRoutes from "./routes/audit.routes";
-
+import challengeRoutes from "./routes/challenge.routes";
+import adminChallengeRoutes from "./routes/adminChallenge.routes";
 const app = express();
 app.post(
     "/api/webhooks/clerk",
@@ -59,7 +60,8 @@ app.use("/api/admin", caseReviewRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/audit", auditRoutes);
-
+app.use('/api/challenges', challengeRoutes);
+app.use('/api/admin/challenges', adminChallengeRoutes);
 // console.log("Case routes mounted");
 console.log("Progress routes mounted");
 console.log("Profile routes mounted");

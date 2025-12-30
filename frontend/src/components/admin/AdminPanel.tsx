@@ -4,7 +4,7 @@
 // Uses Mock Data for analytics when DB is unconnected.
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard as Edit, Trash2, Upload, Users, BarChart3, FileText, Scale, Save, X, Calculator, Target, BookOpen, Image, File } from 'lucide-react';
+import { Upload, Users, BarChart3, FileText, Save, X, Target, Image, File } from 'lucide-react';
 import UserManagement from './UserManagement';
 import ContentManagement from './ContentManagement';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
@@ -13,17 +13,7 @@ import { api } from '../../lib/api';
 // --- Safe Configuration ---
 const ADMIN_KEY_ENV = import.meta.env.VITE_ADMIN_KEY || 'FINOPOLY_ADMIN_2024';
 
-interface ContentItem {
-  id: string;
-  title: string;
-  type: 'simulation' | 'case-study' | 'mcq';
-  module: 'audit' | 'tax' | 'caselaw';
-  difficulty: 'Beginner' | 'Intermediate' | 'Pro';
-  content: any;
-  files?: string[];
-  created: string;
-  status: 'draft' | 'published';
-}
+
 
 const AdminPanel: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -32,8 +22,6 @@ const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'content' | 'files' | 'analytics' | 'users'>('content');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { getToken } = useClerkAuth();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
 
   const [newContent, setNewContent] = useState({
     title: '',
@@ -291,14 +279,14 @@ const AdminPanel: React.FC = () => {
   );
 
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600 text-lg">Manage content, users, and monitor platform performance</p>
+    <div className="p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-screen">
+      <div className="mb-8 text-center sm:text-left">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600 text-base sm:text-lg">Manage content, users, and monitor platform performance</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-white/80 backdrop-blur-sm p-1 rounded-xl mb-8 w-fit shadow-lg border border-white/50">
+      <div className="flex flex-wrap gap-1 bg-white/80 backdrop-blur-sm p-1 rounded-xl mb-8 w-full sm:w-fit shadow-lg border border-white/50">
         {[
           { id: 'content', label: 'Content', icon: FileText },
           { id: 'files', label: 'Files', icon: Upload },
@@ -310,7 +298,7 @@ const AdminPanel: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 font-semibold ${activeTab === tab.id
+              className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all duration-200 font-semibold text-sm sm:text-base ${activeTab === tab.id
                 ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
@@ -332,10 +320,10 @@ const AdminPanel: React.FC = () => {
 
       {/* Create Content Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Create New Content</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Create New Content</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"

@@ -161,6 +161,17 @@ export async function recordActivity({
                 break;
             }
 
+            case "challenge": {
+                const challenge = await tx.analystChallenge.findUnique({
+                    where: { id: referenceId },
+                });
+                if (!challenge) {
+                    throw new Error("Invalid challenge");
+                }
+                xpReward = challenge.xpReward;
+                break;
+            }
+
             default:
                 throw new Error("Unsupported activity type");
         }
@@ -210,6 +221,10 @@ export async function recordActivity({
                 streak: newStreak,
                 lastActivityDate: new Date(),
                 completedSimulations: (isSimulation && success) ? { increment: 1 } : undefined,
+
+                // Update General Counters
+                correctAnswers: success ? { increment: 1 } : undefined,
+                totalQuestions: { increment: 1 },
 
                 // Update Subject Counters
                 auditCorrect: (type === 'audit' && success) ? { increment: 1 } : undefined,

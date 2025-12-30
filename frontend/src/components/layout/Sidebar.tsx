@@ -13,7 +13,6 @@ import {
   Shield,
   ChevronDown,
   BookOpen,
-  Target,
   Menu,
   X
 } from 'lucide-react';
@@ -31,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'quiz-arena', label: 'Quiz Arena', icon: Zap },
+    { id: 'quiz-arena', label: 'Quiz Arcade', icon: Zap },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'progress', label: 'Progress', icon: TrendingUp },
     { id: 'profile', label: 'Profile', icon: User },

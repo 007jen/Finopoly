@@ -16,27 +16,30 @@ export const xpService = {
      * Dispatches a custom event that the XPProvider listens to.
      * @param amount - Amount of XP to add
      * @param source - The source/reason for the XP (e.g., "Daily Login")
+     * @param localOnly - If true, only updates the UI (optimistically) without calling the backend API.
      */
-    increment: async (amount: number, source: string = 'Unknown') => {
+    increment: async (amount: number, source: string = 'Unknown', localOnly: boolean = false) => {
         // Log intent
-        console.log(`[XP] Incrementing ${amount} XP from: ${source}`);
+        console.log(`[XP] Incrementing ${amount} XP from: ${source} (LocalOnly: ${localOnly})`);
 
         // API Call
-        if (getTokenFn) {
-            try {
-                const token = await getTokenFn();
-                if (token) {
-                    await api.post('/api/progress/xp', { amount, source }, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                } else {
-                    console.warn('[XP] No token available for sync');
+        if (!localOnly) {
+            if (getTokenFn) {
+                try {
+                    const token = await getTokenFn();
+                    if (token) {
+                        await api.post('/api/progress/xp', { amount, source }, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                    } else {
+                        console.warn('[XP] No token available for sync');
+                    }
+                } catch (err) {
+                    console.error("[XP] Failed to sync with server:", err);
                 }
-            } catch (err) {
-                console.error("[XP] Failed to sync with server:", err);
+            } else {
+                console.warn('[XP] Token getter not initialized');
             }
-        } else {
-            console.warn('[XP] Token getter not initialized');
         }
 
         // Dispatch event to window (Optimistic UI update)

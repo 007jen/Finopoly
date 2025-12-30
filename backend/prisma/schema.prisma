@@ -18,22 +18,40 @@ enum Role {
   admin
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 enum Difficulty {
   Beginner
   Intermediate
   Pro
 }
 
+// ✅ Safe: Only affects the Analyst Drill module
+enum DrillDifficulty {
+  JUNIOR
+  SENIOR
+  PARTNER
+}
+
+enum DrillAnswerType {
+  NUMBER
+  TEXT
+}
+
 // ============================================================
 //  USER MODEL
 // ============================================================
 model User {
-  id      String  @id @default(uuid())
-  clerkId String  @unique
-  email   String  @unique
+  id      String     @id @default(uuid())
+  clerkId String     @unique
+  email   String     @unique
   name    String?
   avatar  String?
-  role    Role    @default(student)
+  role    Role       @default(student)
+  status  UserStatus @default(ACTIVE)
 
   xp               Int       @default(0)
   streak           Int       @default(0)
@@ -64,9 +82,11 @@ model User {
   caseSubmissions CaseSubmission[]
 
   // Content created by Admin
-  auditCases     AuditCase[]
-  taxSimulations TaxSimulation[]
-  caseLaws       CaseLaw[]
+  auditCases        AuditCase[]
+  taxSimulations    TaxSimulation[]
+  caseLaws          CaseLaw[]
+  challengeAttempts ChallengeAttempt[]
+  createdDrills     AnalystChallenge[] @relation("AdminCreatedDrills")
 
   @@index([xp])
 }
@@ -186,6 +206,7 @@ enum ActivityType {
   tax
   caselaw
   quiz
+  challenge
 }
 
 model Activity {
@@ -229,4 +250,68 @@ model CaseSubmission {
   @@unique([caseId, userId])
   @@index([caseId])
   @@index([userId])
+}
+
+// ============================================================
+//  CHALLENGE CONTENT
+// ============================================================
+// 1. The Content Model (Managed by Admin)
+model AnalystChallenge {
+  id              String  @id @default(uuid())
+  title           String
+  slug            String  @unique
+  description     String
+  richTextContext String? @db.Text
+  isActive        Boolean @default(false)
+
+  // Settings (Using the Safe Enums)
+  difficulty DrillDifficulty @default(JUNIOR)
+  xpReward   Int             @default(150)
+
+  // Media
+  chartUrl   String?
+  datasetUrl String?
+  videoUrl   String
+
+  // Logic
+  question     String
+  instructions String          @default("") // Detailed steps for the analyst
+  answerType   DrillAnswerType @default(NUMBER)
+  correctVal   String
+  tolerance    Float?          @default(0.5)
+
+  // Admin Attribution (Single source of truth)
+  createdBy String?
+  creator   User?   @relation("AdminCreatedDrills", fields: [createdBy], references: [id])
+
+  attempts ChallengeAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// 2. The Progress Model (Tracked per User)
+model ChallengeAttempt {
+  id String @id @default(uuid())
+
+  // Relations
+  userId      String
+  challengeId String
+  user        User             @relation(fields: [userId], references: [clerkId])
+  challenge   AnalystChallenge @relation(fields: [challengeId], references: [id])
+
+  // State
+  isCorrect Boolean @default(false)
+  userInput String
+  attempts  Int     @default(1)
+
+  unlockedVideo Boolean @default(false)
+
+  // Timestamps
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, challengeId])
 }

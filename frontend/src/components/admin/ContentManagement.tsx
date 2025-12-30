@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CreditCard as Edit, Trash2, Save, X, FileText, Scale, Calculator } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Save, X, FileText, Scale, Calculator, Zap, Eye } from 'lucide-react';
+import { ContextPanel } from '../Challenges/ContextPanel';
 import { db } from '../../lib/database';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { api } from '../../lib/api';
 
-type ContentType = 'caselaw' | 'audit' | 'tax';
+type ContentType = 'caselaw' | 'audit' | 'tax' | 'arcade';
 
 const ContentManagement: React.FC = () => {
   const { getToken } = useClerkAuth();
@@ -42,6 +43,18 @@ const ContentManagement: React.FC = () => {
           company: item.companyName
         }));
 
+      } else if (contentType === 'arcade') {
+        const token = await getToken();
+        const rawData = await api.get<any[]>('/api/admin/challenges', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        data = rawData.map((item: any) => ({
+          ...item,
+          xp_reward: item.xpReward,
+          is_active: item.isActive,
+          difficulty: item.difficulty.charAt(0) + item.difficulty.slice(1).toLowerCase() // Map JUNIOR -> Junior
+        }));
       } else {
         data = await db.getTaxSimulations();
       }
@@ -62,6 +75,11 @@ const ContentManagement: React.FC = () => {
       } else if (contentType === 'audit') {
         const token = await getToken();
         await api.delete(`/api/audit/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } else if (contentType === 'arcade') {
+        const token = await getToken();
+        await api.delete(`/api/admin/challenges/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       } else {
@@ -127,63 +145,106 @@ const ContentManagement: React.FC = () => {
             headers: { 'Authorization': `Bearer ${token}` }
           });
         }
+      } else if (contentType === 'arcade') {
+        const token = await getToken();
+
+        // Map back to camelCase for backend
+        const payload = {
+          title: formData.title,
+          slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
+          description: formData.description,
+          richTextContext: formData.richTextContext || null,
+          isActive: formData.is_active,
+          difficulty: formData.difficulty.toUpperCase(), // Map Junior -> JUNIOR
+          xpReward: formData.xp_reward,
+          chartUrl: formData.chartUrl || null,
+          datasetUrl: formData.datasetUrl || null,
+          videoUrl: formData.videoUrl,
+          question: formData.question,
+          instructions: formData.instructions,
+          answerType: formData.answerType || 'NUMBER',
+          correctVal: formData.correctVal,
+          tolerance: formData.answerType === 'NUMBER' ? (formData.tolerance || 0) : null
+        };
+
+        if (editingItem && editingItem.id) {
+          await api.put(`/api/admin/challenges/${editingItem.id}`, payload, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } else {
+          await api.post('/api/admin/challenges', payload, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        }
       } else {
         await db.createTaxSimulation(formData, 'legacy-user-id');
       }
       setShowForm(false);
       setEditingItem(null);
       loadContent();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving:', error);
-      alert('Error saving item');
+      // If our api utility worked, error.message will contain the stringified error object or the text.
+      const errMsg = error.message || String(error);
+      alert('Error saving failed:\n' + errMsg);
     }
   };
 
 
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Content Management</h1>
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Content Management</h1>
         <button
           onClick={handleNew}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold"
+          className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-semibold shadow-md active:scale-95 transition-transform"
         >
           <Plus className="w-5 h-5" />
           Add New
         </button>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-wrap gap-2 sm:gap-4 mb-6">
         <button
           onClick={() => setContentType('caselaw')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors ${contentType === 'caselaw'
-            ? 'bg-blue-600 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
+          className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${contentType === 'caselaw'
+            ? 'bg-blue-600 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-100 shadow-sm'
             }`}
         >
-          <Scale className="w-5 h-5" />
+          <Scale className="w-4 h-4 sm:w-5 sm:h-5" />
           Case Laws
         </button>
         <button
           onClick={() => setContentType('audit')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors ${contentType === 'audit'
-            ? 'bg-blue-600 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
+          className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${contentType === 'audit'
+            ? 'bg-blue-600 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-100 shadow-sm'
             }`}
         >
-          <FileText className="w-5 h-5" />
+          <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
           Audit Cases
         </button>
         <button
           onClick={() => setContentType('tax')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors ${contentType === 'tax'
-            ? 'bg-blue-600 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
+          className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${contentType === 'tax'
+            ? 'bg-blue-600 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-100 shadow-sm'
             }`}
         >
-          <Calculator className="w-5 h-5" />
+          <Calculator className="w-4 h-4 sm:w-5 sm:h-5" />
           Tax Simulations
+        </button>
+        <button
+          onClick={() => setContentType('arcade')}
+          className={`flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all text-sm sm:text-base ${contentType === 'arcade'
+            ? 'bg-blue-600 text-white shadow-md'
+            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-100 shadow-sm'
+            }`}
+        >
+          <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
+          Analyst Drills
         </button>
       </div>
 
@@ -192,8 +253,8 @@ const ContentManagement: React.FC = () => {
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Title</th>
@@ -210,8 +271,8 @@ const ContentManagement: React.FC = () => {
                     <div className="font-semibold text-gray-900">{item.title}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${item.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
-                      item.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${(item.difficulty === 'Beginner' || item.difficulty === 'Junior') ? 'bg-green-100 text-green-700' :
+                      (item.difficulty === 'Intermediate' || item.difficulty === 'Senior') ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
                       }`}>
                       {item.difficulty}
@@ -273,7 +334,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
   const [formData, setFormData] = useState(
     item || {
       title: '',
-      difficulty: 'Beginner',
+      difficulty: contentType === 'arcade' ? 'Junior' : 'Beginner',
       xp_reward: 100,
       is_active: true,
       facts: '',
@@ -293,9 +354,20 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
       violationReason: '',
       faultyField: '',
       invoiceDetails: { vendor: "", amount: 0, tax: 0, total: 0, date: '', invoiceNo: '', description: '', paymentMode: 'BANK', gstin: '' },
-      ledgerDetails: { particulars: "", debit: 0, date: '', vchType: 'Journal', vchNo: '' }
+      ledgerDetails: { particulars: "", debit: 0, date: '', vchType: 'Journal', vchNo: '' },
+      // Arcade Defaults
+      slug: '',
+      richTextContext: '',
+      chartUrl: '',
+      datasetUrl: '',
+      videoUrl: '',
+      instructions: '',
+      answerType: 'NUMBER',
+      correctVal: '',
+      tolerance: 0.5
     }
   );
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -309,13 +381,13 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl my-8">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-2xl my-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
             {item ? 'Edit' : 'Create New'} {contentType === 'caselaw' ? 'Case Law' : contentType === 'audit' ? 'Audit Case' : 'Tax Simulation'}
           </h2>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -325,7 +397,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
             <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
             <input
               type="text"
-              value={formData.title}
+              value={formData.title || ''}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -336,13 +408,23 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Difficulty</label>
               <select
-                value={formData.difficulty}
+                value={formData.difficulty || 'Beginner'}
                 onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               >
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Pro">Pro</option>
+                {contentType !== 'arcade' ? (
+                  <>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Pro">Pro</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Junior">Junior</option>
+                    <option value="Senior">Senior</option>
+                    <option value="Partner">Partner</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -350,11 +432,24 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               <label className="block text-sm font-semibold text-gray-700 mb-2">XP Reward</label>
               <input
                 type="number"
-                value={formData.xp_reward}
-                onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) })}
+                value={formData.xp_reward || 0}
+                onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) || 0 })}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
               />
+            </div>
+
+            <div className="flex items-center gap-2 pt-8">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="is_active" className="text-sm font-semibold text-gray-700">
+                Active / Published
+              </label>
             </div>
           </div>
 
@@ -364,7 +459,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
                 <input
                   type="text"
-                  value={formData.category}
+                  value={formData.category || ''}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -374,7 +469,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Facts</label>
                 <textarea
-                  value={formData.facts}
+                  value={formData.facts || ''}
                   onChange={(e) => setFormData({ ...formData, facts: e.target.value })}
                   required
                   rows={4}
@@ -385,7 +480,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Question</label>
                 <textarea
-                  value={formData.question}
+                  value={formData.question || ''}
                   onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                   required
                   rows={2}
@@ -412,7 +507,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Correct Answer</label>
                 <input
                   type="text"
-                  value={formData.correct_answer}
+                  value={formData.correct_answer || ''}
                   onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -422,7 +517,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Explanation</label>
                 <textarea
-                  value={formData.explanation}
+                  value={formData.explanation || ''}
                   onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
                   required
                   rows={3}
@@ -438,7 +533,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Company</label>
                 <input
                   type="text"
-                  value={formData.company}
+                  value={formData.company || ''}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
@@ -448,7 +543,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                 <textarea
-                  value={formData.description}
+                  value={formData.description || ''}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
                   rows={4}
@@ -460,8 +555,8 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Time Limit (minutes)</label>
                 <input
                   type="number"
-                  value={formData.time_limit}
-                  onChange={(e) => setFormData({ ...formData, time_limit: parseInt(e.target.value) })}
+                  value={formData.time_limit || 0}
+                  onChange={(e) => setFormData({ ...formData, time_limit: parseInt(e.target.value) || 0 })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -591,12 +686,23 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
             </>
           )}
 
-          {contentType === 'tax' && (
+          {contentType === 'arcade' && (
             <>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Slug (URL identifier)</label>
+                <input
+                  type="text"
+                  value={formData.slug || ''}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  placeholder="e.g. turning-bullish-07"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                 <textarea
-                  value={formData.description}
+                  value={formData.description || ''}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
                   rows={3}
@@ -605,14 +711,115 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Scenario</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Rich Text Context (Optional)</label>
                 <textarea
-                  value={formData.scenario}
-                  onChange={(e) => setFormData({ ...formData, scenario: e.target.value })}
-                  required
+                  value={formData.richTextContext || ''}
+                  onChange={(e) => setFormData({ ...formData, richTextContext: e.target.value })}
                   rows={4}
+                  placeholder="Additional context or background information..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Chart URL</label>
+                  <input
+                    type="url"
+                    value={formData.chartUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, chartUrl: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Dataset URL</label>
+                  <input
+                    type="url"
+                    value={formData.datasetUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, datasetUrl: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    placeholder="Direct .csv link (Raw)"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-wider">
+                    Must be a DIRECT link (e.g. GitHub Raw or GSheets /export?format=csv)
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Video URL (Solution)</label>
+                <input
+                  type="url"
+                  value={formData.videoUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Instructions</label>
+                <textarea
+                  value={formData.instructions || ''}
+                  onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                  required
+                  rows={4}
+                  placeholder="Step-by-step instructions for the analyst..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h3 className="font-bold text-gray-900 mb-4">Verification Logic</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Question</label>
+                    <input
+                      type="text"
+                      value={formData.question || ''}
+                      onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Answer Type</label>
+                      <select
+                        value={formData.answerType || 'NUMBER'}
+                        onChange={(e) => setFormData({ ...formData, answerType: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="NUMBER">Number</option>
+                        <option value="TEXT">Text</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Correct Value</label>
+                      <input
+                        type="text"
+                        value={formData.correctVal || ''}
+                        onChange={(e) => setFormData({ ...formData, correctVal: e.target.value })}
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {formData.answerType === 'NUMBER' && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Tolerance (±)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.tolerance || 0}
+                        onChange={(e) => setFormData({ ...formData, tolerance: parseFloat(e.target.value) || 0 })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -625,6 +832,16 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
               <Save className="w-5 h-5" />
               Save
             </button>
+            {contentType === 'arcade' && (
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                className="flex-1 bg-teal-50 text-teal-700 px-6 py-3 rounded-xl hover:bg-teal-100 transition-colors font-semibold flex items-center justify-center gap-2"
+              >
+                <Eye className="w-5 h-5" />
+                Preview
+              </button>
+            )}
             <button
               type="button"
               onClick={onCancel}
@@ -635,6 +852,26 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
           </div>
         </form>
       </div>
+
+      {/* ARCADE PREVIEW MODAL */}
+      {showPreview && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl relative">
+            <button
+              onClick={() => setShowPreview(false)}
+              className="absolute top-6 right-6 z-10 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-all"
+            >
+              <X className="w-6 h-6 text-gray-900" />
+            </button>
+            <div className="p-8">
+              <ContextPanel challenge={{ ...formData, id: 'preview-id' }} />
+              <div className="text-center pb-10">
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">End of Preview</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { XPProvider } from './_xp/xp-provider';
 import { AccuracyProvider } from './_accuracy/accuracy-context';
 import { LeaderboardProvider } from './context/LeaderboardContext';
+import { ChallengePage } from './Pages/ChallengePage';
 import LoginPage from './components/auth/LoginPage';
 import OnboardingModal from './components/auth/OnboardingModal';
 import Sidebar from './components/layout/Sidebar';
@@ -27,6 +28,7 @@ const AppContent: React.FC = () => {
   const { showOnboarding, user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(window.location.pathname.toLowerCase().includes('/admin') ? 'admin' : 'dashboard');
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
+  const [currentChallengeId, setCurrentChallengeId] = useState<string | null>(null);
   const [currentCaseDetail, setCurrentCaseDetail] = useState<string | null>(null);
 
   if (loading || !user) {
@@ -57,6 +59,16 @@ const AppContent: React.FC = () => {
 
   const handleCloseCaseDetail = () => {
     setCurrentCaseDetail(null);
+  };
+
+  const handleStartChallenge = (challengeId: string) => {
+    setCurrentChallengeId(challengeId);
+    setActiveTab('challenge-detail');
+  };
+
+  const handleBackToChallenges = () => {
+    setCurrentChallengeId(null);
+    setActiveTab('quiz-arena');
   };
 
   const renderContent = () => {
@@ -99,13 +111,21 @@ const AppContent: React.FC = () => {
       case 'tax-cases':
         return <div className="flex items-center justify-center min-h-[60vh]"><h2 className="text-2xl font-bold text-gray-900">Tax Cases Coming Soon</h2></div>;
       case 'quiz-arena':
-        return <QuizArena />;
+        return <QuizArena onStartDrill={handleStartChallenge} />;
       case 'leaderboard':
         return <Leaderboard />;
       case 'progress':
         return <ProgressModule />;
       case 'profile':
         return <ProfilePage />;
+      case 'challenge-detail':
+        return currentChallengeId ? (
+          <ChallengePage
+            id={currentChallengeId}
+            onBack={handleBackToChallenges}
+            onNext={(nextId: string) => setCurrentChallengeId(nextId)}
+          />
+        ) : <Dashboard setActiveTab={setActiveTab} />;
       default:
         return <Dashboard setActiveTab={setActiveTab} />;
     }

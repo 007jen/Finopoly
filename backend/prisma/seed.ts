@@ -74,8 +74,54 @@ async function main() {
         });
     }
 
+    // Seed Analyst Challenges
+    const challenge1 = await prisma.analystChallenge.upsert({
+        where: { slug: "turning-bullish-07" },
+        update: {},
+        create: {
+            id: "turning-bullish-07",
+            title: "Turning Bullish",
+            slug: "turning-bullish-07",
+            description: "Your dataset contains daily closing prices for the SPDR S&P 500 ETF Trust (SPY) over the last 5 years. Your task is to calculate moving averages and identify 'Golden Cross' moments.",
+            difficulty: "JUNIOR",
+            isActive: true,
+            xpReward: 150,
+            chartUrl: "https://images.unsplash.com/photo-1611974717482-aa866a7b3dbd?q=80&w=2070&auto=format&fit=crop",
+            datasetUrl: "https://raw.githubusercontent.com/dataprofessor/data/master/iris.csv",
+            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            question: "What was the close price on the date of the most recent 'golden cross'? (numbers only, no currency symbols)",
+            instructions: "1. 50-day moving average: The average closing price for the last 50 trading days, calculated for each date.\n2. 200-day moving average: The average closing price for the last 200 trading days, calculated for each date.\n3. Golden Cross: A binary field (1/0) that equals 1 only on the exact date when the 50-day average crosses from below the 200-day average; otherwise 0.",
+            answerType: "NUMBER",
+            correctVal: "145.50",
+            tolerance: 0.5
+        }
+    });
+
+    const challenge2 = await prisma.analystChallenge.upsert({
+        where: { slug: "profitability-pulse-08" },
+        update: {},
+        create: {
+            id: "profitability-pulse-08",
+            title: "Profitability Pulse",
+            slug: "profitability-pulse-08",
+            description: "Analyze gross margin trends and identify operating leverage shifts. Understand how variable costs impact bottom-line scalability.",
+            difficulty: "SENIOR",
+            isActive: true,
+            xpReward: 250,
+            chartUrl: "https://images.unsplash.com/photo-1543286386-713bcd549661?q=80&w=2070&auto=format&fit=crop",
+            datasetUrl: "https://raw.githubusercontent.com/dataprofessor/data/master/iris.csv",
+            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            question: "What is the Year-over-Year (YoY) percentage growth in Gross Profit for the Q3 2023 period?",
+            instructions: "1. Calculate Revenue and COGS for Q3 2022 and Q3 2023.\n2. Determine Gross Profit for both periods.\n3. Apply the growth formula: (New - Old) / Old * 100.",
+            answerType: "NUMBER",
+            correctVal: "12.4",
+            tolerance: 0.1
+        }
+    });
+
     console.log("Admin user seeded");
     console.log("Cases seeded: ", case1.title, case2.title);
+    console.log("Analyst Challenges seeded: ", challenge1.title);
     console.log("Badges seeded: ", badges.map(b => b.name).join(", "));
 }
 

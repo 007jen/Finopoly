@@ -9,41 +9,67 @@ type RequestOptions = RequestInit & {
     headers?: Record<string, string>;
 };
 
-// 2. The Internal Helper function
+// 2. NEW HELPER: Get the Clerk Token from the browser window (Global Access)
+/**
+ * Retrieves the Clerk JWT token directly from the window object.
+ * This allows our API utility to stay "authenticated" without being 
+ * deeply tied to the React lifecycle.
+ */
+const getClerkToken = async () => {
+    if (typeof window !== 'undefined' && (window as any).Clerk) {
+        const session = (window as any).Clerk.session;
+        if (session) {
+            return await session.getToken();
+        }
+    }
+    return null;
+};
+
+// 3. The Internal Helper function
 async function internalFetch<T>(url: string, options: RequestOptions = {}): Promise<T> {
     const fullUrl = url.startsWith("http") ? url : `${BASE_URL}${url}`;
 
-    const headers = {
+    // 🛑 FETCH TOKEN: Get valid session token
+    const token = await getClerkToken();
+
+    const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        ...options.headers,
+        ...(options.headers as Record<string, string> || {}),
     };
+
+    // 📧 STAMP HEADER: Add Bearer token if session exists
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
 
     const config: RequestInit = {
         ...options,
         headers,
-        credentials: "include", // CRITICAL: This sends cookies/sessions to the backend
+        credentials: "include", // Essential for cookie/session support
     };
 
-    console.log("🚀 DEBUG: Fetching URL:", fullUrl); // <--- ADD THIS LINE
-    console.log("🚀 DEBUG: Full Config:", config); // <--- ADD THIS LINE
-    try {
-        const response = await fetch(fullUrl, config);
-    }
-    catch (error) {
-
-    }
-
     try {
         const response = await fetch(fullUrl, config);
 
-        // 3. Handle 4xx and 5xx errors (Fetch doesn't do this automatically!)
+        // 4. Handle 4xx and 5xx errors
         if (!response.ok) {
-            // Try to parse JSON error, fallback to empty object if fails
+            // Specialized 401 logging
+            if (response.status === 401) {
+                console.warn("🔐 API 401: Unauthorized - Token might be expired or missing.");
+            }
+
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `API Error: ${response.statusText}`);
+
+            // Extract and format the error message
+            let rawError = errorData.error || errorData.message || `API Error: ${response.statusText}`;
+            if (typeof rawError === 'object') {
+                rawError = JSON.stringify(rawError);
+            }
+
+            throw new Error(rawError);
         }
 
-        // 4. Handle Empty Responses (like 204 No Content)
+        // 5. Handle Empty Responses (like 204 No Content)
         if (response.status === 204) {
             return {} as T;
         }
@@ -51,7 +77,7 @@ async function internalFetch<T>(url: string, options: RequestOptions = {}): Prom
         return await response.json();
     } catch (error) {
         console.error("API Request Failed:", error);
-        throw error; // Re-throw so your UI knows something went wrong
+        throw error;
     }
 }
 
