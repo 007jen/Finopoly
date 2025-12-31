@@ -3,6 +3,7 @@ import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { Lock, Play, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../lib/api'; // Your API helper
 import { xpService } from '../../_xp/xp-service';
+import confetti from 'canvas-confetti';
 
 interface ChallengeResponse {
     success: boolean;
@@ -17,6 +18,45 @@ export const ActionPanel = ({ challenge, onUpdate }: any) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+
+    const triggerCelebration = () => {
+        const duration = 3 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+        const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+        // Money shapes
+        const scalar = 2;
+        const money = confetti.shapeFromText({ text: '💵', scalar });
+        const bag = confetti.shapeFromText({ text: '💰', scalar });
+        const coins = confetti.shapeFromText({ text: '💸', scalar });
+
+        const interval: any = setInterval(function () {
+            const timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+
+            const particleCount = 50 * (timeLeft / duration);
+            // since particles fall down, start a bit higher than random
+            confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                shapes: [money, bag, coins],
+                colors: ['#2dd4bf', '#fbbf24', '#ffffff'] // teal, gold, white
+            });
+            confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                shapes: [money, bag, coins],
+                colors: ['#2dd4bf', '#fbbf24', '#ffffff']
+            });
+        }, 250);
+    };
 
     const isUnlocked = challenge.userStatus?.unlocked;
 
@@ -33,6 +73,7 @@ export const ActionPanel = ({ challenge, onUpdate }: any) => {
                 // This triggers the XP bar to slide upward instantly.
                 xpService.increment(challenge.xpReward || 150, `Drill: ${challenge.title}`, true);
 
+                triggerCelebration(); // 💸 Money Fireworks!
                 onUpdate(res.videoUrl); // Pass the video URL back up to parent
                 incrementCorrect(true); // 🎯 Accuracy Sync (Local Only)
             } else {
