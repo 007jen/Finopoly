@@ -1,27 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
-  TrendingUp,
-  Target,
-  Calendar,
   Award,
   BarChart3,
-  Clock,
+  Calendar,
   CheckCircle,
-  Star
+  Clock,
+  Star,
+  Target
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
-
-import { useXP } from '../../_xp/xp-context';
-import { useAccuracy } from '../../_accuracy/accuracy-context';
-import { RotateCcw } from 'lucide-react';
 import { api } from '../../lib/api';
 
 const ProgressModule: React.FC = () => {
   const { user } = useAuth();
   const { getToken } = useClerkAuth();
-  const { resetXP } = useXP();
-  const { resetAccuracy } = useAccuracy();
 
   const [loading, setLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -92,12 +85,7 @@ const ProgressModule: React.FC = () => {
     );
   }
 
-  const handleReset = () => {
-    if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
-      resetXP();
-      resetAccuracy();
-    }
-  };
+
 
   // Transform Weekly Data
   const weeklyData = [
@@ -112,24 +100,26 @@ const ProgressModule: React.FC = () => {
 
   const totalWeeklyXp = weeklyXpData?.totalXp || 0;
 
-  // Transform Streak Data (Current Month Mock-up using real data for active)
-  // Generating days for current month
-  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-  const monthlyStreak = Array.from({ length: daysInMonth }, (_, i) => {
-    const date = i + 1;
-    // Construct date string YYYY-MM-DD to match API format if possible
-    // Assuming API returns YYYY-MM-DD or ISO strings.
-    // Ideally we should compare proper date objects.
-    // For simplicity, let's assume streakData contains "YYYY-MM-DD"
-    const paddedDate = date.toString().padStart(2, '0');
-    const yearMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const dateStr = `${yearMonth}-${paddedDate}`;
+  // Transform Streak Data
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonthIdx = today.getMonth();
+  const daysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentYear, currentMonthIdx, 1).getDay(); // 0=Sun, 6=Sat
 
-    // Check if dateStr exists in streakData. 
-    // Note: we need to ensure timezones don't mess this up, but for MVP this is OK.
-    const active = streakData.some(d => d.startsWith(dateStr));
-    return { date, active };
+  const monthlyStreak = Array.from({ length: daysInMonth }, (_, i) => {
+    const dayNum = i + 1;
+    const year = currentYear;
+    const monthStr = String(currentMonthIdx + 1).padStart(2, '0');
+    const dayStr = String(dayNum).padStart(2, '0');
+    const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+    const active = streakData.some(d => d === dateStr);
+    return { date: dayNum, active };
   });
+
+  // Calculate padding for the calendar grid
+  const calendarPadding = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
   // Use Subject Data
   const accuracyData = {
@@ -234,13 +224,17 @@ const ProgressModule: React.FC = () => {
                   {day}
                 </div>
               ))}
+              {calendarPadding.map((_, i) => (
+                <div key={`pad-${i}`} className="aspect-square" />
+              ))}
               {monthlyStreak.map((day, index) => (
                 <div
                   key={index}
-                  className={`aspect-square rounded-lg flex items-center justify-center text-xs font-medium ${day.active
-                    ? 'bg-green-500 text-white'
+                  className={`aspect-square rounded-lg flex items-center justify-center text-xs font-medium transition-colors ${day.active
+                    ? 'bg-green-500 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-400'
                     }`}
+                  title={day.active ? 'Active' : 'No activity'}
                 >
                   {day.date}
                 </div>

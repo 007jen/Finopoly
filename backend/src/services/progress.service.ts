@@ -34,7 +34,10 @@ export class ProgressService {
         // Initialize daily XP array
         const dailyXp = [0, 0, 0, 0, 0, 0, 0];
         activities.forEach(a => {
-            const dayIndex = (a.createdAt.getUTCDay() + 6) % 7;
+            // Use local day to match user's perspective
+            // .getDay() returns 0 for Sunday, 1 for Monday...
+            // We want Mon=0, Tue=1 ... Sun=6
+            const dayIndex = (a.createdAt.getDay() + 6) % 7;
             dailyXp[dayIndex] += a.xpEarned;
         });
 
@@ -60,10 +63,15 @@ export class ProgressService {
             orderBy: { createdAt: 'asc' }
         });
 
-        // Extract unique dates in YYYY-MM-DD format using a Set
-        // This avoids DB-specific raw queries (e.g. SQLite vs Postgres differences on DATE())
+        // Extract unique dates in YYYY-MM-DD format using local time
         const uniqueDates = new Set(
-            activities.map(a => a.createdAt.toISOString().split('T')[0])
+            activities.map(a => {
+                const d = a.createdAt;
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            })
         );
 
         return Array.from(uniqueDates);
