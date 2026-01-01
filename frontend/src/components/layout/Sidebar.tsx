@@ -8,6 +8,7 @@ import {
   LogOut,
   Zap,
   User,
+  Users,
   FileText,
   Calculator,
   Shield,
@@ -32,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'quiz-arena', label: 'Quiz Arcade', icon: Zap },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+    { id: 'community', label: 'Community', icon: Users },
     { id: 'progress', label: 'Progress', icon: TrendingUp },
     { id: 'profile', label: 'Profile', icon: User },
   ];

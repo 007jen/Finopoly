@@ -87,6 +87,7 @@ model User {
   caseLaws          CaseLaw[]
   challengeAttempts ChallengeAttempt[]
   createdDrills     AnalystChallenge[] @relation("AdminCreatedDrills")
+  // messages          Message[]
 
   @@index([xp])
 }
@@ -315,3 +316,18 @@ model ChallengeAttempt {
 
   @@unique([userId, challengeId])
 }
+
+// model Channel {
+//   id       String    @id @default(uuid())
+//   name     String    @unique
+//   messages Message[]
+// }
+
+// model Message {
+//   id        String  @id @default(uuid())
+//   content   String
+//   senderId  String
+//   channelId String
+//   sender    User    @relation(fields: [senderId], references: [clerkId])
+//   channel   Channel @relation(fields: [channelId], references: [id])
+// }

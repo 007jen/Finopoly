@@ -23,6 +23,7 @@ import ProgressModule from './components/progress/ProgressModule';
 import ProfilePage from './components/profile/ProfilePage';
 import AdminPanel from './components/admin/AdminPanel';
 import BadgeAwardModal from './components/badges/BadgeAwardModal';
+import CommunityUI from './Community/Community';
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 
 const AppContent: React.FC = () => {
@@ -115,6 +116,8 @@ const AppContent: React.FC = () => {
         return <QuizArena onStartDrill={handleStartChallenge} />;
       case 'leaderboard':
         return <Leaderboard />;
+      case 'community':
+        return <CommunityUI />;
       case 'progress':
         return <ProgressModule />;
       case 'profile':
