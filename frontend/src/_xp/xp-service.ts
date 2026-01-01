@@ -1,6 +1,7 @@
 // Event names for XP updates
 export const XP_EVENT_NAME = 'xp-update';
 export const XP_RESET_EVENT_NAME = 'xp-reset';
+export const ACHIEVEMENT_EVENT_NAME = 'achievement-unlocked';
 
 import { api } from '../lib/api';
 
@@ -28,9 +29,16 @@ export const xpService = {
                 try {
                     const token = await getTokenFn();
                     if (token) {
-                        await api.post('/api/progress/xp', { amount, source }, {
+                        const res = await api.post<any>('/api/progress/xp', { amount, source }, {
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
+
+                        if (res.newBadges && res.newBadges.length > 0) {
+                            const achievementEvent = new CustomEvent(ACHIEVEMENT_EVENT_NAME, {
+                                detail: { badges: res.newBadges }
+                            });
+                            window.dispatchEvent(achievementEvent);
+                        }
                     } else {
                         console.warn('[XP] No token available for sync');
                     }

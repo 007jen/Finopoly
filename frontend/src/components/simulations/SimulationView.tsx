@@ -75,7 +75,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const [levels, setLevels] = useState<Level[]>([]);
   const [loading, setLoading] = useState(true);
   const { getToken } = useClerkAuth();
-  const { refreshUser } = useAuth();
+  const { refreshUser, awardBadges } = useAuth();
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -134,34 +134,37 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   }, [currentLevelIdx]);
 
   useEffect(() => {
-    setLoading(false);
+    // Component mounted
   }, []);
 
   const currentLevel = levels[currentLevelIdx % levels.length];
 
-  // Timer Logic
+  // Ref for debouncing level completion
+  const isProcessingRef = useRef(false);
+
   useEffect(() => {
-    if (gameState !== 'PLAYING') return;
-    if (!currentLevel) return; // Add safety check inside hook
+    // Reset processing lock when level changes
+    isProcessingRef.current = false;
+  }, [currentLevelIdx]);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 0.1) {
-          clearInterval(timer);
-          // Timeout is an automatic failure
-          setResult('FAILURE');
-          if (currentLevel) currentLevel.violationReason = "Time's up! Audit incomplete.";
-          setGameState('GAME_OVER');
-          logAttempt(false); // Log failure to backend
-          return 0;
-        }
-        return prev - 0.1;
+  // Helper Functions
+  const logAttempt = async (isSuccess: boolean) => {
+    try {
+      const token = await getToken();
+      const res = await api.post<any>('/api/audit/complete', {
+        caseId,
+        score: isSuccess ? 100 : 0,
+        success: isSuccess
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, [gameState, currentLevel]);
-
+      refreshUser();
+      return res;
+    } catch (error) {
+      console.error("Failed to log activity:", error);
+      return null;
+    }
+  };
 
   const triggerVictoryConfetti = () => {
     const duration = 3000;
@@ -190,30 +193,6 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     frame();
   };
 
-  // Prevent double-firing of completion logic (e.g. rapid clicks)
-  const isProcessingRef = useRef(false);
-
-  useEffect(() => {
-    // Reset processing lock when level changes
-    isProcessingRef.current = false;
-  }, [currentLevelIdx]);
-
-  const logAttempt = async (isSuccess: boolean) => {
-    try {
-      const token = await getToken();
-      await api.post('/api/audit/complete', {
-        caseId,
-        score: isSuccess ? 100 : 0,
-        success: isSuccess
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      refreshUser();
-    } catch (error) {
-      console.error("Failed to log activity:", error);
-    }
-  };
-
   const handleLevelComplete = (success: boolean) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -229,7 +208,10 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
         if (currentLevelIdx >= levels.length - 1) {
           setResult(null);
           setGameState('FINISHED');
-          await logAttempt(true);
+          const res = await logAttempt(true);
+          if (res?.newBadges && res.newBadges.length > 0) {
+            awardBadges(res.newBadges);
+          }
         } else {
           setGameState('PLAYING');
           setResult(null);
@@ -237,10 +219,32 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
           setCurrentLevelIdx(prev => prev + 1);
         }
       }, 1500);
-    } else {
-      // Failure handled in handleStepDecision or Timer
     }
   };
+
+  // Timer Logic
+  useEffect(() => {
+    if (gameState !== 'PLAYING') return;
+    if (!currentLevel) return; // Add safety check inside hook
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0.1) {
+          clearInterval(timer);
+          // Timeout is an automatic failure
+          setResult('FAILURE');
+          if (currentLevel) currentLevel.violationReason = "Time's up! Audit incomplete.";
+          setGameState('GAME_OVER');
+          logAttempt(false); // Log failure to backend
+          return 0;
+        }
+        return prev - 0.1;
+      });
+    }, 100);
+
+    return () => clearInterval(timer);
+  }, [gameState, currentLevel]);
+
 
   const handleStepDecision = (field: AuditField, choice: FieldStatus) => {
     if (gameState !== 'PLAYING' || !currentLevel) return;

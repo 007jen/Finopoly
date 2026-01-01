@@ -9,6 +9,7 @@ import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { db } from '../lib/database';
 // Safe abstraction for data layer interaction if needed
 import { getUserBadges } from '../lib/data-layer';
+import { ACHIEVEMENT_EVENT_NAME } from '../_xp/xp-service';
 
 interface AuthContextType {
     user: AppUserType | null;
@@ -19,6 +20,9 @@ interface AuthContextType {
     showOnboarding: boolean;
     completeOnboarding: (onboardingData: { role: string; level: string; preferredAreas: string[] }) => Promise<void>;
     loading: boolean;
+    pendingBadges: any[] | null;
+    awardBadges: (badges: any[]) => void;
+    clearPendingBadges: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,7 +41,7 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
     const getClerkName = () => {
         if (clerkUser?.fullName) return clerkUser.fullName;
         if (clerkUser?.firstName || clerkUser?.lastName) {
-            return `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
+            return `${clerkUser.firstName || ''} ${clerkUser.lastName || ''} `.trim();
         }
         return null;
     };
@@ -112,6 +116,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<AppUserType | null>(null);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [pendingBadges, setPendingBadges] = useState<any[] | null>(null);
+
+    const awardBadges = (badges: any[]) => {
+        if (!badges || badges.length === 0) return;
+        setPendingBadges(badges);
+    };
+
+    const clearPendingBadges = () => {
+        setPendingBadges(null);
+    };
+
+    // Global listener for achievements (triggered by non-React xp-service)
+    useEffect(() => {
+        const handleAchievement = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (detail?.badges) {
+                awardBadges(detail.badges);
+            }
+        };
+
+        window.addEventListener(ACHIEVEMENT_EVENT_NAME, handleAchievement);
+        return () => window.removeEventListener(ACHIEVEMENT_EVENT_NAME, handleAchievement);
+    }, []);
 
     const loadProfile = React.useCallback(async () => {
         // Wait for Clerk to initialize
@@ -256,6 +283,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 showOnboarding,
                 completeOnboarding,
                 loading,
+                pendingBadges,
+                awardBadges,
+                clearPendingBadges
             }}
         >
             {children}

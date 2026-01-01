@@ -106,6 +106,8 @@ export const challengeService = {
                 }
             });
 
+            let newBadges: any[] = [];
+
             // B. Award XP (Only if this is the FIRST time they solved it)
             if (isCorrect) {
                 // We need the DB UUID for the activity service
@@ -115,16 +117,17 @@ export const challengeService = {
                 });
 
                 if (dbUser) {
-                    await recordActivity({
+                    const activityResult = await recordActivity({
                         userId: dbUser.id,
                         type: 'challenge',
                         referenceId: challenge.id,
                         success: true,
                     });
+                    newBadges = activityResult.newBadges;
                 }
             }
 
-            return { isCorrect, videoUrl: isCorrect ? challenge.videoUrl : null };
+            return { isCorrect, videoUrl: isCorrect ? challenge.videoUrl : null, newBadges };
         });
     },
 

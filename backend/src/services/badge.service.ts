@@ -9,44 +9,36 @@ export class BadgeService {
      * Awards them if they don't have them yet.
      */
     static async checkAndAwardBadges(tx: TxClient, userId: string, totalXp: number) {
-        const badgesToAward: string[] = [];
+        // 1. Fetch ALL eligible badges from the DB based on XP Requirement
+        const eligibleBadges = await tx.badge.findMany({
+            where: {
+                xpRequirement: { lte: totalXp }
+            }
+        });
 
-        // 1. Define Badge Milestones (Hardcoded for now, or fetch from DB cache)
-        if (totalXp >= 500) badgesToAward.push("Novice Auditor");
-        if (totalXp >= 1000) badgesToAward.push("Apprentice");
-        if (totalXp >= 2500) badgesToAward.push("Audit Pro");
-        if (totalXp >= 5000) badgesToAward.push("Master of Coin");
-        if (totalXp >= 10000) badgesToAward.push("Grandmaster");
+        if (eligibleBadges.length === 0) return [];
 
         // 2. Fetch existing badges for this user to avoid duplicates
-        const userBadges = await tx.userBadge.findMany({
+        const ownedUserBadges = await tx.userBadge.findMany({
             where: { userId },
-            include: { badge: true }
+            select: { badgeId: true }
         });
-        const ownedBadgeNames = new Set(userBadges.map(ub => ub.badge.name));
+        const ownedBadgeIds = new Set(ownedUserBadges.map(ub => ub.badgeId));
 
-        // 3. Determine new badges
-        const newBadgeNames = badgesToAward.filter(name => !ownedBadgeNames.has(name));
+        // 3. Determine new badges to award
+        const newBadgesToAward = eligibleBadges.filter(b => !ownedBadgeIds.has(b.id));
 
-        if (newBadgeNames.length === 0) return [];
+        if (newBadgesToAward.length === 0) return [];
 
-        // 4. Award them
-        const awarded = [];
-        for (const badgeName of newBadgeNames) {
-            // Find the badge definition in DB
-            const badgeDef = await tx.badge.findUnique({ where: { name: badgeName } });
+        // 4. Award them atomically
+        await tx.userBadge.createMany({
+            data: newBadgesToAward.map(b => ({
+                userId,
+                badgeId: b.id
+            }))
+        });
 
-            if (badgeDef) {
-                await tx.userBadge.create({
-                    data: {
-                        userId,
-                        badgeId: badgeDef.id
-                    }
-                });
-                awarded.push(badgeDef);
-            }
-        }
-
-        return awarded;
+        console.log(`[Badges] Awarded ${newBadgesToAward.length} new badges to user ${userId}`);
+        return newBadgesToAward;
     }
 }

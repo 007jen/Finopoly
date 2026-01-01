@@ -4,16 +4,19 @@ import { Lock, Play, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../lib/api'; // Your API helper
 import { xpService } from '../../_xp/xp-service';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../../context/AuthContext';
 
 interface ChallengeResponse {
     success: boolean;
     message: string;
     videoUrl?: string;
     xpAwarded?: number;
+    newBadges?: any[];
 }
 
 export const ActionPanel = ({ challenge, onUpdate }: any) => {
     const { incrementCorrect, incrementTotal } = useAccuracy();
+    const { awardBadges } = useAuth();
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -72,6 +75,10 @@ export const ActionPanel = ({ challenge, onUpdate }: any) => {
                 // We use localOnly: true because the backend verify endpoint already awarded XP to the DB.
                 // This triggers the XP bar to slide upward instantly.
                 xpService.increment(challenge.xpReward || 150, `Drill: ${challenge.title}`, true);
+
+                if (res.newBadges && res.newBadges.length > 0) {
+                    awardBadges(res.newBadges);
+                }
 
                 triggerCelebration(); // 💸 Money Fireworks!
                 onUpdate(res.videoUrl); // Pass the video URL back up to parent

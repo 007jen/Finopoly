@@ -37,6 +37,7 @@ export const submitSolution = async (req: Request, res: Response) => {
         res.json({
             success: result.isCorrect,
             videoUrl: result.videoUrl,
+            newBadges: result.newBadges,
             message: result.isCorrect ? "Correct! Analysis verified." : "Incorrect. Check your calculations."
         });
     } catch (error) {

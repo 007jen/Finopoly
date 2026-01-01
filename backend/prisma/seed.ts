@@ -52,23 +52,73 @@ async function main() {
         },
     });
 
+    // 0. Cleanup Old Badges (Anti-clutter)
+    const oldBadgeNames = ["Novice Auditor", "Apprentice", "Audit Pro", "Master of Coin", "Grandmaster"];
+
+    // First find the badges to get their IDs
+    const badgesToDelete = await prisma.badge.findMany({
+        where: { name: { in: oldBadgeNames } }
+    });
+
+    if (badgesToDelete.length > 0) {
+        const ids = badgesToDelete.map(b => b.id);
+        // Delete UserBadge links first to avoid foreign key errors
+        await prisma.userBadge.deleteMany({
+            where: { badgeId: { in: ids } }
+        });
+        // Now delete the badges
+        await prisma.badge.deleteMany({
+            where: { id: { in: ids } }
+        });
+        console.log(`Cleaned up ${badgesToDelete.length} old badges.`);
+    }
+
     // Seed Badges
     const badges = [
-        { name: "Novice Auditor", xp: 500, description: "Earned 500 XP", icon: "🥉" },
-        { name: "Apprentice", xp: 1000, description: "Earned 1000 XP", icon: "🥈" },
-        { name: "Audit Pro", xp: 2500, description: "Earned 2500 XP", icon: "🥇" },
-        { name: "Master of Coin", xp: 5000, description: "Earned 5000 XP", icon: "💎" },
-        { name: "Grandmaster", xp: 10000, description: "Earned 10000 XP", icon: "👑" }
+        {
+            name: "Motivated Aspirant",
+            description: "Reached 2,000 XP! You've started a strong journey.",
+            icon: "target",
+            xpRequirement: 2000
+        },
+        {
+            name: "Consistent Player",
+            description: "Reached 5,000 XP! Your dedication is showing.",
+            icon: "zap",
+            xpRequirement: 5000
+        },
+        {
+            name: "You Can Do It",
+            description: "Reached 7,000 XP! Keep pushing forward.",
+            icon: "thumbs-up",
+            xpRequirement: 7000
+        },
+        {
+            name: "Maintain Your Legacy",
+            description: "Reached 15,000 XP! You are building a legacy.",
+            icon: "shield",
+            xpRequirement: 15000
+        },
+        {
+            name: "Learning to Teach Others",
+            description: "Reached 20,000 XP! You are now a master.",
+            icon: "book-open",
+            xpRequirement: 20000
+        }
     ];
 
     for (const b of badges) {
         await prisma.badge.upsert({
             where: { name: b.name },
-            update: {},
+            update: {
+                description: b.description,
+                xpRequirement: b.xpRequirement,
+                icon: b.icon
+            },
             create: {
                 name: b.name,
                 description: b.description,
-                xpRequirement: b.xp,
+                xpRequirement: b.xpRequirement,
                 icon: b.icon
             }
         });

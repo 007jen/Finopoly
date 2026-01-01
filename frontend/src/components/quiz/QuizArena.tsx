@@ -147,7 +147,7 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
 
       // Award XP based on mode
       if (selectedMode === 'mcq') {
-        xpService.increment(100, `Quiz: MCQ Correct Answer`);
+        xpService.increment(500, `Quiz: MCQ Correct Answer`);
       } else if (selectedMode === 'truefalse') {
         xpService.increment(50, `Quiz: T/F Correct Answer`);
       } else if (selectedMode === 'simulation') {

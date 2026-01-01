@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { prisma } from "../utils/prisma";
+import { BadgeService } from "./badge.service";
 
 export class ProgressService {
 
@@ -102,7 +102,7 @@ export class ProgressService {
 
             // IDEMPOTENCY CHECK (Time-Window Based)
             // Prevents duplicate XP awards if specific events fire multiple times (e.g. on refresh)
-            const recentWindowSeconds = amount > 200 ? 20 : 2;
+            const recentWindowSeconds = amount > 200 ? 5 : 2;
             const recentThreshold = new Date(Date.now() - recentWindowSeconds * 1000);
 
             const duplicate = await tx.activity.findFirst({
@@ -142,33 +142,9 @@ export class ProgressService {
             });
 
             // 3. Check for new Badges
-            // Get all badges that the user qualifies for with their NEW xp
-            const eligibleBadges = await tx.badge.findMany({
-                where: { xpRequirement: { lte: user.xp } }
-            });
+            const newBadges = await BadgeService.checkAndAwardBadges(tx as any, userId, user.xp);
 
-            // Get badges the user ALREADY has
-            const ownedUserBadges = await tx.userBadge.findMany({
-                where: { userId },
-                select: { badgeId: true }
-            });
-            const ownedBadgeIds = new Set(ownedUserBadges.map(ub => ub.badgeId));
-
-            // Determine new badges to award
-            const newBadgesToAward = eligibleBadges.filter(b => !ownedBadgeIds.has(b.id));
-
-            // Award them
-            if (newBadgesToAward.length > 0) {
-                await tx.userBadge.createMany({
-                    data: newBadgesToAward.map(b => ({
-                        userId,
-                        badgeId: b.id
-                    }))
-                });
-                console.log(`Awarded ${newBadgesToAward.length} badges to user ${user.id}`);
-            }
-
-            return { user, activity, newBadges: newBadgesToAward };
+            return { user, activity, newBadges };
         });
     }
 

@@ -66,7 +66,7 @@ const Leaderboard = () => {
   return (
     <div className="min-h-full bg-gray-50 p-4 md:p-6 lg:p-8 space-y-8 font-sans">
       {/* --- Header Section --- */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+      <div className="flex flex-col items-center justify-center text-center gap-2 mb-12">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Global Leaderboard</h1>
           <p className="text-sm md:text-base text-gray-500 mt-1">Top performers in the finance community.</p>
@@ -82,7 +82,7 @@ const Leaderboard = () => {
           </div>
 
           {/* Rank 1 (Gold) - Center & Taller */}
-          <div className="order-1 md:order-2 md:-mt-8 z-10 scale-110">
+          <div className="order-1 md:order-2 md:-mt-4 z-10 scale-105">
             <PodiumCard user={topThree[0]} rank={1} isWinner={true} color="bg-yellow-400" iconColor="text-yellow-500" />
           </div>
 
@@ -221,7 +221,7 @@ const PodiumCard = ({ user, rank, isWinner = false, color, iconColor }: { user?:
   if (!user) return <div className="hidden md:block h-full opacity-0"></div>;
 
   return (
-    <div className={`relative flex flex-col items-center p-4 rounded-2xl bg-white shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-gray-100 transition-transform hover:-translate-y-1 duration-300 ${isWinner ? 'ring-2 ring-indigo-50 shadow-indigo-100' : ''}`}>
+    <div className={`relative flex flex-col items-center p-4 rounded-2xl bg-white shadow-[0_4px_20px_rgb(0,0,0,0.04)] border border-gray-100 transition-transform hover:-translate-y-1 duration-300 w-full max-w-[210px] mx-auto ${isWinner ? 'ring-2 ring-indigo-50 shadow-indigo-100' : ''}`}>
       {/* Rank Badge for Mobile */}
       <div className="absolute top-3 left-3 text-[10px] font-bold text-gray-300 md:hidden">#{rank}</div>
 

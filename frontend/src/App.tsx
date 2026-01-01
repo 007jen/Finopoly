@@ -22,10 +22,11 @@ import Leaderboard from './components/leaderboard/Leaderboard';
 import ProgressModule from './components/progress/ProgressModule';
 import ProfilePage from './components/profile/ProfilePage';
 import AdminPanel from './components/admin/AdminPanel';
+import BadgeAwardModal from './components/badges/BadgeAwardModal';
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 
 const AppContent: React.FC = () => {
-  const { showOnboarding, user, loading } = useAuth();
+  const { showOnboarding, user, loading, pendingBadges, clearPendingBadges } = useAuth();
   const [activeTab, setActiveTab] = useState(window.location.pathname.toLowerCase().includes('/admin') ? 'admin' : 'dashboard');
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
   const [currentChallengeId, setCurrentChallengeId] = useState<string | null>(null);
@@ -133,6 +134,14 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30 flex overflow-hidden">
+      {/* Achievement Popups */}
+      {pendingBadges && (
+        <BadgeAwardModal
+          badges={pendingBadges}
+          onClose={clearPendingBadges}
+        />
+      )}
+
       {/* Show onboarding modal if needed */}
       {showOnboarding && <OnboardingModal />}
 

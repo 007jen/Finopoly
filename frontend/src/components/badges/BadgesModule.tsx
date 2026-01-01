@@ -1,85 +1,76 @@
 import React from 'react';
-import { Award, Lock, Star, Flame, Target, Trophy, Shield, Zap } from 'lucide-react';
+import { Award, Lock, Star, Flame, Target, Trophy, Shield, Zap, ThumbsUp, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../lib/api';
+
+interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  xpRequirement: number;
+}
+
+interface BadgeWithStatus extends Badge {
+  earned: boolean;
+  earnedDate: string;
+}
 
 const BadgesModule: React.FC = () => {
   const { user } = useAuth();
+  const [dbBadges, setDbBadges] = React.useState<Badge[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  if (!user) return null;
+  React.useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        const data = await api.get<Badge[]>('/api/badges');
+        setDbBadges(data);
+      } catch (error) {
+        console.error('Failed to fetch badges:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBadges();
+  }, []);
 
-  const allBadges = [
-    // Earned badges
-    ...user.badges.map(badge => ({ ...badge, earned: true })),
-    // Available badges
-    {
-      id: '4',
-      name: 'Perfect Score',
-      description: 'Score 100% in any simulation',
-      icon: 'Star',
-      earnedDate: '',
-      earned: false,
-      requirement: 'Score 100% in a simulation',
-      progress: 85
-    },
-    {
-      id: '5',
-      name: 'Speed Demon',
-      description: 'Complete a simulation in record time',
-      icon: 'Zap',
-      earnedDate: '',
-      earned: false,
-      requirement: 'Complete any simulation under 20 minutes',
-      progress: 60
-    },
-    {
-      id: '6',
-      name: 'Knowledge Vault',
-      description: 'Complete 50 case law challenges',
-      icon: 'Shield',
-      earnedDate: '',
-      earned: false,
-      requirement: 'Complete 50 case law challenges',
-      progress: 23
-    },
-    {
-      id: '7',
-      name: 'Champion',
-      description: 'Reach the top 10 on leaderboard',
-      icon: 'Trophy',
-      earnedDate: '',
-      earned: false,
-      requirement: 'Reach top 10 on weekly leaderboard',
-      progress: 0
-    },
-    {
-      id: '8',
-      name: 'Consistency King',
-      description: 'Maintain 30-day learning streak',
-      icon: 'Target',
-      earnedDate: '',
-      earned: false,
-      requirement: 'Maintain 30-day learning streak',
-      progress: 40
-    }
-  ];
+  if (!user || loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Merge logic: For every badge in DB, check if user has it
+  const allBadges: BadgeWithStatus[] = dbBadges.map(dbBadge => {
+    const earnedBadge = (user.badges as any[]).find(ub => ub.name === dbBadge.name);
+    return {
+      ...dbBadge,
+      earned: !!earnedBadge,
+      earnedDate: earnedBadge?.earnedAt || earnedBadge?.earnedDate || '',
+    };
+  });
 
   const getIcon = (iconName: string, className: string = "w-8 h-8") => {
     const icons: { [key: string]: React.ReactNode } = {
-      Award: <Award className={className} />,
-      Flame: <Flame className={className} />,
-      Scale: <Award className={className} />,
-      Star: <Star className={className} />,
-      Zap: <Zap className={className} />,
-      Shield: <Shield className={className} />,
-      Trophy: <Trophy className={className} />,
-      Target: <Target className={className} />,
+      'award': <Award className={className} />,
+      'flame': <Flame className={className} />,
+      'star': <Star className={className} />,
+      'zap': <Zap className={className} />,
+      'shield': <Shield className={className} />,
+      'trophy': <Trophy className={className} />,
+      'target': <Target className={className} />,
+      'thumbs-up': <ThumbsUp className={className} />,
+      'book-open': <BookOpen className={className} />,
     };
-    return icons[iconName] || <Award className={className} />;
+    return icons[iconName.toLowerCase()] || <Award className={className} />;
   };
 
   const getBadgeColor = (earned: boolean) => {
-    return earned 
-      ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' 
+    return earned
+      ? 'bg-gradient-to-br from-yellow-400 to-yellow-600'
       : 'bg-gray-300';
   };
 
@@ -116,14 +107,13 @@ const BadgesModule: React.FC = () => {
       {/* Badges Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {allBadges.map((badge) => (
-          <div 
-            key={badge.id} 
-            className={`bg-white rounded-xl p-6 border-2 transition-all hover:shadow-lg ${
-              badge.earned ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200'
-            }`}
+          <div
+            key={badge.id}
+            className={`bg-white rounded-xl p-6 border-2 transition-all hover:shadow-lg ${badge.earned ? 'border-yellow-200 bg-yellow-50' : 'border-gray-200'
+              }`}
           >
             <div className="flex items-start justify-between mb-4">
-              <div 
+              <div
                 className={`w-16 h-16 rounded-full flex items-center justify-center ${getBadgeColor(badge.earned)}`}
               >
                 {badge.earned ? (
@@ -132,7 +122,7 @@ const BadgesModule: React.FC = () => {
                   <Lock className="w-8 h-8 text-gray-500" />
                 )}
               </div>
-              
+
               {badge.earned && (
                 <div className="text-right">
                   <div className="text-xs text-green-600 font-medium">EARNED</div>
@@ -146,24 +136,24 @@ const BadgesModule: React.FC = () => {
             <h3 className={`font-semibold mb-2 ${badge.earned ? 'text-gray-900' : 'text-gray-600'}`}>
               {badge.name}
             </h3>
-            
+
             <p className={`text-sm mb-4 ${badge.earned ? 'text-gray-700' : 'text-gray-500'}`}>
               {badge.description}
             </p>
 
-            {!badge.earned && 'requirement' in badge && (
+            {!badge.earned && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-gray-600">
-                  <span>Progress</span>
-                  <span>{badge.progress}%</span>
+                  <span>Requirement</span>
+                  <span className="font-bold">{badge.xpRequirement} XP</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${badge.progress}%` }}
+                    style={{ width: `${Math.min(100, (user.xp / badge.xpRequirement) * 100)}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">{badge.requirement}</p>
+                <p className="text-xs text-gray-500 mt-2">Earn XP to unlock this achievement</p>
               </div>
             )}
 
@@ -178,18 +168,33 @@ const BadgesModule: React.FC = () => {
       </div>
 
       {/* Next Badge Spotlight */}
-      <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-            <Star className="w-8 h-8" />
+      {(() => {
+        const nextBadge = allBadges.find(b => !b.earned);
+        if (!nextBadge) return null;
+
+        const progress = Math.min(100, (user.xp / nextBadge.xpRequirement) * 100);
+
+        return (
+          <div className="mt-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                {getIcon(nextBadge.icon, "w-8 h-8")}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-1">Next Milestone: {nextBadge.name}</h3>
+                <p className="opacity-90 mb-2">You're at {Math.round(progress)}% of this goal!</p>
+                <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-white h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="text-sm opacity-75">Reach {nextBadge.xpRequirement} XP to unlock</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-semibold mb-1">Next Badge: Perfect Score</h3>
-            <p className="opacity-90 mb-2">You're 15% away from earning this badge!</p>
-            <p className="text-sm opacity-75">Score 100% in any simulation to unlock</p>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
     </div>
   );
 };
