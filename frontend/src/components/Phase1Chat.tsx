@@ -233,8 +233,10 @@ export default function Phase1Chat() {
                                                 <button
                                                     className="bg-white text-indigo-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors"
                                                     onClick={(e) => {
-                                                        const input = e.currentTarget.previousSibling as HTMLInputElement;
-                                                        submitAnswer(msg.id, input.value);
+                                                        // Look at the container, then find the input box inside it
+                                                        const container = e.currentTarget.parentElement;
+                                                        const input = container?.querySelector('input') as HTMLInputElement;
+                                                        if (input) submitAnswer(msg.id, input.value);
                                                     }}
                                                 >
                                                     Solve
