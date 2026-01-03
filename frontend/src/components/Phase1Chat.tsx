@@ -99,6 +99,14 @@ export default function Phase1Chat() {
             xpReward: 150
         });
 
+        // BEFORE clearing state, add it to your own list
+        const mockPayload = {
+            id: Date.now().toString(),
+            content: challQuest,
+            challengeData: { isChallenge: true, xpReward: 150 },
+            author: "SYSTEM"
+        };
+        setMessageList(list => [...list, mockPayload]);
         // Clear local inputs
         setChallQuest("");
         setChallAns("");

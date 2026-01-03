@@ -96,7 +96,10 @@ export const setupSocketHandlers = (io: Server) => {
             try {
                 const challenge = challengeSchema.parse(payload);
                 const channel = await prisma.channel.findUnique({ where: { name: challenge.room } });
-                if (!channel) return;
+                if (!channel) {
+                    console.error(`[CHALLENGE-FAIL] Channel "${challenge.room}" not found in DB!`);
+                    return;
+                }
                 const message = await prisma.message.create({
                     data: {
                         content: challenge.content,
