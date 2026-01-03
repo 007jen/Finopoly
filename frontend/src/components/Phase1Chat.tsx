@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import io, { Socket } from "socket.io-client";
 
 // Architect Note: Connect to the backend port (5000), not the frontend.
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Phase1Chat() {
     const [room] = useState("General Lounge");
@@ -25,7 +25,7 @@ export default function Phase1Chat() {
         // Initialize connection
         socketRef.current = io(SOCKET_URL, {
             auth: { token: "PHASE_1_TEST_TOKEN" },
-            transports: ["websocket"] // Force websocket for reliability
+            transports: ["polling", "websocket"] // Force websocket for reliability
         });
 
         // 🕒 Phase 3: Catch the historical sync
