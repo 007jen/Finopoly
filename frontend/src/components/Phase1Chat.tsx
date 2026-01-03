@@ -42,9 +42,9 @@ export default function Phase1Chat() {
         });
 
         // 🏆 Phase 2: Results of our guess
-        socketRef.current.on("challenge_result", (result: { success: boolean; message: string; xpEarned: number }) => {
+        socketRef.current.on("challenge_result", (result: { success: boolean; message: string; xpReward: number }) => {
             if (result.success) {
-                alert(`🎊 ${result.message} +${result.xpEarned} XP!`);
+                alert(`🎊 ${result.message} +${result.xpReward} XP!`);
             } else {
                 alert(`❌ ${result.message}`);
             }
@@ -99,15 +99,7 @@ export default function Phase1Chat() {
             xpReward: 150
         });
 
-        // BEFORE clearing state, add it to your own list
-        const mockPayload = {
-            id: Date.now().toString(),
-            content: challQuest,
-            challengeData: { isChallenge: true, xpReward: 150 },
-            author: "SYSTEM"
-        };
-        setMessageList(list => [...list, mockPayload]);
-        // Clear local inputs
+        // Clear local inputs (Removed optimistic setMessageList to sync with DB UUIDs)
         setChallQuest("");
         setChallAns("");
         setChallengeMode(false);
