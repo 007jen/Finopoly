@@ -1,18 +1,8 @@
-// // src/index.ts
-// import app from './server';
-// import dotenv from 'dotenv';
-// dotenv.config();
+import { server, PORT } from "./server";
 
-// const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
-
-// app.listen(PORT, () => {
-//     console.log(`[INFO] Server running on port ${PORT}`);
-// });
-
-import app from "./server";
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-    console.log(`[INFO] Server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`\n---------------------------------------`);
+    console.log(`🚀 UNIFIED SERVER RUNNING ON PORT ${PORT}`);
+    console.log(`🔗 Socket.io Readiness: [ACTIVE]`);
+    console.log(`---------------------------------------\n`);
 });

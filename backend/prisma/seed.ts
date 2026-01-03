@@ -169,10 +169,22 @@ async function main() {
         }
     });
 
+    // Seed Community Channels
+    const channel1 = await prisma.channel.upsert({
+        where: { name: 'General Lounge' },
+        update: {},
+        create: {
+            id: '1',
+            name: 'General Lounge',
+            description: 'The main community hub for all students.'
+        }
+    });
+
     console.log("Admin user seeded");
     console.log("Cases seeded: ", case1.title, case2.title);
     console.log("Analyst Challenges seeded: ", challenge1.title);
     console.log("Badges seeded: ", badges.map(b => b.name).join(", "));
+    console.log("Community Channels seeded: ", channel1.name);
 }
 
 main()

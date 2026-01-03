@@ -29,7 +29,6 @@ enum Difficulty {
   Pro
 }
 
-// ✅ Safe: Only affects the Analyst Drill module
 enum DrillDifficulty {
   JUNIOR
   SENIOR
@@ -39,6 +38,19 @@ enum DrillDifficulty {
 enum DrillAnswerType {
   NUMBER
   TEXT
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+  ANNOUNCEMENT
+}
+
+enum SubmissionStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
 }
 
 // ============================================================
@@ -55,13 +67,14 @@ model User {
 
   xp               Int       @default(0)
   streak           Int       @default(0)
+  level            Int       @default(1)
   lastActivityDate DateTime?
 
-  // Accuracy Tracking
+  // Accuracy Tracking (Legacy - Keep for now, but use Stats for new)
   correctAnswers Int @default(0)
   totalQuestions Int @default(0)
 
-  // Subject-wise Accuracy (New)
+  // Subject-wise Accuracy
   auditCorrect   Int @default(0)
   auditTotal     Int @default(0)
   taxCorrect     Int @default(0)
@@ -69,32 +82,46 @@ model User {
   caselawCorrect Int @default(0)
   caselawTotal   Int @default(0)
 
-  completedSimulations Int @default(0)
-
-  preferredAreas String[] @default([])
+  completedSimulations Int      @default(0)
+  preferredAreas       String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  userBadges      UserBadge[]
-  activities      Activity[]
-  caseSubmissions CaseSubmission[]
-
-  // Content created by Admin
-  auditCases        AuditCase[]
-  taxSimulations    TaxSimulation[]
-  caseLaws          CaseLaw[]
+  stats             UserStats[]
+  userBadges        UserBadge[]
+  activities        Activity[]
+  caseSubmissions   CaseSubmission[]
   challengeAttempts ChallengeAttempt[]
-  createdDrills     AnalystChallenge[] @relation("AdminCreatedDrills")
-  // messages          Message[]
+  messages          Message[]
+
+  // Admin Attribution
+  createdDrills  AnalystChallenge[] @relation("AdminCreatedDrills")
+  caseLaws       CaseLaw[]
+  auditCases     AuditCase[]
+  taxSimulations TaxSimulation[]
 
   @@index([xp])
+  @@index([clerkId])
 }
 
 // ============================================================
-//  BADGES (Catalog of all badges)
+//  NORMALIZED USER STATS
 // ============================================================
+model UserStats {
+  id           String       @id @default(uuid())
+  userId       String
+  moduleType   ActivityType
+  correctCount Int          @default(0)
+  totalCount   Int          @default(0)
+  accuracy     Float        @default(0.0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleType])
+}
+
 model Badge {
   id            String  @id @default(uuid())
   name          String  @unique
@@ -105,9 +132,6 @@ model Badge {
   userBadges UserBadge[]
 }
 
-// ============================================================
-//  USER-BADGES (Which user earned which badge)
-// ============================================================
 model UserBadge {
   id       String   @id @default(uuid())
   userId   String
@@ -117,11 +141,45 @@ model UserBadge {
   user  User  @relation(fields: [userId], references: [id])
   badge Badge @relation(fields: [badgeId], references: [id])
 
-  @@unique([userId, badgeId]) // Prevent duplicate badges
+  @@unique([userId, badgeId])
 }
 
 // ============================================================
-//  CASE LAW CONTENT
+//  COMMUNITY MODELS
+// ============================================================
+model Channel {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  type        ChannelType @default(TEXT)
+  description String?
+  messages    Message[]
+  createdAt   DateTime    @default(now())
+}
+
+model Message {
+  id      String @id @default(uuid())
+  content String @db.Text
+
+  // 🟢 The Magic Field for Challenges (Phase 2)
+  challengeData Json?
+
+  // Relations
+  senderId String?
+  sender   User?   @relation(fields: [senderId], references: [clerkId])
+
+  // Author Info (Denormalized for simple Phase 1 testing)
+  authorName String
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([channelId, createdAt])
+}
+
+// ============================================================
+//  CONTENT MODELS
 // ============================================================
 model CaseLaw {
   id         String     @id @default(uuid())
@@ -146,9 +204,6 @@ model CaseLaw {
   updatedAt DateTime @updatedAt
 }
 
-// ============================================================
-//  AUDIT CASE CONTENT
-// ============================================================
 model AuditCase {
   id          String     @id @default(uuid())
   title       String
@@ -156,12 +211,11 @@ model AuditCase {
   difficulty  Difficulty
   description String
 
-  // Dynamic Game Data
-  invoiceDetails  Json? // Stores { vendor, amount, date, etc. }
-  ledgerDetails   Json? // Stores { date, particulars, debit, etc. }
-  expectedAction  String // 'ACCEPT' or 'REJECT'
-  violationReason String? // If REJECT, why?
-  faultyField     String? // 'Vendor', 'Date', 'Amount', 'Tax', 'Compliance' or null
+  invoiceDetails  Json?
+  ledgerDetails   Json?
+  expectedAction  String
+  violationReason String?
+  faultyField     String?
   tags            String[] @default([])
 
   xpReward  Int     @default(150)
@@ -175,9 +229,6 @@ model AuditCase {
   updatedAt DateTime @updatedAt
 }
 
-// ============================================================
-//  TAX SIMULATIONS
-// ============================================================
 model TaxSimulation {
   id          String     @id @default(uuid())
   title       String
@@ -199,9 +250,6 @@ model TaxSimulation {
   updatedAt DateTime @updatedAt
 }
 
-// ============================================================
-//  USER ACTIVITY LOGGING (XP, Scores, Progress)
-// ============================================================
 enum ActivityType {
   audit
   tax
@@ -229,16 +277,13 @@ model Activity {
   @@index([createdAt])
 }
 
-// ============================================================
-//  CASE SUBMISSIONS (Student written answers)
-// ============================================================
 model CaseSubmission {
   id     String @id @default(uuid())
   caseId String
   userId String
-  answer String
+  answer String @db.Text
 
-  status     String    @default("pending")
+  status     SubmissionStatus @default(PENDING)
   score      Int?
   feedback   String?
   reviewedAt DateTime?
@@ -249,14 +294,8 @@ model CaseSubmission {
   user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([caseId, userId])
-  @@index([caseId])
-  @@index([userId])
 }
 
-// ============================================================
-//  CHALLENGE CONTENT
-// ============================================================
-// 1. The Content Model (Managed by Admin)
 model AnalystChallenge {
   id              String  @id @default(uuid())
   title           String
@@ -265,23 +304,19 @@ model AnalystChallenge {
   richTextContext String? @db.Text
   isActive        Boolean @default(false)
 
-  // Settings (Using the Safe Enums)
   difficulty DrillDifficulty @default(JUNIOR)
   xpReward   Int             @default(150)
 
-  // Media
   chartUrl   String?
   datasetUrl String?
   videoUrl   String
 
-  // Logic
   question     String
-  instructions String          @default("") // Detailed steps for the analyst
+  instructions String          @default("")
   answerType   DrillAnswerType @default(NUMBER)
   correctVal   String
   tolerance    Float?          @default(0.5)
 
-  // Admin Attribution (Single source of truth)
   createdBy String?
   creator   User?   @relation("AdminCreatedDrills", fields: [createdBy], references: [id])
 
@@ -293,41 +328,22 @@ model AnalystChallenge {
   @@index([isActive])
 }
 
-// 2. The Progress Model (Tracked per User)
 model ChallengeAttempt {
   id String @id @default(uuid())
 
-  // Relations
   userId      String
   challengeId String
   user        User             @relation(fields: [userId], references: [clerkId])
   challenge   AnalystChallenge @relation(fields: [challengeId], references: [id])
 
-  // State
   isCorrect Boolean @default(false)
   userInput String
   attempts  Int     @default(1)
 
   unlockedVideo Boolean @default(false)
 
-  // Timestamps
   startedAt   DateTime  @default(now())
   completedAt DateTime?
 
   @@unique([userId, challengeId])
 }
-
-// model Channel {
-//   id       String    @id @default(uuid())
-//   name     String    @unique
-//   messages Message[]
-// }
-
-// model Message {
-//   id        String  @id @default(uuid())
-//   content   String
-//   senderId  String
-//   channelId String
-//   sender    User    @relation(fields: [senderId], references: [clerkId])
-//   channel   Channel @relation(fields: [channelId], references: [id])
-// }

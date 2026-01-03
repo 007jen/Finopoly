@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { SubmissionStatus } from "@prisma/client";
 
 export const caseReviewService = {
     async reviewSubmission(
@@ -18,7 +19,7 @@ export const caseReviewService = {
             throw new Error("SUBMISSION_NOT_FOUND");
         }
 
-        if (submission.status === "reviewed") {
+        if (submission.status !== SubmissionStatus.PENDING && submission.status !== SubmissionStatus.REVIEWING) {
             throw new Error("ALREADY_REVIEWED");
         }
 
@@ -27,7 +28,7 @@ export const caseReviewService = {
             data: {
                 score,
                 feedback,
-                status: "reviewed",
+                status: SubmissionStatus.APPROVED,
                 reviewedAt: new Date(),
             },
         });

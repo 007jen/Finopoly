@@ -1,7 +1,11 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import http from "http";
+import { Server } from "socket.io";
+import { setupSocketHandlers } from "./socket";
 
+// Route Imports
 import authRoutes from "./routes/auth.routes";
 import activityRoutes from "./routes/activity.routes";
 import leaderboardRoutes from "./routes/leaderboard.routes";
@@ -15,7 +19,11 @@ import auditRoutes from "./routes/audit.routes";
 import challengeRoutes from "./routes/challenge.routes";
 import adminChallengeRoutes from "./routes/adminChallenge.routes";
 import badgeRoutes from "./routes/badge.routes";
+
 const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Webhook handling (Pre-middleware)
 app.post(
     "/api/webhooks/clerk",
     bodyParser.raw({ type: "application/json" }),
@@ -23,35 +31,37 @@ app.post(
 );
 
 app.use(express.json());
-// CORS Configuration
+
+// Unified CORS Policy
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:4173",
-    process.env.FRONTEND_URL // Production Vercel URL
+    process.env.FRONTEND_URL
 ].filter(Boolean) as string[];
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
+const corsOptions = {
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"]
+};
 
-        if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
-            callback(null, true);
-        } else {
-            // Temporarily allow all for debugging if needed, but best to warn
-            console.warn(`Blocked CORS request from: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
-}));
+app.use(cors(corsOptions));
 
-// Simple Health Check Endpoint
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
+// 1. Create Native HTTP Server
+const server = http.createServer(app);
+
+// 2. Initialize Socket.io on that Server
+const io = new Server(server, {
+    cors: corsOptions // Reuse the same strict policy
 });
 
-// ROUTES
+// 3. Attach Handlers
+setupSocketHandlers(io);
+
+// Health Check
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
+// REST API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
@@ -64,8 +74,5 @@ app.use("/api/audit", auditRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/admin/challenges', adminChallengeRoutes);
 app.use('/api/badges', badgeRoutes);
-// console.log("Case routes mounted");
-console.log("Progress routes mounted");
-console.log("Profile routes mounted");
 
-export default app;
+export { app, server, io, PORT };

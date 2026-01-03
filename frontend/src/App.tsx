@@ -24,6 +24,7 @@ import ProfilePage from './components/profile/ProfilePage';
 import AdminPanel from './components/admin/AdminPanel';
 import BadgeAwardModal from './components/badges/BadgeAwardModal';
 import CommunityUI from './Community/Community';
+import Phase1Chat from './components/Phase1Chat';
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 
 const AppContent: React.FC = () => {
@@ -117,7 +118,9 @@ const AppContent: React.FC = () => {
       case 'leaderboard':
         return <Leaderboard />;
       case 'community':
-        return <CommunityUI />;
+        return <Phase1Chat />;
+      case 'socket-test':
+        return <Phase1Chat />;
       case 'progress':
         return <ProgressModule />;
       case 'profile':
