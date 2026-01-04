@@ -364,7 +364,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
       {/* 2. SCROLLABLE CONTENT AREA */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-40 md:pb-24 scroll-smooth">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="max-w-[1400px] mx-auto space-y-6">
 
           {/* DOCUMENT AREA */}
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
@@ -374,25 +374,25 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
                 <span>PAYMENT VOUCHER</span>
                 <span>ORIGINAL</span>
               </div>
-              <div className="p-4 space-y-2">
+              <div className="p-4 lg:p-10 space-y-4">
                 <div className="flex justify-between flex-wrap gap-2">
-                  <h2 className="font-bold text-lg break-words">{currentLevel.invoice.vendor}</h2>
-                  <span className="font-mono text-sm whitespace-nowrap">{currentLevel.invoice.date}</span>
+                  <h2 className="font-bold text-lg lg:text-3xl break-words">{currentLevel.invoice.vendor}</h2>
+                  <span className="font-mono text-sm lg:text-xl whitespace-nowrap">{currentLevel.invoice.date}</span>
                 </div>
                 <div className="text-xs text-slate-500">{currentLevel.invoice.gstin}</div>
-                <div className="py-2 border-y border-slate-300 my-2">
-                  <div className="flex justify-between text-sm">
+                <div className="py-4 border-y border-slate-300 my-4">
+                  <div className="flex justify-between text-base lg:text-xl">
                     <span className="break-words mr-2">{currentLevel.invoice.description}</span>
                     <span className="font-mono font-bold">₹{currentLevel.invoice.amount.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-slate-500 mt-1">
+                  <div className="flex justify-between text-xs lg:text-sm text-slate-500 mt-2">
                     <span>GST (18%)</span>
                     <span className="font-mono">₹{currentLevel.invoice.tax.toLocaleString()}</span>
                   </div>
                 </div>
-                <div className="flex justify-between items-center bg-slate-200 p-2 rounded">
-                  <span className="font-bold text-sm">TOTAL</span>
-                  <span className="font-bold text-xl font-mono">₹{currentLevel.invoice.total.toLocaleString()}</span>
+                <div className="flex justify-between items-center bg-slate-200 p-3 lg:p-4 rounded-xl">
+                  <span className="font-bold text-sm lg:text-lg">TOTAL</span>
+                  <span className="font-bold text-xl lg:text-4xl font-mono">₹{currentLevel.invoice.total.toLocaleString()}</span>
                 </div>
                 <div className="mt-2 text-xs font-bold text-slate-500 uppercase">
                   Paid via: <span className="text-slate-900">{currentLevel.invoice.paymentMode}</span>
@@ -401,15 +401,15 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
             </div>
 
             {/* LEDGER CARD */}
-            <div className="flex-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden flex flex-col w-full min-h-[300px]">
-              <div className="bg-slate-900 p-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <div className="flex-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden flex flex-col w-full min-h-[350px] lg:min-h-[550px]">
+              <div className="bg-slate-900 p-2 lg:p-3 text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">
                 Tally Prime View
               </div>
 
               {/* Scrollable Table Container */}
-              <div className="flex-1 p-4 font-mono text-xs text-green-400 overflow-x-auto">
+              <div className="flex-1 p-4 lg:p-10 font-mono text-xs lg:text-base text-green-400 overflow-x-auto">
                 <div className="min-w-[400px]"> {/* Force min width to prevent squashing */}
-                  <div className="grid grid-cols-[1fr,2fr,1fr] gap-4 border-b border-slate-600 pb-2 mb-2 text-slate-500">
+                  <div className="grid grid-cols-[1fr,2fr,1fr] gap-6 border-b border-slate-600 pb-3 mb-4 text-slate-500 uppercase text-[10px] lg:text-xs tracking-widest font-black">
                     <span>Date</span>
                     <span>Particulars</span>
                     <span className="text-right">Debit</span>
@@ -437,7 +437,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
       {/* 3. CHECKLIST UI & ACTIONS (Fixed Bottom) */}
       <div className="fixed bottom-0 left-0 w-full bg-slate-800 border-t border-slate-700 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] z-50 p-4 md:p-6 pb-6 safe-area-inset-bottom">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[1400px] mx-auto">
           {activeField && (
             <div className="flex flex-col md:flex-row items-center gap-4 justify-between animate-in slide-in-from-bottom-5 duration-300">
 

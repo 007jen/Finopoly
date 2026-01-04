@@ -3,16 +3,13 @@ import {
     User,
     Star,
     Award,
-    Calendar,
     TrendingUp,
     BookOpen,
     Target,
     Clock,
-    Trophy,
     Edit,
     Download,
-    Share2,
-    CheckCircle
+    Share2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
@@ -87,36 +84,6 @@ const ProfilePage: React.FC = () => {
     const currentLevel = profileOverview?.level ?? user.level;
     const xpToNextLevel = profileOverview?.xpToNextLevel ?? 350; // Fallback or calculated
 
-    const journeyMilestones = [
-        {
-            date: '2024-01-01',
-            title: 'Joined Finopoly',
-            description: 'Started your learning journey',
-            icon: User,
-            color: 'from-blue-500 to-blue-600'
-        },
-        {
-            date: '2024-01-15',
-            title: 'First Badge Earned',
-            description: 'Earned "Audit Rookie" badge',
-            icon: Award,
-            color: 'from-yellow-500 to-orange-500'
-        },
-        {
-            date: '2024-01-20',
-            title: 'Streak Master',
-            description: 'Achieved 7-day learning streak',
-            icon: Calendar,
-            color: 'from-orange-500 to-red-500'
-        },
-        {
-            date: '2024-01-25',
-            title: 'Case Law Pro',
-            description: 'Scored 90%+ in case law simulations',
-            icon: Trophy,
-            color: 'from-purple-500 to-pink-500'
-        }
-    ];
 
     const recentQuizScores = [
         { quiz: 'Audit Fundamentals', score: 85, maxScore: 100, date: '2024-01-28' },
@@ -274,31 +241,6 @@ const ProfilePage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Journey Timeline */}
-                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8">
-                            <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Your Learning Journey</h3>
-                            <div className="space-y-6">
-                                {journeyMilestones.map((milestone, index) => {
-                                    const Icon = milestone.icon;
-                                    return (
-                                        <div key={index} className="flex items-start gap-6">
-                                            <div className={`w-12 lg:w-14 h-12 lg:h-14 bg-gradient-to-br ${milestone.color} rounded-full flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                                                <Icon className="w-6 lg:w-7 h-6 lg:h-7 text-white" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-                                                    <h4 className="font-bold text-gray-900 text-base lg:text-lg">{milestone.title}</h4>
-                                                    <span className="text-sm text-gray-500 font-medium">
-                                                        {new Date(milestone.date).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                <p className="text-gray-600 mt-2">{milestone.description}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
                         {/* Recent Quiz Scores */}
                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8">

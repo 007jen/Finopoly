@@ -104,6 +104,19 @@ export const ActionPanel = ({ challenge, onUpdate }: any) => {
         }
     };
 
+    const getEmbedUrl = (url: string) => {
+        if (!url) return '';
+        // This Regex "Snaps" the 11-character ID from any YouTube link format
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        const videoId = (match && match[2].length === 11) ? match[2] : null;
+
+        if (videoId) {
+            return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+        }
+        return url; // Fallback to original if we can't parse it
+    };
+
     return (
         <div className="flex flex-col gap-8 lg:gap-12 mt-8 lg:mt-12 mb-20">
             {/* 1. The Question Card */}
@@ -159,7 +172,7 @@ export const ActionPanel = ({ challenge, onUpdate }: any) => {
                     {isUnlocked && challenge.videoUrl ? (
                         <div className="aspect-video">
                             <iframe
-                                src={challenge.videoUrl}
+                                src={getEmbedUrl(challenge.videoUrl)}
                                 className="w-full h-full"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen

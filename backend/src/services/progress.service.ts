@@ -102,7 +102,7 @@ export class ProgressService {
 
             // IDEMPOTENCY CHECK (Time-Window Based)
             // Prevents duplicate XP awards if specific events fire multiple times (e.g. on refresh)
-            const recentWindowSeconds = amount > 200 ? 5 : 2;
+            const recentWindowSeconds = amount > 200 ? 1 : 1;
             const recentThreshold = new Date(Date.now() - recentWindowSeconds * 1000);
 
             const duplicate = await tx.activity.findFirst({

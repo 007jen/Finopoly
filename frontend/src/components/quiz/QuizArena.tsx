@@ -339,6 +339,93 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
           <p className="text-gray-600 text-base lg:text-xl">Challenge yourself with different quiz formats</p>
         </div>
 
+        {/* Drill Cockpit Section */}
+        {!selectedMode && (
+          <div className="mt-12 lg:mt-16 space-y-6">
+            <div className="flex items-center gap-3 px-1 lg:px-0">
+              <div className="p-2 bg-teal-100 rounded-lg text-teal-600">
+                <Brain className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl lg:text-2xl font-black text-gray-900">Drill Cockpit</h2>
+                <p className="text-gray-500 text-[10px] lg:text-sm uppercase font-bold tracking-widest italic opacity-60">Real-world analyst challenges</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {loadingDrills ? (
+                // Skeleton Loader
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
+                ))
+              ) : drills.length > 0 ? (
+                drills.map((drill) => (
+                  <div
+                    key={drill.id}
+                    onClick={() => onStartDrill?.(drill.slug)}
+                    className="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden"
+                  >
+                    <div className="flex justify-between items-start mb-6">
+                      <span className={`${getDifficultyStyle(drill.difficulty)} text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider`}>
+                        {drill.difficulty}
+                      </span>
+                      <span className="text-gray-400 text-sm font-bold">{drill.xpReward} XP</span>
+                    </div>
+
+                    <div className="space-y-2 mb-6">
+                      <h3 className="text-xl font-black text-gray-900 leading-tight">
+                        {drill.title}
+                      </h3>
+                      <p className="text-gray-500 text-sm leading-relaxed">
+                        {drill.description}
+                      </p>
+                    </div>
+
+                    <div className={`flex items-center gap-2 font-black text-sm ${drill.isSolved ? 'text-green-600' :
+                      drill.difficulty.toUpperCase() === 'JUNIOR' ? 'text-teal-600' :
+                        drill.difficulty.toUpperCase() === 'SENIOR' ? 'text-orange-600' :
+                          'text-purple-600'
+                      }`}>
+                      {drill.isSolved ? 'Drill Solved' : 'Start Drill'}
+                      <Zap className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${drill.isSolved ? 'animate-pulse' : ''}`} />
+                    </div>
+
+                    {/* Subtle background decoration */}
+                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      {drill.difficulty.toUpperCase() === 'JUNIOR' ? <Calculator className="w-24 h-24" /> : <Brain className="w-24 h-24" />}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-16 text-center bg-white rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <Zap className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900 mb-2">No Active Drills</h3>
+                  <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                    Our analysts are heads-down preparing new visual case studies for you.
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                    <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                      Next Drills Drop Every Monday
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Locked Drill Placeholder (Always show one for future hype) */}
+              <div className="bg-gray-50/50 rounded-2xl p-6 border border-dashed border-gray-200 flex flex-col items-center justify-center text-center opacity-60">
+                <div className="p-3 bg-gray-100 rounded-full mb-3">
+                  <Lock className="w-6 h-6 text-gray-400" />
+                </div>
+                <h3 className="font-bold text-gray-400">Drill #{drills.length + 1} Incoming</h3>
+                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-black">Locked</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quiz Mode Selection */}
         {!selectedMode ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -435,93 +522,6 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
                   <Play className="w-5 h-5" />
                   Start Quiz
                 </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Drill Cockpit Section */}
-        {!selectedMode && (
-          <div className="mt-12 lg:mt-16 space-y-6">
-            <div className="flex items-center gap-3 px-1 lg:px-0">
-              <div className="p-2 bg-teal-100 rounded-lg text-teal-600">
-                <Brain className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl lg:text-2xl font-black text-gray-900">Drill Cockpit</h2>
-                <p className="text-gray-500 text-[10px] lg:text-sm uppercase font-bold tracking-widest italic opacity-60">Real-world analyst challenges</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {loadingDrills ? (
-                // Skeleton Loader
-                [1, 2, 3].map((i) => (
-                  <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
-                ))
-              ) : drills.length > 0 ? (
-                drills.map((drill) => (
-                  <div
-                    key={drill.id}
-                    onClick={() => onStartDrill?.(drill.slug)}
-                    className="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden"
-                  >
-                    <div className="flex justify-between items-start mb-6">
-                      <span className={`${getDifficultyStyle(drill.difficulty)} text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider`}>
-                        {drill.difficulty}
-                      </span>
-                      <span className="text-gray-400 text-sm font-bold">{drill.xpReward} XP</span>
-                    </div>
-
-                    <div className="space-y-2 mb-6">
-                      <h3 className="text-xl font-black text-gray-900 leading-tight">
-                        {drill.title}
-                      </h3>
-                      <p className="text-gray-500 text-sm leading-relaxed">
-                        {drill.description}
-                      </p>
-                    </div>
-
-                    <div className={`flex items-center gap-2 font-black text-sm ${drill.isSolved ? 'text-green-600' :
-                      drill.difficulty.toUpperCase() === 'JUNIOR' ? 'text-teal-600' :
-                        drill.difficulty.toUpperCase() === 'SENIOR' ? 'text-orange-600' :
-                          'text-purple-600'
-                      }`}>
-                      {drill.isSolved ? 'Drill Solved' : 'Start Drill'}
-                      <Zap className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${drill.isSolved ? 'animate-pulse' : ''}`} />
-                    </div>
-
-                    {/* Subtle background decoration */}
-                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      {drill.difficulty.toUpperCase() === 'JUNIOR' ? <Calculator className="w-24 h-24" /> : <Brain className="w-24 h-24" />}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full py-16 text-center bg-white rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                    <Zap className="w-8 h-8 text-gray-300" />
-                  </div>
-                  <h3 className="text-xl font-black text-gray-900 mb-2">No Active Drills</h3>
-                  <p className="text-gray-500 max-w-sm mx-auto mb-6">
-                    Our analysts are heads-down preparing new visual case studies for you.
-                  </p>
-                  <div className="inline-flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
-                    <span className="w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                      Next Drills Drop Every Monday
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Locked Drill Placeholder (Always show one for future hype) */}
-              <div className="bg-gray-50/50 rounded-2xl p-6 border border-dashed border-gray-200 flex flex-col items-center justify-center text-center opacity-60">
-                <div className="p-3 bg-gray-100 rounded-full mb-3">
-                  <Lock className="w-6 h-6 text-gray-400" />
-                </div>
-                <h3 className="font-bold text-gray-400">Drill #{drills.length + 1} Incoming</h3>
-                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-black">Locked</p>
               </div>
             </div>
           </div>
