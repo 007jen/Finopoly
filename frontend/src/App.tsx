@@ -12,7 +12,7 @@ import TopBar from './components/layout/TopBar';
 import Dashboard from './components/dashboard/Dashboard';
 import SimulationsList from './components/simulations/SimulationsList';
 import SimulationView from './components/simulations/SimulationView';
-import { AuditLobby } from './components/simulations/AuditLobby'; // Updated import
+import { AuditLobby } from './components/simulations/AuditLobby.tsx'; // Updated import
 import TaxSimulation from './components/simulations/TaxSimulation';
 import CaseLawModuleLive from './components/caselaws/CaseLawModuleLive';
 import CaseLawExplorer from './components/caselaw/CaseLawExplorer';
@@ -23,9 +23,11 @@ import ProgressModule from './components/progress/ProgressModule';
 import ProfilePage from './components/profile/ProfilePage';
 import AdminPanel from './components/admin/AdminPanel';
 import BadgeAwardModal from './components/badges/BadgeAwardModal';
-import CommunityUI from './Community/Community';
-import Phase1Chat from './components/Phase1Chat';
-import { SignedIn, SignedOut } from '@clerk/clerk-react'
+// import CommunityUI from './Community/Community';
+import Phase1Chat from './components/Phase1Chat.tsx';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import LandingPage from './components/landing/LandingPage';
+// import { ActivityTrackerProvider } from './services/ActivityTracker';
 
 const AppContent: React.FC = () => {
   const { showOnboarding, user, loading, pendingBadges, clearPendingBadges } = useAuth();
@@ -33,6 +35,11 @@ const AppContent: React.FC = () => {
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
   const [currentChallengeId, setCurrentChallengeId] = useState<string | null>(null);
   const [currentCaseDetail, setCurrentCaseDetail] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (loading || !user) {
     return (
@@ -101,7 +108,7 @@ const AppContent: React.FC = () => {
       case 'simulations':
         return <SimulationsList onStartSimulation={handleStartSimulation} />;
       case 'audit-arena':
-        return <AuditLobby onStartAudit={handleStartSimulation} />; // Use AuditLobby
+        return <AuditLobby onStartAudit={handleStartSimulation} onBack={() => setActiveTab('dashboard')} />;
       case 'caselaw-simulation':
         return <CaseLawModuleLive />;
       case 'caselaw-explorer':
@@ -110,13 +117,13 @@ const AppContent: React.FC = () => {
         }
         return <CaseLawExplorer onOpenCase={handleOpenCaseDetail} />;
       case 'tax-simulation':
-        return <TaxSimulation />;
+        return <TaxSimulation onBack={() => setActiveTab('dashboard')} />;
       case 'tax-cases':
         return <div className="flex items-center justify-center min-h-[60vh]"><h2 className="text-2xl font-bold text-gray-900">Tax Cases Coming Soon</h2></div>;
       case 'quiz-arena':
-        return <QuizArena onStartDrill={handleStartChallenge} />;
+        return <QuizArena onStartDrill={handleStartChallenge} onBack={() => setActiveTab('dashboard')} />;
       case 'leaderboard':
-        return <Leaderboard />;
+        return <Leaderboard onBack={() => setActiveTab('dashboard')} />;
       case 'community':
         return <Phase1Chat />;
       case 'socket-test':
@@ -124,7 +131,7 @@ const AppContent: React.FC = () => {
       case 'progress':
         return <ProgressModule />;
       case 'profile':
-        return <ProfilePage />;
+        return <ProfilePage onBack={() => setActiveTab('dashboard')} />;
       case 'challenge-detail':
         return currentChallengeId ? (
           <ChallengePage
@@ -139,6 +146,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
+    // <ActivityTrackerProvider activeTab={activeTab}>
     <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30 flex overflow-hidden">
       {/* Achievement Popups */}
       {pendingBadges && (
@@ -158,14 +166,27 @@ const AppContent: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Desktop Sidebar */}
-          <div className="hidden lg:block h-full">
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-          </div>
+          {/* Desktop & Mobile Sidebar */}
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => {
+              const newState = !isSidebarCollapsed;
+              setIsSidebarCollapsed(newState);
+              localStorage.setItem('sidebar-collapsed', String(newState));
+            }}
+            isMobileOpen={isMobileMenuOpen}
+            onMobileClose={() => setIsMobileMenuOpen(false)}
+          />
 
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col min-w-0 h-full">
-            <TopBar user={user!} setActiveTab={setActiveTab} />
+            <TopBar
+              user={user!}
+              setActiveTab={setActiveTab}
+              onMenuClick={() => setIsMobileMenuOpen(true)}
+            />
 
             {/* Scrollable Content */}
             <main className="flex-1 overflow-y-auto">
@@ -214,7 +235,18 @@ const AppContent: React.FC = () => {
         </>
       )}
     </div>
+    // </ActivityTrackerProvider>
   );
+};
+
+const PublicContent: React.FC = () => {
+  const [showLogin, setShowLogin] = useState(false);
+
+  if (showLogin) {
+    return <LoginPage />;
+  }
+
+  return <LandingPage onGetStarted={() => setShowLogin(true)} />;
 };
 
 const App: React.FC = () => {
@@ -224,10 +256,11 @@ const App: React.FC = () => {
         <XPProvider>
           <LeaderboardProvider>
             <SignedOut>
-              <LoginPage />
+              <PublicContent />
             </SignedOut>
             <SignedIn>
-              <AppContent />
+              {/* Note: We need a wrapper to access activeTab for ActivityTrackerProvider */}
+              <AppWrapper />
             </SignedIn>
           </LeaderboardProvider>
         </XPProvider>
@@ -235,5 +268,13 @@ const App: React.FC = () => {
     </AuthProvider>
   );
 };
+
+const AppWrapper: React.FC = () => {
+  // We need to move activeTab state here or pass it down
+  // For simplicity since AppContent already has it, we'll wrap inside AppContent if possible
+  // Actually, ActivityTracker needs to be high level. 
+  // Let's modify AppContent instead.
+  return <AppContent />;
+}
 
 export default App;

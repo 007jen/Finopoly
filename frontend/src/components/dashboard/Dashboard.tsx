@@ -8,17 +8,15 @@ import {
   Target,
   Zap,
   Star,
-  ChevronRight,
-  Check
+  ChevronRight
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
-import { db } from '../../lib/database';
 
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 
-import { xpService, XP_EVENT_NAME, XP_RESET_EVENT_NAME } from '../../_xp/xp-service';
+import { XP_EVENT_NAME, XP_RESET_EVENT_NAME } from '../../_xp/xp-service';
 
 interface DashboardProps {
   setActiveTab: (tab: string) => void;
@@ -321,71 +319,71 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
         </div>
 
         {/* Main Content Grid: Continue Learning + XP Balance */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7">
 
           {/* Left Col: Continue Learning Section */}
-          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-2xl flex flex-col justify-between h-full">
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl lg:rounded-3xl p-[23px] lg:p-[30px] text-white shadow-2xl flex flex-col justify-between h-full">
             <div>
-              <h2 className="text-2xl lg:text-3xl font-bold mb-4">
+              <h2 className="text-[1.4rem] lg:text-[1.78rem] font-bold mb-3">
                 {lastActivity ? 'Continue Learning' : 'Start Your Journey'}
               </h2>
-              <p className="text-lg lg:text-xl opacity-95 mb-2">
+              <p className="text-[1.05rem] lg:text-[1.18rem] opacity-95 mb-2">
                 {lastActivity ? (lastActivity.title || lastActivity.label) : 'Learn Audit Basics: Simulation 101'}
               </p>
-              <p className="text-sm lg:text-base opacity-80 mb-6">
+              <p className="text-[13px] lg:text-[15px] opacity-80 mb-5">
                 {lastActivity ? `Last activity: ${getTimeAgo(lastActivity.date)}` : 'Ready to earn your first badge?'}
               </p>
-              <div className="mb-6 lg:mb-0">
-                <div className="flex items-center justify-between text-sm lg:text-base mb-3">
+              <div className="mb-5 lg:mb-0">
+                <div className="flex items-center justify-between text-xs lg:text-sm mb-2.5">
                   <span className="font-medium">Progress</span>
                   <span className="font-bold">{lastActivity ? '' : '0%'}</span>
                 </div>
-                <div className="w-full bg-white bg-opacity-20 rounded-full h-3 lg:h-4">
-                  <div className="bg-white h-3 lg:h-4 rounded-full shadow-sm transition-all duration-500" style={{ width: lastActivity ? '100%' : '5%' }}></div>
+                <div className="w-full bg-white bg-opacity-20 rounded-full h-2.5 lg:h-3.5">
+                  <div className="bg-white h-2.5 lg:h-3.5 rounded-full shadow-sm transition-all duration-500" style={{ width: lastActivity ? '100%' : '5%' }}></div>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => setActiveTab(lastActivity ? getResumeAction() : 'audit-arena')}
-              className="mt-6 w-full bg-white bg-opacity-20 hover:bg-opacity-30 px-8 py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 font-bold text-lg hover:scale-105 shadow-lg"
+              className="mt-5 w-full bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 font-bold text-base lg:text-lg hover:scale-105 shadow-lg"
             >
-              <Play className="w-6 h-6" />
+              <Play className="w-5 h-5 lg:w-6 lg:h-6" />
               {lastActivity ? 'Resume' : 'Start Now'}
             </button>
           </div>
 
           {/* Right Col: XP Balance Card (Moved from QuizArena) */}
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-xl flex flex-col justify-between h-full">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl lg:rounded-3xl p-[23px] lg:p-[30px] text-white shadow-xl flex flex-col justify-between h-full">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-2xl lg:text-3xl font-bold mb-2">Your XP Balance</h2>
+                <h2 className="text-[1.4rem] lg:text-[1.78rem] font-bold mb-2">Your XP Balance</h2>
                 <div className="flex items-center gap-3 mb-2">
-                  <Star className="w-8 h-8 lg:w-10 lg:h-10 fill-white text-white" />
-                  <span className="text-3xl lg:text-5xl font-bold">{user?.xp.toLocaleString()}</span>
-                  <span className="text-xl font-medium opacity-90 pt-2">XP</span>
+                  <Star className="w-[30px] h-[30px] lg:w-[38px] lg:h-[38px] fill-white text-white" />
+                  <span className="text-[1.75rem] lg:text-[2.40rem] font-bold">{user?.xp.toLocaleString()}</span>
+                  <span className="text-lg lg:text-xl font-medium opacity-90 pt-1.5 lg:pt-2">XP</span>
                 </div>
               </div>
-              <div className="hidden sm:block p-3 bg-white/20 rounded-2xl rotate-3">
-                <Zap className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+              <div className="hidden sm:block p-2.5 bg-white/20 rounded-2xl rotate-3">
+                <Zap className="w-[30px] h-[30px] lg:w-[38px] lg:h-[38px] text-white" />
               </div>
             </div>
 
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-lg font-bold bg-white/20 px-4 py-1.5 rounded-lg">Level {user.level || 1}</span>
-                <span className="text-sm font-medium opacity-90">{(user.xp % 1000)} / 1000 XP to next</span>
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-2.5">
+                <span className="text-[15px] lg:text-[17px] font-bold bg-white/20 px-3.5 py-1 rounded-lg">Level {user.level || 1}</span>
+                <span className="text-xs lg:text-[13px] font-medium opacity-90">{(user.xp % 1000)} / 1000 XP to next</span>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full bg-black/20 rounded-full h-4 relative overflow-hidden">
+              <div className="w-full bg-black/20 rounded-full h-3 lg:h-[15px] relative overflow-hidden">
                 <div
                   className="bg-white h-full rounded-full transition-all duration-700 ease-out shadow-sm"
                   style={{ width: `${(user.xp % 1000) / 10}%` }}
                 />
               </div>
 
-              <p className="mt-4 text-sm opacity-90 text-center font-medium">Earn more XP by completing simulations & quizzes!</p>
+              <p className="mt-3.5 text-xs lg:text-[13px] opacity-90 text-center font-medium">Earn more XP by completing simulations & quizzes!</p>
             </div>
           </div>
 

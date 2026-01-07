@@ -1,61 +1,71 @@
 import { useEffect, useState, useRef } from "react";
 import io, { Socket } from "socket.io-client";
+import { Send, Zap, Users, Sparkles, CheckCircle, MessageSquare, Shield, TrendingUp, X, Plus } from "lucide-react";
+import confetti from "canvas-confetti";
+import { useAuth } from "../context/AuthContext";
 
-// Architect Note: Connect to the backend port (5000), not the frontend.
+// Backend port is 5000
 const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// Financial/Professional avatar colors
+const getAvatarColor = (name: string) => {
+    if (!name || name === "SYSTEM") return "bg-gray-400";
+    const colors = ["bg-blue-500", "bg-indigo-500", "bg-slate-500", "bg-cyan-600", "bg-blue-700", "bg-indigo-700"];
+    return colors[(name.length || 0) % colors.length];
+};
+
 export default function Phase1Chat() {
-    const [room] = useState("General Lounge");
-    const [username, setUsername] = useState("");
+    const { user } = useAuth();
     const [message, setMessage] = useState("");
     const [messageList, setMessageList] = useState<any[]>([]);
-    const [joined, setJoined] = useState(false);
+    const [room] = useState("General Lounge");
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const socketRef = useRef<Socket | null>(null);
 
-    // 🎲 Level 2: User Challenge Creation State
-    const [challengeMode, setChallengeMode] = useState(false);
+    // --- Challenge Creator State ---
+    const [isChallMode, setIsChallMode] = useState(false);
     const [challQuest, setChallQuest] = useState("");
     const [challAns, setChallAns] = useState("");
 
-    // Use ref to persist socket across renders without re-connecting
-    const socketRef = useRef<Socket | null>(null);
-
-    const joinRoom = () => {
-        if (!username || !room) return;
-
+    // --- SOCKET LOGIC ---
+    useEffect(() => {
         // Initialize connection
         socketRef.current = io(SOCKET_URL, {
             auth: { token: "PHASE_1_TEST_TOKEN" },
-            transports: ["polling", "websocket"] // Force websocket for reliability
-        });
-
-        // 🕒 Phase 3: Catch the historical sync
-        socketRef.current.on("load_history", (history: any[]) => {
-            setMessageList(history);
+            transports: ["polling", "websocket"]
         });
 
         socketRef.current.emit("join_room", room);
-        setJoined(true);
 
-        // Listener for incoming messages
+        // 🕒 Load historical messages
+        socketRef.current.on("load_history", (history: any[]) => {
+            setMessageList(history);
+            scrollToBottom();
+        });
+
+        // 📩 Listen for new messages
         socketRef.current.on("receive_message", (data) => {
-            setMessageList((list) => [...list, data]);
+            setMessageList((prev) => {
+                if (prev.some(m => m.id === data.id)) return prev;
+
+                const optimisticIndex = prev.findIndex(m =>
+                    String(m.id).startsWith("temp-") &&
+                    m.content === data.content &&
+                    m.author === data.author
+                );
+
+                if (optimisticIndex !== -1) {
+                    const newList = [...prev];
+                    newList[optimisticIndex] = data;
+                    return newList;
+                }
+
+                return [...prev, data];
+            });
+            scrollToBottom();
         });
 
-        // 🏆 Phase 2: Results of our guess
-        socketRef.current.on("challenge_result", (result: { success: boolean; message: string; xpReward: number }) => {
-            if (result.success) {
-                alert(`🎊 ${result.message} +${result.xpReward} XP!`);
-            } else {
-                alert(`❌ ${result.message}`);
-            }
-        });
-
-        // 👁️ Phase 2: Notification when someone else solves it
-        socketRef.current.on("challenge_solved_by", (data: { messageId: string; user: string }) => {
-            console.log(`Node ${data.user} solved challenge ${data.messageId}`);
-        });
-
-        // 🌍 Level 3: Global solve notification
+        // 🏆 Challenge results (Solved notifications)
         socketRef.current.on("challenge_solved_globally", (data: { messageId: string; winner: string }) => {
             setMessageList((prevList) =>
                 prevList.map((m) =>
@@ -64,265 +74,342 @@ export default function Phase1Chat() {
                         : m
                 )
             );
+
+            // If I won, trigger confetti
+            if (data.winner === user?.name) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#3b82f6', '#8b5cf6', '#fbbf24']
+                });
+            }
         });
 
-        socketRef.current.on("connect_error", (err) => {
-            console.error("[SOCKET-ERR]", err.message);
-            alert(`Connection Failed: ${err.message}`);
-        });
+        // Clean up
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
+    }, [room, user?.name]);
+
+    const scrollToBottom = () => {
+        setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     };
 
     const sendMessage = () => {
-        if (!message || !socketRef.current) return;
+        if (!message.trim() || !socketRef.current) return;
 
+        const authorName = String(user?.name || "Member");
         const payload = {
+            id: `temp-txt-${Date.now()}`,
             room,
-            author: username,
+            author: authorName,
             content: message,
+            type: "TEXT",
             time: new Date().toISOString()
         };
 
         socketRef.current.emit("send_message", payload);
-
-        // Optimistic UI update
         setMessageList((list) => [...list, payload]);
         setMessage("");
+        scrollToBottom();
     };
 
     const sendChallenge = () => {
-        if (!challQuest || !challAns || !socketRef.current) return;
+        if (!challQuest.trim() || !challAns.trim() || !socketRef.current) return;
+
+        const authorName = String(user?.name || "Member");
+        const tempId = `temp-chall-${Date.now()}`;
+
+        const payload = {
+            id: tempId,
+            room,
+            author: authorName,
+            content: challQuest.trim(),
+            time: new Date().toISOString(),
+            challengeData: {
+                isChallenge: true,
+                xpReward: 0,
+                isSolved: false
+            }
+        };
 
         socketRef.current.emit("broadcast_challenge", {
             room,
-            content: challQuest,
-            answer: challAns,
-            xpReward: 150
+            content: challQuest.trim(),
+            answer: challAns.trim(),
+            xpReward: 0,
+            author: authorName
         });
 
-        // Clear local inputs (Removed optimistic setMessageList to sync with DB UUIDs)
+        setMessageList((list) => [...list, payload]);
         setChallQuest("");
         setChallAns("");
-        setChallengeMode(false);
+        setIsChallMode(false);
+        scrollToBottom();
     };
 
     const submitAnswer = (messageId: string, answer: string) => {
-        if (!socketRef.current || !answer) return;
+        if (!socketRef.current || !answer || !user?.name) return;
 
         socketRef.current.emit("submit_challenge_answer", {
             messageId,
             answer,
-            username // Level 3: Tell the server who we are
+            username: user.name
         });
     };
 
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (socketRef.current) socketRef.current.disconnect();
-        };
-    }, []);
-
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-slate-200 p-6 font-sans">
-            {!joined ? (
-                <div className="bg-slate-900 p-10 rounded-3xl border border-slate-800 shadow-2xl w-full max-w-md">
-                    <h2 className="text-3xl font-black mb-2 text-white tracking-tighter italic">FINOPOLY <span className="text-blue-500">COMMUNITY</span></h2>
-                    <p className="text-slate-500 text-sm mb-8 font-medium">Phase 1: Proof of Architecture</p>
+        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-3 sm:p-6 lg:p-8 flex items-center justify-center relative overflow-hidden">
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5 ml-1">Identity</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. TaxPro_99"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-700 font-bold"
-                                onChange={(e) => setUsername(e.target.value)}
-                            />
+            {/* --- ADAPTIVE ANIMATED BACKGROUND IMPROVED --- */}
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[50%] bg-blue-100/40 blur-[100px] rounded-full animate-pulse duration-[8s]"></div>
+                <div className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-slate-200/50 blur-[100px] rounded-full animate-pulse duration-[12s]"></div>
+            </div>
+
+            {/* --- MAIN CONTAINED BODY (Reduced by ~6%) --- */}
+            <div className="flex flex-col w-full h-full max-w-[96%] bg-[#f8fafc] text-slate-900 font-sans rounded-[2rem] shadow-2xl shadow-slate-800/60 border border-white/60 overflow-hidden relative z-10 flex-1">
+
+                {/* --- HEADER --- */}
+                <div className="h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-4 sm:px-6 z-20">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="bg-blue-600 p-2 sm:p-2.5 rounded-xl shadow-lg shadow-blue-600/20 transition-transform hover:scale-105 active:scale-95">
+                            <MessageSquare size={18} className="text-white sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5 ml-1">Frequency (Room)</label>
-                            <input
-                                type="text"
-                                defaultValue="General Lounge"
-                                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-blue-400"
-                                readOnly
-                            />
+                            <h1 className="font-extrabold text-sm sm:text-base lg:text-lg tracking-tight text-slate-900 uppercase">Community Hub</h1>
+                            <p className="text-[9px] sm:text-[10px] text-blue-600 font-black flex items-center gap-1.5 uppercase tracking-widest">
+                                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.4)]"></span>
+                                Live Discussion
+                            </p>
                         </div>
-                        <button
-                            onClick={joinRoom}
-                            disabled={!username}
-                            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all transform active:scale-[0.98] mt-4"
-                        >
-                            Establish Link
-                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-slate-200/50">
+                            <Shield size={14} className="text-blue-600" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                <span className="text-blue-600">{room}</span>
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-blue-50/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full border border-blue-100/50 transition-colors hover:bg-blue-100">
+                            <Users size={14} className="text-blue-700 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-blue-700">124 Pro Nodes</span>
+                        </div>
                     </div>
                 </div>
-            ) : (
-                <div className="w-full max-w-3xl bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[700px] border border-slate-800 relative ring-1 ring-white/5">
-                    {/* Header */}
-                    <div className="bg-slate-950/50 backdrop-blur-xl p-6 border-b border-slate-800 flex justify-between items-center z-10">
-                        <div className="flex items-center gap-3">
-                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)] animate-pulse"></div>
-                            <span className="font-black text-xl tracking-tight text-white italic">#{room}</span>
-                        </div>
-                        <div className="bg-slate-800/50 px-4 py-1.5 rounded-full border border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            Current Node: <span className="text-blue-400">{username}</span>
+
+                {/* --- CHAT STREAM --- */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 relative no-scrollbar z-10">
+                    {/* Professional Mesh Pattern */}
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mt-12"></div>
+
+                    {/* System Notification */}
+                    <div className="flex justify-center my-6">
+                        <div className="bg-white/60 backdrop-blur-md text-slate-500 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] py-2 px-6 rounded-full border border-slate-200/50 shadow-sm transition-all hover:bg-white/80">
+                            Instant Peer-to-Peer Learning Network Established
                         </div>
                     </div>
 
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-slate-950 to-slate-900 scrollbar-thin scrollbar-thumb-slate-800">
-                        {messageList.length === 0 && (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-2 opacity-50">
-                                <p className="font-black uppercase tracking-[0.3em] text-[10px]">No transmissions detected</p>
-                            </div>
-                        )}
-                        {messageList.map((msg, index) => {
-                            const isMe = msg.author === username;
-                            const isChallenge = msg.challengeData?.isChallenge;
+                    {messageList.map((msg, idx) => {
+                        const authorName = String(msg.author || "Member");
+                        const isMe = authorName === String(user?.name || "Member");
+                        const isChallenge = msg.challengeData?.isChallenge;
+                        const isSolved = msg.challengeData?.isSolved;
 
-                            return (
-                                <div key={index} className={`flex flex-col ${isMe ? "items-end" : "items-start"} animate-in slide-in-from-bottom-2 duration-300`}>
-                                    <div className="flex items-center gap-2 mb-1.5 px-2">
-                                        <span className={`text-[10px] font-black uppercase tracking-wider ${isMe ? "text-blue-400" : "text-slate-500"}`}>{msg.author}</span>
-                                        {msg.time && (
-                                            <span className="text-[9px] text-slate-700 font-medium">
-                                                {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        )}
+                        return (
+                            <div key={msg.id || `msg-${idx}`} className={`flex gap-3 sm:gap-4 ${isMe ? "flex-row-reverse" : "flex-row"} animate-in fade-in slide-in-from-bottom-2 duration-400`}>
+
+                                {/* Avatar */}
+                                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs sm:text-sm font-black text-white shadow-lg flex-shrink-0 transition-all hover:scale-110 ring-2 ring-white/50 ${getAvatarColor(authorName)}`}>
+                                    {authorName.charAt(0).toUpperCase()}
+                                </div>
+
+                                {/* Content Bubble */}
+                                <div className={`flex flex-col max-w-[90%] sm:max-w-[75%] lg:max-w-[65%] ${isMe ? "items-end" : "items-start"}`}>
+                                    <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                                        <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${isMe ? "text-blue-600" : "text-slate-500"}`}>
+                                            {authorName}
+                                        </span>
+                                        <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold opacity-80 uppercase tracking-tighter">
+                                            {msg.time ? new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just Now"}
+                                        </span>
                                     </div>
 
-                                    {isChallenge && msg.challengeData?.isSolved ? (
-                                        // 🏆 SOLVED STATE
-                                        <div className="bg-slate-800/50 p-6 rounded-[2rem] rounded-tl-none border border-emerald-500/30 shadow-xl max-w-sm opacity-80 backdrop-blur-sm relative overflow-hidden group">
-                                            <div className="absolute top-0 right-0 p-2 transform rotate-12 transition-transform group-hover:scale-110">
-                                                <div className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg border border-white/20">OFFLINE</div>
+                                    {isChallenge ? (
+                                        /* --- 🏆 THE CHALLENGE WIDGET --- */
+                                        <div className={`bg-white/90 backdrop-blur-sm border-2 ${isSolved ? 'border-emerald-100 shadow-sm' : 'border-blue-100/80 shadow-xl shadow-blue-500/5'} rounded-2xl p-4 sm:p-5 w-full max-w-sm group transition-all hover:border-blue-400/30`}>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div className={`flex items-center ${isSolved ? 'text-emerald-600' : 'text-blue-600'} text-[9px] sm:text-[10px] font-black uppercase tracking-widest`}>
+                                                    <div className={`p-1 rounded-lg mr-2 ${isSolved ? 'bg-emerald-50' : 'bg-blue-50'}`}>
+                                                        <Zap size={14} className={`${isSolved ? 'fill-emerald-600' : 'fill-blue-600'}`} />
+                                                    </div>
+                                                    {isSolved ? "Drill Resolved" : "Active Peer Drill"}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-blue-400 transition-colors">
+                                                    <TrendingUp size={12} />
+                                                    <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-tighter">Skill Booster</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="bg-emerald-500/20 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest text-emerald-400 border border-emerald-500/20">Drill Completed</span>
-                                                <span className="text-[10px] font-bold text-slate-500 italic">Solved by {msg.challengeData.winner}</span>
-                                            </div>
-                                            <p className="text-slate-400 font-bold text-lg mb-0 line-through decoration-slate-600/50">{msg.content}</p>
-                                        </div>
-                                    ) : isChallenge ? (
-                                        // 💎 THE CHALLENGE WIDGET (ACTIVE)
-                                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-[2rem] rounded-tl-none border border-white/20 shadow-2xl max-w-sm">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="bg-white/20 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest text-white">Active Drill</span>
-                                                <span className="text-[10px] font-bold text-indigo-200">Earn +{msg.challengeData.xpReward} XP</span>
-                                            </div>
-                                            <p className="text-white font-bold text-lg mb-4 leading-tight">{msg.content}</p>
 
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Type answer..."
-                                                    className="flex-1 bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:bg-white/20 transition-all text-white placeholder:text-white/40"
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter") submitAnswer(msg.id, e.currentTarget.value);
-                                                    }}
-                                                />
-                                                <button
-                                                    className="bg-white text-indigo-700 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors"
-                                                    onClick={(e) => {
-                                                        // Look at the container, then find the input box inside it
-                                                        const container = e.currentTarget.parentElement;
-                                                        const input = container?.querySelector('input') as HTMLInputElement;
-                                                        if (input) submitAnswer(msg.id, input.value);
-                                                    }}
-                                                >
-                                                    Solve
-                                                </button>
-                                            </div>
+                                            <p className={`font-bold text-sm sm:text-[15px] mb-4 leading-relaxed ${isSolved ? 'text-slate-400 italic' : 'text-slate-800'}`}>
+                                                {msg.content}
+                                            </p>
+
+                                            {isSolved ? (
+                                                <div className="flex items-center gap-1.5 text-emerald-600 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-emerald-50/80 backdrop-blur-sm py-2 px-3 rounded-xl border border-emerald-100/50">
+                                                    <CheckCircle size={12} /> Resolved by {msg.challengeData.winner}
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Solve this drill..."
+                                                        className="flex-1 bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white focus:border-blue-500/60 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 placeholder:text-slate-400 shadow-inner font-medium"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter") submitAnswer(msg.id, e.currentTarget.value);
+                                                        }}
+                                                    />
+                                                    <button
+                                                        onClick={(e) => {
+                                                            const input = e.currentTarget.parentElement?.querySelector('input');
+                                                            if (input) submitAnswer(msg.id, input.value);
+                                                        }}
+                                                        className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                                                    >
+                                                        Solve
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
-                                        // 💬 Standard Message
-                                        <div className={`max-w-[85%] rounded-[1.5rem] px-5 py-3.5 text-sm font-medium shadow-xl 
-                                            ${isMe ? "bg-blue-600 text-white rounded-tr-none" : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700/50"}`}>
-                                            <p className="leading-relaxed">{msg.content}</p>
+                                        /* --- 💬 STANDARD TEXT --- */
+                                        <div className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-[13px] sm:text-[14px] font-bold shadow-sm leading-relaxed relative group transition-all border
+                                            ${isMe ? "bg-blue-600 text-white border-blue-700 rounded-tr-none shadow-blue-600/10"
+                                                : "bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200/70 rounded-tl-none hover:border-slate-300"
+                                            }`}>
+                                            {msg.content}
                                         </div>
                                     )}
                                 </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Input */}
-                    <div className="p-6 bg-slate-950/80 backdrop-blur-md border-t border-slate-800 flex flex-col gap-4">
-
-                        {/* 🎲 Challenge Mode Toggle */}
-                        <div className="flex items-center justify-between">
-                            <button
-                                onClick={() => setChallengeMode(!challengeMode)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                                    ${challengeMode
-                                        ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-                                        : "bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300"}`}
-                            >
-                                <div className={`w-2 h-2 rounded-full ${challengeMode ? "bg-white animate-pulse" : "bg-slate-700"}`}></div>
-                                {challengeMode ? "Challenge Mode Active" : "Regular Message"}
-                            </button>
-
-                            {challengeMode && (
-                                <span className="text-[10px] font-bold text-indigo-400 animate-pulse">CREATING LIVE DRILL...</span>
-                            )}
-                        </div>
-
-                        {challengeMode ? (
-                            /* Challenge Inputs */
-                            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <input
-                                    type="text"
-                                    placeholder="The Question (e.g. What is the standard tax rate?)"
-                                    className="w-full p-4 bg-slate-900 border border-slate-800 text-white rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all font-medium placeholder:text-slate-700"
-                                    value={challQuest}
-                                    onChange={(e) => setChallQuest(e.target.value)}
-                                />
-                                <div className="flex gap-4">
-                                    <input
-                                        type="text"
-                                        placeholder="The Secret Answer"
-                                        className="flex-1 p-4 bg-slate-950 border border-slate-800 text-indigo-400 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all font-bold placeholder:text-slate-800"
-                                        value={challAns}
-                                        onChange={(e) => setChallAns(e.target.value)}
-                                        onKeyPress={(e) => e.key === "Enter" && sendChallenge()}
-                                    />
-                                    <button
-                                        onClick={sendChallenge}
-                                        disabled={!challQuest || !challAns}
-                                        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 px-8 rounded-2xl text-white font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all transform active:scale-95"
-                                    >
-                                        Deploy
-                                    </button>
-                                </div>
                             </div>
-                        ) : (
-                            /* Standard Message Input */
-                            <div className="flex gap-4 items-center">
-                                <div className="flex-1 relative group">
-                                    <input
-                                        type="text"
-                                        value={message}
-                                        placeholder={`Message node #${room}...`}
-                                        className="w-full p-4 bg-slate-900 border border-slate-800 text-white rounded-2xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all font-medium placeholder:text-slate-700"
-                                        onChange={(e) => setMessage(e.target.value)}
-                                        onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                                    />
+                        );
+                    })}
+                    <div ref={scrollRef} className="h-4" />
+                </div>
+
+                {/* --- COMPACT CHALLENGE CREATOR --- */}
+                {isChallMode && (
+                    <div className="mx-4 sm:mx-8 mb-4 animate-in slide-in-from-bottom-4 duration-400 z-20">
+                        <div className="bg-white/95 backdrop-blur-xl border-2 border-blue-500/80 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 animate-gradient-x bg-[length:200%_auto]"></div>
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="flex items-center gap-2.5 text-blue-600">
+                                    <div className="p-1.5 rounded-lg bg-blue-50">
+                                        <Zap size={16} className="fill-blue-600" />
+                                    </div>
+                                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.1em]">Create Community Drill</span>
                                 </div>
-                                <button
-                                    onClick={sendMessage}
-                                    disabled={!message}
-                                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 w-14 h-14 rounded-2xl text-white flex items-center justify-center shadow-lg shadow-blue-500/20 transition-all transform active:scale-90"
-                                >
-                                    <svg className="w-6 h-6 rotate-45 -translate-y-0.5 -translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                    </svg>
+                                <button onClick={() => setIsChallMode(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                                    <X size={18} />
                                 </button>
                             </div>
-                        )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">The Question</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter your audit question..."
+                                        value={challQuest}
+                                        onChange={(e) => setChallQuest(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && sendChallenge()}
+                                        className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500/50 focus:bg-white transition-all font-bold placeholder:font-medium placeholder:text-slate-400"
+                                    />
+                                </div>
+                                <div className="space-y-1 relative">
+                                    <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">The Answer</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Hidden solution..."
+                                            value={challAns}
+                                            onChange={(e) => setChallAns(e.target.value)}
+                                            onKeyDown={(e) => e.key === "Enter" && sendChallenge()}
+                                            className="flex-1 bg-slate-50/50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500/50 focus:bg-white transition-all font-bold placeholder:font-medium placeholder:text-slate-400"
+                                        />
+                                        <button
+                                            onClick={sendChallenge}
+                                            disabled={!challQuest.trim() || !challAns.trim()}
+                                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-30 disabled:grayscale text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 active:scale-95 flex items-center gap-2"
+                                        >
+                                            Deploy <Send size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- INPUT AREA --- */}
+                <div className="p-3 sm:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/40 z-20">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex items-center gap-2 sm:gap-3 bg-white p-1 rounded-2xl border border-slate-200 focus-within:border-blue-500/50 focus-within:ring-8 focus-within:ring-blue-500/5 transition-all shadow-lg shadow-slate-200/50">
+                            <button
+                                onClick={() => setIsChallMode(!isChallMode)}
+                                className={`p-2.5 sm:p-3 rounded-xl transition-all ${isChallMode ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 ring-4 ring-blue-500/10' : 'bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                title="Drop a Drill"
+                            >
+                                <Plus size={20} className={`sm:w-5 sm:h-5 transition-transform duration-300 ${isChallMode ? 'rotate-45' : ''}`} />
+                            </button>
+
+                            <input
+                                type="text"
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                                placeholder="Collaborate with peers..."
+                                className="flex-1 bg-transparent text-slate-700 text-[13px] sm:text-sm px-2 sm:px-3 py-2.5 outline-none placeholder-slate-400 font-bold"
+                            />
+
+                            <button
+                                onClick={sendMessage}
+                                disabled={!message.trim()}
+                                className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale transform active:scale-90 shadow-xl shadow-blue-600/20"
+                            >
+                                <Send size={18} className="sm:w-[18px] sm:h-[18px] translate-x-0.5 -translate-y-0.5" />
+                            </button>
+                        </div>
+
+                        <div className="flex justify-center mt-3 sm:mt-4">
+                            <div className="flex items-center gap-2 text-[9px] sm:text-[10px] text-slate-400 font-black bg-white/50 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-200/50 uppercase tracking-[0.05em] transition-all hover:bg-white/80">
+                                <Sparkles size={12} className="text-blue-500 animate-pulse" />
+                                Drop a live drill by clicking the <Plus size={10} className="inline mx-0.5" /> button
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
+
+            {/* Custom Animations in Tailwind Global (Conceptual - standard classes used above) */}
+            <style>{`
+                @keyframes gradient-x {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .animate-gradient-x {
+                    animation: gradient-x 4s ease infinite;
+                }
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            `}</style>
         </div>
     );
 }

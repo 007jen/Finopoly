@@ -19,6 +19,7 @@ export interface User {
   joinedDate: string;
   correctAnswers?: number;
   totalQuestions?: number;
+  activeSeconds?: number;
 }
 
 export interface Badge {

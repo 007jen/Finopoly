@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
-import { 
-  Calculator, 
-  Download, 
-  Upload, 
-  FileText, 
-  CheckCircle, 
+import {
+  Calculator,
+  Download,
+  Upload,
+  FileText,
+  CheckCircle,
   XCircle,
   Award,
   Clock,
   Target,
   BookOpen,
   Lightbulb,
-  ArrowRight,
-  Play
+  Play,
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 
-const TaxSimulation: React.FC = () => {
+interface TaxSimulationProps {
+  onBack?: () => void;
+}
+
+const TaxSimulation: React.FC<TaxSimulationProps> = ({ onBack }) => {
   const [activeSimulation, setActiveSimulation] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -146,15 +151,25 @@ const TaxSimulation: React.FC = () => {
   if (!activeSimulation) {
     return (
       <div className="p-6 bg-gradient-to-br from-gray-50 to-green-50/30 min-h-screen">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Tax Simulation Hub</h1>
-          <p className="text-gray-600 text-lg">Master tax computation and planning through practical exercises</p>
+        <div className="flex items-center gap-4 mb-8">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Tax Simulation Hub</h1>
+            <p className="text-gray-600 text-lg">Master tax computation and planning through practical exercises</p>
+          </div>
         </div>
 
         {/* Simulation Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {taxSimulations.map((simulation) => (
-            <div 
+            <div
               key={simulation.id}
               className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/50 hover:shadow-2xl transition-all duration-300 group cursor-pointer"
               onClick={() => handleSimulationSelect(simulation.id)}
@@ -163,9 +178,8 @@ const TaxSimulation: React.FC = () => {
                 <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <Calculator className="w-8 h-8 text-white" />
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${
-                  simulation.difficulty === 'Intermediate' ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${simulation.difficulty === 'Intermediate' ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
+                  }`}>
                   {simulation.difficulty}
                 </span>
               </div>
@@ -195,6 +209,7 @@ const TaxSimulation: React.FC = () => {
                 <div className="flex items-center gap-2 text-green-600 group-hover:gap-3 transition-all font-semibold">
                   <Play className="w-4 h-4" />
                   Start Simulation
+                  <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             </div>
@@ -252,7 +267,7 @@ const TaxSimulation: React.FC = () => {
                   <p className="text-gray-600">Review the financial information carefully</p>
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200/50">
                 <pre className="text-gray-800 leading-relaxed whitespace-pre-wrap font-medium">
                   {currentSimulation.caseFacts}
@@ -286,7 +301,7 @@ const TaxSimulation: React.FC = () => {
           <div className="space-y-6">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/50">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Tax Computation Workspace</h3>
-              
+
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200/50">
                   <div className="flex items-center gap-3 mb-4">
@@ -364,7 +379,7 @@ const TaxSimulation: React.FC = () => {
         <div className="flex items-center gap-4">
           <p className="text-gray-600">Step {currentStep + 1} of {currentSimulation.steps!.length}</p>
           <div className="flex-1 bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentStep + 1) / currentSimulation.steps!.length) * 100}%` }}
             />
@@ -383,19 +398,17 @@ const TaxSimulation: React.FC = () => {
 
           <div className="space-y-4 mb-8">
             {currentStepData.options.map((option, index) => (
-              <label 
-                key={index} 
-                className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
-                  answers[currentStepData.id] === option
-                    ? 'border-green-500 bg-green-50 shadow-lg shadow-green-100/50'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
-                } ${
-                  showResult && option === currentStepData.correctAnswer
+              <label
+                key={index}
+                className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${answers[currentStepData.id] === option
+                  ? 'border-green-500 bg-green-50 shadow-lg shadow-green-100/50'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+                  } ${showResult && option === currentStepData.correctAnswer
                     ? 'border-green-500 bg-green-50'
                     : showResult && answers[currentStepData.id] === option && option !== currentStepData.correctAnswer
-                    ? 'border-red-500 bg-red-50'
-                    : ''
-                }`}
+                      ? 'border-red-500 bg-red-50'
+                      : ''
+                  }`}
               >
                 <input
                   type="radio"
@@ -418,11 +431,10 @@ const TaxSimulation: React.FC = () => {
           </div>
 
           {showResult && (
-            <div className={`rounded-xl p-6 mb-6 ${
-              isCorrect
-                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200'
-                : 'bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200'
-            }`}>
+            <div className={`rounded-xl p-6 mb-6 ${isCorrect
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200'
+              : 'bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200'
+              }`}>
               <div className="flex items-start gap-4">
                 {isCorrect ? (
                   <CheckCircle className="w-6 h-6 text-green-600 mt-1" />
@@ -430,19 +442,18 @@ const TaxSimulation: React.FC = () => {
                   <XCircle className="w-6 h-6 text-red-600 mt-1" />
                 )}
                 <div>
-                  <h4 className={`font-bold text-lg mb-3 ${
-                    isCorrect ? 'text-green-800' : 'text-red-800'
-                  }`}>
+                  <h4 className={`font-bold text-lg mb-3 ${isCorrect ? 'text-green-800' : 'text-red-800'
+                    }`}>
                     {isCorrect ? 'Excellent! Correct Answer! 🎉' : 'Incorrect. Let\'s learn from this!'}
                   </h4>
-                  
+
                   {isCorrect && (
                     <div className="flex items-center gap-2 mb-4">
                       <Award className="w-5 h-5 text-green-600" />
                       <span className="font-semibold text-green-700">+{Math.floor(currentSimulation.xpReward / currentSimulation.steps!.length)} XP earned!</span>
                     </div>
                   )}
-                  
+
                   <div className="bg-white/80 rounded-lg p-4 border border-gray-200/50">
                     <div className="flex items-start gap-2 mb-3">
                       <Lightbulb className="w-4 h-4 text-blue-600 mt-0.5" />
@@ -459,7 +470,7 @@ const TaxSimulation: React.FC = () => {
             <div className="text-sm text-gray-500">
               Progress: {currentStep + 1}/{currentSimulation.steps!.length} steps
             </div>
-            
+
             {!showResult ? (
               <button
                 onClick={handleSubmitStep}

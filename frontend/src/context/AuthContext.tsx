@@ -83,6 +83,7 @@ const mapClerkUserToUser = (clerkUser: any, dbProfile: any = null): AppUserType 
             joinedDate: dbProfile.created_at || new Date().toISOString(),
             correctAnswers: typeof dbProfile.correctAnswers === 'number' ? dbProfile.correctAnswers : 0,
             totalQuestions: typeof dbProfile.totalQuestions === 'number' ? dbProfile.totalQuestions : 0,
+            activeSeconds: typeof dbProfile.activeSeconds === 'number' ? dbProfile.activeSeconds : 0,
         } as AppUserType;
     }
 

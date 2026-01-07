@@ -6,6 +6,7 @@ import {
     getSubjectAccuracy,
     addXp,
     updateAccuracy,
+    logActivity,
     getDailyGoals,
     getWeeklyGoals
 } from "../controllers/progress.controller";
@@ -23,5 +24,6 @@ router.get("/streak", getStreakCalendar);
 router.get("/subjects", getSubjectAccuracy);
 router.post("/xp", addXp);
 router.post("/accuracy", updateAccuracy);
+// router.post("/activity", logActivity);
 
 export default router;

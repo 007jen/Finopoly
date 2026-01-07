@@ -4,9 +4,10 @@
 // Uses Mock Data for analytics when DB is unconnected.
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Users, BarChart3, FileText, Save, X, Target, Image, File } from 'lucide-react';
+import { Upload, Users, BarChart3, FileText, Save, X, Target, Image, File, Shield } from 'lucide-react';
 import UserManagement from './UserManagement';
 import ContentManagement from './ContentManagement';
+import AdminAuditPanel from './AdminAuditPanel';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { api } from '../../lib/api';
 
@@ -19,7 +20,7 @@ const AdminPanel: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [securityKey, setSecurityKey] = useState("");
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<'content' | 'files' | 'analytics' | 'users'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'files' | 'analytics' | 'users' | 'audit'>('content');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { getToken } = useClerkAuth();
 
@@ -292,6 +293,7 @@ const AdminPanel: React.FC = () => {
           { id: 'files', label: 'Files', icon: Upload },
           { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'users', label: 'Users', icon: Users },
+          { id: 'audit', label: 'Audit simulations', icon: Shield },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -316,6 +318,7 @@ const AdminPanel: React.FC = () => {
         {activeTab === 'files' && renderFilesTab()}
         {activeTab === 'analytics' && renderAnalyticsTab()}
         {activeTab === 'users' && renderUsersTab()}
+        {activeTab === 'audit' && <AdminAuditPanel />}
       </div>
 
       {/* Create Content Modal */}

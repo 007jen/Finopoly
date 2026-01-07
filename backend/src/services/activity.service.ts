@@ -102,13 +102,23 @@ export async function recordActivity({
     referenceId,
     score = 0,
     success = true,
+    correctIncrement,
+    totalIncrement,
+    xpEarned,
 }: {
     userId: string;
     type: ActivityType;
     referenceId: string;
     score?: number;
     success?: boolean;
+    correctIncrement?: number;
+    totalIncrement?: number;
+    xpEarned?: number;
 }) {
+    // Fallbacks for granular increments
+    const cInc = correctIncrement !== undefined ? correctIncrement : (success ? 1 : 0);
+    const tInc = totalIncrement !== undefined ? totalIncrement : 1;
+
     return prisma.$transaction(async (tx) => {
         // 🔒 Re-fetch user INSIDE transaction
         const user = await tx.user.findUnique({
@@ -116,72 +126,102 @@ export async function recordActivity({
         });
 
         if (!user) {
+            console.error(`[ActivityService] CRITICAL: User ${userId} not found in DB`);
             throw new Error("User not found");
         }
 
+
+        // 🔍 IDEMPOTENCY CHECK (5s window)
+        const recentThreshold = new Date(Date.now() - 5000);
+        const duplicate = await tx.activity.findFirst({
+            where: {
+                userId,
+                activityType: type,
+                activityId: referenceId,
+                createdAt: { gte: recentThreshold }
+            }
+        });
+
+        if (duplicate) {
+            return {
+                xpEarned: 0,
+                totalXp: user.xp,
+                streak: user.streak,
+                newBadges: [],
+                alreadyRecorded: true
+            };
+        }
+
         // 🔐 SERVER-SIDE XP CALCULATION
-        let xpReward = 0;
+        let xpReward = xpEarned !== undefined ? xpEarned : 0;
 
-        switch (type) {
-            case "audit": {
-                const audit = await tx.auditCase.findUnique({
-                    where: { id: referenceId },
-                });
-                if (!audit || !audit.isActive) {
-                    throw new Error("Invalid audit case");
+        if (xpEarned === undefined) {
+            switch (type) {
+                case "audit": {
+                    const audit = await tx.auditCase.findUnique({
+                        where: { id: referenceId },
+                    });
+                    if (!audit) {
+                        console.error(`[ActivityService] ERROR: Audit case ${referenceId} not found`);
+                        throw new Error("Invalid audit case: Not found in database");
+                    }
+                    if (!audit.isActive) {
+                        console.error(`[ActivityService] ERROR: Audit case ${referenceId} is inactive`);
+                        throw new Error("Invalid audit case: Inactive");
+                    }
+                    xpReward = audit.xpReward;
+                    break;
                 }
-                xpReward = audit.xpReward;
-                break;
-            }
 
-            case "caselaw": {
-                const caseLaw = await tx.caseLaw.findUnique({
-                    where: { id: referenceId },
-                });
-                if (!caseLaw || !caseLaw.isActive) {
-                    throw new Error("Invalid case law");
+                case "caselaw": {
+                    const caseLaw = await tx.caseLaw.findUnique({
+                        where: { id: referenceId },
+                    });
+                    if (!caseLaw || !caseLaw.isActive) {
+                        throw new Error("Invalid case law");
+                    }
+                    xpReward = caseLaw.xpReward;
+                    break;
                 }
-                xpReward = caseLaw.xpReward;
-                break;
-            }
 
-            case "tax": {
-                const tax = await tx.taxSimulation.findUnique({
-                    where: { id: referenceId },
-                });
-                if (!tax || !tax.isActive) {
-                    throw new Error("Invalid tax simulation");
+                case "tax": {
+                    const tax = await tx.taxSimulation.findUnique({
+                        where: { id: referenceId },
+                    });
+                    if (!tax || !tax.isActive) {
+                        throw new Error("Invalid tax simulation");
+                    }
+                    xpReward = tax.xpReward;
+                    break;
                 }
-                xpReward = tax.xpReward;
-                break;
-            }
 
-            case "quiz": {
-                xpReward = 50; // fixed for now
-                break;
-            }
-
-            case "challenge": {
-                const challenge = await tx.analystChallenge.findUnique({
-                    where: { id: referenceId },
-                });
-                if (!challenge) {
-                    throw new Error("Invalid challenge");
+                case "quiz": {
+                    xpReward = 50; // default
+                    break;
                 }
-                xpReward = challenge.xpReward;
-                break;
+
+                case "challenge": {
+                    const challenge = await tx.analystChallenge.findUnique({
+                        where: { id: referenceId },
+                    });
+                    if (!challenge) {
+                        throw new Error("Invalid challenge");
+                    }
+                    xpReward = challenge.xpReward;
+                    break;
+                }
+
+                default:
+                    throw new Error("Unsupported activity type");
             }
 
-            default:
-                throw new Error("Unsupported activity type");
+            // ❌ HANDLE FAILURE: No XP reward on failure (if not overridden)
+            if (!success && type !== 'quiz') {
+                xpReward = 0;
+            }
         }
 
-        // � HANDLE FAILURE: No XP reward on failure
-        if (!success) {
-            xpReward = 0;
-        }
-
-        // �📅 STREAK LOGIC (UTC DAY BASED)
+        // 📅 STREAK LOGIC (UTC DAY BASED)
         const today = toUTCDay(new Date());
         const lastDay = user.lastActivityDate
             ? toUTCDay(user.lastActivityDate)
@@ -221,20 +261,48 @@ export async function recordActivity({
                 streak: newStreak,
                 lastActivityDate: new Date(),
                 completedSimulations: (isSimulation && success) ? { increment: 1 } : undefined,
-
-                // Update General Counters
-                correctAnswers: success ? { increment: 1 } : undefined,
-                totalQuestions: { increment: 1 },
-
-                // Update Subject Counters
-                auditCorrect: (type === 'audit' && success) ? { increment: 1 } : undefined,
-                auditTotal: (type === 'audit') ? { increment: 1 } : undefined,
-                taxCorrect: (type === 'tax' && success) ? { increment: 1 } : undefined,
-                taxTotal: (type === 'tax') ? { increment: 1 } : undefined,
-                caselawCorrect: (type === 'caselaw' && success) ? { increment: 1 } : undefined,
-                caselawTotal: (type === 'caselaw') ? { increment: 1 } : undefined,
+                correctAnswers: { increment: cInc },
+                totalQuestions: { increment: tInc },
+                auditCorrect: (type === 'audit') ? { increment: cInc } : undefined,
+                auditTotal: (type === 'audit') ? { increment: tInc } : undefined,
+                taxCorrect: (type === 'tax') ? { increment: cInc } : undefined,
+                taxTotal: (type === 'tax') ? { increment: tInc } : undefined,
+                caselawCorrect: (type === 'caselaw') ? { increment: cInc } : undefined,
+                caselawTotal: (type === 'caselaw') ? { increment: tInc } : undefined,
             },
         });
+
+        console.log(`xp gained on ${type}`);
+
+        // 📊 Update UserStats Table (Normalized)
+        const stats = await tx.userStats.upsert({
+            where: {
+                userId_moduleType: {
+                    userId,
+                    moduleType: type
+                }
+            },
+            update: {
+                correctCount: { increment: cInc },
+                totalCount: { increment: tInc },
+            },
+            create: {
+                userId,
+                moduleType: type,
+                correctCount: cInc,
+                totalCount: tInc,
+            }
+        });
+
+        // Recalculate accuracy for UserStats
+        if (stats.totalCount > 0) {
+            await tx.userStats.update({
+                where: { id: stats.id },
+                data: {
+                    accuracy: (stats.correctCount / stats.totalCount) * 100
+                }
+            });
+        }
 
         // 🏅 BADGE CHECK
         // We pass the transaction client 'tx' so it's part of the same atomic operation

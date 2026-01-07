@@ -47,7 +47,7 @@ export const mockUser: User = {
 
 export const mockAuditCases: AuditCase[] = [
   {
-    id: '1',
+    id: '7927078f-087b-47fd-8f57-295d86aafbb9', // Real DB ID for "vdfvfdv"
     title: 'Fixed Assets Audit - ABC Pvt Ltd',
     company: 'ABC Private Limited',
     difficulty: 'Intermediate',

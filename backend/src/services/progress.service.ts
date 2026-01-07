@@ -270,6 +270,19 @@ export class ProgressService {
         };
     }
 
+    static async logActivity(userId: string, seconds: number) {
+        return prisma.user.update({
+            where: { id: userId },
+            data: {
+                activeSeconds: { increment: seconds },
+                lastActivityDate: new Date()
+            },
+            select: {
+                activeSeconds: true
+            }
+        });
+    }
+
     static async getWeeklyGoals(userId: string) {
         const now = new Date();
         const weekStart = startOfWeek(now, { weekStartsOn: 0 });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
-import { Clock, Users, Award, ArrowRight, Filter } from 'lucide-react';
+import { Clock, Users, ArrowRight, Filter, ArrowLeft, FileText, Target, Star } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface AuditCaseCard {
@@ -16,9 +16,10 @@ interface AuditCaseCard {
 
 interface AuditLobbyProps {
     onStartAudit: (id: string) => void;
+    onBack?: () => void;
 }
 
-export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
+export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit, onBack }) => {
     const { getToken } = useClerkAuth();
     const [error, setError] = useState<string | null>(null);
     const [cases, setCases] = useState<AuditCaseCard[]>([]);
@@ -61,10 +62,20 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
 
     return (
         <div className="p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Audit Simulations</h1>
-                    <p className="text-gray-600">Practice with real-world audit scenarios</p>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
+                <div className="flex items-center gap-4">
+                    {onBack && (
+                        <button
+                            onClick={onBack}
+                            className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400 hover:text-gray-900"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                    )}
+                    <div className="text-center lg:text-left">
+                        <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-3 tracking-tight">Audit Simulations</h1>
+                        <p className="text-gray-600 text-base lg:text-xl">Practice with real-world audit scenarios</p>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -96,50 +107,71 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit }) => {
                     <p>No audit cases available for this category.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {filteredCases.map((c) => (
-                        <div key={c.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 group">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{c.title}</h3>
-                                    <p className="text-gray-600 text-sm mb-3">{c.companyName}</p>
-                                    <p className="text-gray-700 text-xs sm:text-sm leading-relaxed line-clamp-2 h-10">{c.description}</p>
-                                </div>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(c.difficulty)}`}>
-                                    {c.difficulty}
-                                </span>
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:gap-8">
+                    {filteredCases.map((c) => {
+                        const iconColor = c.difficulty === 'Beginner' ? 'from-green-500 to-green-600' :
+                            c.difficulty === 'Intermediate' ? 'from-yellow-400 to-yellow-500' :
+                                'from-red-500 to-red-600';
 
-                            <div className="flex items-center gap-3 sm:gap-6 mb-4 text-xs sm:text-sm text-gray-500 flex-wrap">
-                                <div className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    {c.timeLimit ? Math.ceil(c.timeLimit / 60) : 5} mins
+                        return (
+                            <div key={c.id} className="group bg-white rounded-3xl p-[28px] border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col items-center text-center hover:-translate-y-2">
+                                {/* Difficulty & XP Badges */}
+                                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                                    <span className={`${getDifficultyColor(c.difficulty)} text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm border border-current opacity-90`}>
+                                        {c.difficulty}
+                                    </span>
+                                    <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-gray-100 shadow-sm">
+                                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                        <span className="text-gray-700 text-xs font-black">{c.xpReward}</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Users className="w-4 h-4" />
-                                    1 tasks
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Award className="w-4 h-4" />
-                                    {c.xpReward} XP
-                                </div>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <div className="text-sm text-gray-500">
-                                    {/* Usually we have docs count, using static for now or can add to API */}
-                                    2 documents provided
+                                {/* Prominent Icon */}
+                                <div className={`w-[71px] h-[71px] bg-gradient-to-br ${iconColor} rounded-2xl flex items-center justify-center mb-[21px] mt-[28px] group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xl`}>
+                                    <Target className="w-[34px] h-[34px] text-white" />
                                 </div>
+
+                                <div className="space-y-2 mb-[28px] flex-1">
+                                    <h3 className="text-[1.1rem] lg:text-[1.32rem] font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tight">
+                                        {c.companyName}
+                                    </h3>
+                                    <p className="text-gray-1000 font-bold text-[15px] lg:text-[1.02rem] mb-1">{c.title}</p>
+                                    <p className="text-gray-500 text-[12.5px] lg:text-[14.5px] leading-relaxed line-clamp-2">
+                                        {c.description}
+                                    </p>
+                                </div>
+
+                                {/* Metadata Row */}
+                                <div className="flex items-center justify-center gap-4.5 mb-[28px] text-[10.5px] lg:text-[12.5px] font-bold text-gray-400 uppercase tracking-widest">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-3 h-3" />
+                                        {c.timeLimit ? Math.ceil(c.timeLimit / 60) : 5}m
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="w-3 h-3" />
+                                        2 Docs
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Users className="w-3 h-3" />
+                                        1 Tasks
+                                    </div>
+                                </div>
+
                                 <button
                                     onClick={() => onStartAudit(c.id)}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 font-medium hover:scale-105 w-full sm:w-auto justify-center"
+                                    className="w-full bg-gray-50 border-2 border-gray-100 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white py-[14px] rounded-2xl font-black text-[11px] lg:text-[12.5px] uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm group-hover:shadow-xl group-hover:scale-[1.02]"
                                 >
                                     Start Simulation
-                                    <ArrowRight className="w-4 h-4" />
+                                    <ArrowRight className="w-3 h-3" />
                                 </button>
+
+                                {/* Subtle background decoration */}
+                                <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <Target className="w-32 h-32" />
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

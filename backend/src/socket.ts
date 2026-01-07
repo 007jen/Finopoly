@@ -16,8 +16,8 @@ const challengeSchema = z.object({
     room: z.string().min(1),
     content: z.string().min(1),
     answer: z.string().min(1),
-    xpReward: z.number().min(50),
-
+    xpReward: z.number().min(0),
+    author: z.string().optional(),
 });
 
 // 2. The Socket Manager
@@ -104,14 +104,13 @@ export const setupSocketHandlers = (io: Server) => {
                 const message = await prisma.message.create({
                     data: {
                         content: challenge.content,
-                        authorName: "SYSTEM",
+                        authorName: challenge.author || "SYSTEM",
                         channelId: channel.id,
                         challengeData: {
                             type: "QUIZ",
                             answer: challenge.answer,
                             xpReward: challenge.xpReward,
                             isChallenge: true
-
                         }
                     }
                 });
@@ -119,7 +118,7 @@ export const setupSocketHandlers = (io: Server) => {
                     id: message.id,
                     room: challenge.room,
                     content: challenge.content,
-                    author: "SYSTEM",
+                    author: challenge.author || "SYSTEM",
                     time: message.createdAt.toISOString(),
                     challengeData: {
                         isChallenge: true,

@@ -10,10 +10,11 @@ import {
   RotateCcw,
   Calculator,
   Lock,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { xpService } from '../../_xp/xp-service';
+// import { xpService } from '../../_xp/xp-service';
 import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { useLeaderboard } from '../../hooks/useLeaderboard';
 import { QUIZ_QUESTIONS, QuizQuestion } from '../../data/quizQuestions';
@@ -32,10 +33,11 @@ interface AnalystDrill {
 
 interface QuizArenaProps {
   onStartDrill?: (id: string) => void;
+  onBack?: () => void;
 }
 
-const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
-  const { user } = useAuth();
+const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
+  const { user, refreshUser } = useAuth();
   const { updateUserStats } = useLeaderboard();
   const { incrementCorrect, incrementTotal } = useAccuracy();
   const [selectedMode, setSelectedMode] = useState<'mcq' | 'truefalse' | 'simulation' | null>(null);
@@ -132,6 +134,7 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
     setCurrentQuestion(0);
     setScore(0);
     setSelectedAnswer('');
+    setTimeLeft(30);
     setShowResult(false);
   };
 
@@ -139,49 +142,114 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
     setSelectedAnswer(answer);
   };
 
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [isGameOver] = useState(false);
+
+  React.useEffect(() => {
+    if (!quizStarted || showResult || isGameOver) return;
+
+    if (timeLeft <= 0) {
+      handleTimeout();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [quizStarted, timeLeft, showResult, isGameOver]);
+
+  const handleTimeout = () => {
+    // Treat timeout as incorrect answer
+    if (user?.name) {
+      updateUserStats(user.name, 0, 0, 1);
+    }
+    incrementTotal();
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 400);
+    setShowResult(true);
+
+    setTimeout(async () => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setSelectedAnswer('');
+        setTimeLeft(30);
+        setShowResult(false);
+      } else {
+        // Quiz Finished on Timeout
+        try {
+          const xpPerQ = selectedMode === 'mcq' ? 100 : selectedMode === 'truefalse' ? 50 : 150;
+          const totalXp = score * xpPerQ;
+
+          await api.post('/api/activity', {
+            type: 'quiz',
+            referenceId: `quiz-${selectedMode}-${Date.now()}`,
+            score: (score / questions.length) * 100,
+            correctIncrement: score,
+            totalIncrement: questions.length,
+            xpEarned: totalXp
+          });
+          refreshUser();
+        } catch (error) {
+          console.error("Failed to log quiz activity:", error);
+        }
+        setQuizStarted(false);
+        setSelectedMode(null);
+      }
+    }, 2000);
+  };
+
   const submitAnswer = () => {
     const currentQ = questions[currentQuestion];
+    const isCorrect = selectedAnswer === (currentQ as any)?.correctAnswer;
 
-    if (selectedAnswer === currentQ?.correctAnswer) {
-      setScore(score + 1);
-
-      // Award XP based on mode
-      if (selectedMode === 'mcq') {
-        xpService.increment(500, `Quiz: MCQ Correct Answer`);
-      } else if (selectedMode === 'truefalse') {
-        xpService.increment(50, `Quiz: T/F Correct Answer`);
-      } else if (selectedMode === 'simulation') {
-        xpService.increment(150, `Quiz: Simulation Correct Answer`);
-      }
-
-      // Update Leaderboard Stats (1 correct answer, 1 total question attempt)
-      // Note: We pass 0 for XP here because LeaderboardContext now auto-syncs XP from the Global XP system.
-      // We only need this call to update the Accuracy stats (correct/total).
-      if (user?.name) { // Simple user check
+    if (isCorrect) {
+      setScore(s => s + 1);
+      if (user?.name) {
         updateUserStats(user.name, 0, 1, 1);
       }
-      incrementCorrect(); // Update global accuracy
+      incrementCorrect();
     } else {
-      // Incorrect answer: 0 XP, 0 correct, 1 total
       if (user?.name) {
         updateUserStats(user.name, 0, 0, 1);
       }
-      incrementTotal(); // Update global accuracy
-
-      // Trigger Shake Animation
+      incrementTotal();
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 400);
     }
 
     setShowResult(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
         setSelectedAnswer('');
+        setTimeLeft(30);
         setShowResult(false);
       } else {
-        // Quiz completed
+        // Quiz Finished
+        try {
+          const finalScore = score + (isCorrect ? 1 : 0);
+          const xpPerQ = selectedMode === 'mcq' ? 100 : selectedMode === 'truefalse' ? 50 : 150;
+          const totalXp = finalScore * xpPerQ;
+
+          console.log(`[QUIZ-DEBUG] Logging quiz activity. Mode: ${selectedMode}, Final Score: ${finalScore}, Total XP: ${totalXp}`);
+
+          const res = await api.post('/api/activity', {
+            type: 'quiz',
+            referenceId: `quiz-${selectedMode}-${Date.now()}`,
+            score: Math.round((finalScore / questions.length) * 100),
+            correctIncrement: finalScore,
+            totalIncrement: questions.length,
+            xpEarned: totalXp
+          });
+
+          console.log("[QUIZ-DEBUG] Activity logged successfully:", res);
+          refreshUser();
+        } catch (error: any) {
+          console.error("[QUIZ-DEBUG] FAILED to log quiz activity:", error);
+        }
         setQuizStarted(false);
         setSelectedMode(null);
       }
@@ -214,9 +282,9 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
                 <p className="text-gray-600 text-lg">Question {currentQuestion + 1} of {questions.length}</p>
               </div>
               <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-gray-600 bg-gray-50 px-4 py-2 rounded-xl">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors ${timeLeft < 10 ? 'bg-red-50 border-red-200 text-red-600 animate-pulse' : 'bg-gray-50 border-gray-100 text-gray-600'}`}>
                   <Clock className="w-4 h-4" />
-                  <span className="font-semibold">15:30</span>
+                  <span className="font-bold font-mono">{timeLeft}s</span>
                 </div>
                 <div className="text-sm text-gray-500 bg-blue-50 px-4 py-2 rounded-xl">
                   Score: <span className="font-bold">{score}/{questions.length}</span>
@@ -334,21 +402,31 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
   return (
     <div className="min-h-full bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30">
       <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
-        <div className="text-center lg:text-left">
-          <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-3 tracking-tight">Quiz Arcade</h1>
-          <p className="text-gray-600 text-base lg:text-xl">Challenge yourself with different quiz formats</p>
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+          )}
+          <div className="text-center lg:text-left">
+            <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-3 tracking-tight">Quiz Arcade</h1>
+            <p className="text-gray-600 text-base lg:text-xl">Challenge yourself with different quiz formats</p>
+          </div>
         </div>
 
         {/* Drill Cockpit Section */}
         {!selectedMode && (
           <div className="mt-12 lg:mt-16 space-y-6">
-            <div className="flex items-center gap-3 px-1 lg:px-0">
-              <div className="p-2 bg-teal-100 rounded-lg text-teal-600">
-                <Brain className="w-5 h-5" />
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="p-3 bg-teal-100 rounded-2xl text-teal-600 shadow-sm">
+                <Brain className="w-6 h-6 lg:w-8 lg:h-8" />
               </div>
               <div>
-                <h2 className="text-xl lg:text-2xl font-black text-gray-900">Drill Cockpit</h2>
-                <p className="text-gray-500 text-[10px] lg:text-sm uppercase font-bold tracking-widest italic opacity-60">Real-world analyst challenges</p>
+                <h2 className="text-2xl lg:text-3xl font-black text-gray-900 leading-tight">Drill Cockpit</h2>
+                <p className="text-gray-500 text-[10px] lg:text-sm uppercase font-black tracking-[0.2em] opacity-60">Real-world analyst challenges</p>
               </div>
             </div>
 
@@ -359,43 +437,63 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill }) => {
                   <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
                 ))
               ) : drills.length > 0 ? (
-                drills.map((drill) => (
-                  <div
-                    key={drill.id}
-                    onClick={() => onStartDrill?.(drill.slug)}
-                    className="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer relative overflow-hidden"
-                  >
-                    <div className="flex justify-between items-start mb-6">
-                      <span className={`${getDifficultyStyle(drill.difficulty)} text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider`}>
-                        {drill.difficulty}
-                      </span>
-                      <span className="text-gray-400 text-sm font-bold">{drill.xpReward} XP</span>
-                    </div>
+                drills.map((drill) => {
+                  const DrillIcon = drill.difficulty.toUpperCase() === 'JUNIOR' ? Calculator : Brain;
+                  const drillColor = drill.difficulty.toUpperCase() === 'JUNIOR' ? 'from-teal-500 to-teal-600' :
+                    drill.difficulty.toUpperCase() === 'SENIOR' ? 'from-orange-500 to-orange-600' :
+                      'from-purple-500 to-purple-600';
 
-                    <div className="space-y-2 mb-6">
-                      <h3 className="text-xl font-black text-gray-900 leading-tight">
-                        {drill.title}
-                      </h3>
-                      <p className="text-gray-500 text-sm leading-relaxed">
-                        {drill.description}
-                      </p>
-                    </div>
+                  return (
+                    <div
+                      key={drill.id}
+                      onClick={() => onStartDrill?.(drill.slug)}
+                      className="group bg-white rounded-3xl p-8 border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col items-center text-center hover:-translate-y-2"
+                    >
+                      {/* Difficulty & XP Badges */}
+                      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+                        <span className={`${getDifficultyStyle(drill.difficulty)} text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-wider shadow-sm border border-current opacity-90`}>
+                          {drill.difficulty}
+                        </span>
+                        <div className="flex items-center gap-1 bg-gray-50/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-gray-100 shadow-sm">
+                          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                          <span className="text-gray-700 text-xs font-black">{drill.xpReward}</span>
+                        </div>
+                      </div>
 
-                    <div className={`flex items-center gap-2 font-black text-sm ${drill.isSolved ? 'text-green-600' :
-                      drill.difficulty.toUpperCase() === 'JUNIOR' ? 'text-teal-600' :
-                        drill.difficulty.toUpperCase() === 'SENIOR' ? 'text-orange-600' :
-                          'text-purple-600'
-                      }`}>
-                      {drill.isSolved ? 'Drill Solved' : 'Start Drill'}
-                      <Zap className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${drill.isSolved ? 'animate-pulse' : ''}`} />
-                    </div>
+                      {/* Prominent Icon */}
+                      <div className={`w-20 h-20 bg-gradient-to-br ${drillColor} rounded-2xl flex items-center justify-center mb-6 mt-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xl relative`}>
+                        <DrillIcon className="w-10 h-10 text-white" />
+                        {drill.isSolved && (
+                          <div className="absolute -top-2 -right-2 bg-green-500 text-white p-1 rounded-full shadow-lg border-2 border-white">
+                            <CheckCircle className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Subtle background decoration */}
-                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      {drill.difficulty.toUpperCase() === 'JUNIOR' ? <Calculator className="w-24 h-24" /> : <Brain className="w-24 h-24" />}
+                      <div className="space-y-3 mb-8 flex-1">
+                        <h3 className="text-xl lg:text-2xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                          {drill.title}
+                        </h3>
+                        <p className="text-gray-500 text-sm lg:text-base leading-relaxed line-clamp-2">
+                          {drill.description}
+                        </p>
+                      </div>
+
+                      <div className={`w-full py-4 rounded-xl border-2 font-black text-sm flex items-center justify-center gap-2 transition-all duration-300 ${drill.isSolved
+                        ? 'bg-green-50 border-green-200 text-green-600'
+                        : 'bg-gray-50 border-gray-100 text-gray-900 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white group-hover:shadow-lg group-hover:scale-[1.02]'
+                        }`}>
+                        {drill.isSolved ? 'Drill Solved' : 'Start Drill'}
+                        {!drill.isSolved && <Zap className="w-4 h-4" />}
+                      </div>
+
+                      {/* Subtle watermark */}
+                      <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <DrillIcon className="w-32 h-32" />
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="col-span-full py-16 text-center bg-white rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">

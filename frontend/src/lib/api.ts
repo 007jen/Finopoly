@@ -95,5 +95,13 @@ export const api = {
     delete: <T>(url: string, options?: RequestOptions) =>
         internalFetch<T>(url, { ...options, method: "DELETE" }),
 
-
+    // Audit Admin
+    createAuditCase: (data: any) =>
+        api.post('/api/audit/create', data),
+    listAdminAuditCases: () =>
+        api.get<any[]>('/api/audit/list'),
+    updateAuditCase: (id: string, data: any) =>
+        api.put(`/api/audit/${id}`, data),
+    deleteAuditCase: (id: string) =>
+        api.delete(`/api/audit/${id}`),
 };

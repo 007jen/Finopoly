@@ -83,6 +83,7 @@ model User {
   caselawTotal   Int @default(0)
 
   completedSimulations Int      @default(0)
+  activeSeconds        Int      @default(0)
   preferredAreas       String[] @default([])
 
   createdAt DateTime @default(now())
@@ -211,8 +212,13 @@ model AuditCase {
   difficulty  Difficulty
   description String
 
-  invoiceDetails  Json?
-  ledgerDetails   Json?
+  invoiceDetails Json?
+  ledgerDetails  Json?
+
+  // Advanced Features
+  clientBrief Json?
+  vouchers    Json?
+
   expectedAction  String
   violationReason String?
   faultyField     String?

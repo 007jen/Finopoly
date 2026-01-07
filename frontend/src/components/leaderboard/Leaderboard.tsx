@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Medal, Crown, Star, Flame, Target, BookOpen } from "lucide-react";
+import { Medal, Crown, Star, Flame, Target, BookOpen, ArrowLeft } from "lucide-react";
 import { db } from "../../lib/database";
 
 // --- Types ---
@@ -21,7 +21,11 @@ interface LeaderboardUser {
   avatar?: string;
 }
 
-const Leaderboard = () => {
+interface LeaderboardProps {
+  onBack?: () => void;
+}
+
+const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -66,8 +70,17 @@ const Leaderboard = () => {
   return (
     <div className="min-h-full bg-gray-50 p-4 md:p-6 lg:p-8 space-y-8 font-sans">
       {/* --- Header Section --- */}
-      <div className="flex flex-col items-center justify-center text-center gap-2 mb-12">
-        <div>
+      <div className="relative mb-12">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors p-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-xs font-black uppercase tracking-widest hidden md:block">Back</span>
+          </button>
+        )}
+        <div className="flex flex-col items-center justify-center text-center gap-2">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Global Leaderboard</h1>
           <p className="text-sm md:text-base text-gray-500 mt-1">Top performers in the finance community.</p>
         </div>

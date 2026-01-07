@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, X, Flame, ShieldAlert, ArrowLeft, AlertCircle, Shield } from 'lucide-react';
+import { Check, X, Flame, ShieldAlert, ArrowLeft, Shield, Target } from 'lucide-react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAuth } from '../../context/AuthContext';
 import confetti from 'canvas-confetti';
 import { api } from '../../lib/api';
+import InvoiceView from './InvoiceView';
+import TallyAuditView from './TallyAuditView';
 
 // --- Types ---
 type PaymentMode = 'CASH' | 'BANK' | 'UPI';
 type AuditField = 'Vendor' | 'Date' | 'Amount' | 'Tax' | 'Compliance';
-type FieldStatus = 'VALID' | 'FRAUD' | null;
 
 interface InvoiceData {
   vendor: string;
@@ -33,19 +34,135 @@ interface LedgerData {
 
 interface Level {
   id: number;
+  companyName?: string;
+  description?: string;
   invoice: InvoiceData;
   ledger: LedgerData;
-  // If faultyField is null, it's a Clean Case (All Valid)
-  faultyField: AuditField | null;
+  faultyField: string | null;
   violationReason?: string;
 }
 
 // --- Mock Data ---
 // --- Mock Data ---
-// Removed hardcoded levels to enforce API usage.
-const GAME_LEVELS: Level[] = [];
+const GAME_LEVELS: Level[] = [
+  {
+    id: 1,
+    invoice: {
+      vendor: "Bharat Electronics Ltd",
+      invoiceNo: "BEL/24-25/089",
+      date: "01-Apr-2024",
+      amount: 45000,
+      tax: 8100,
+      total: 53100,
+      gstin: "29AAAAA0000A1Z5",
+      paymentMode: "BANK",
+      description: "Industrial Components Purchase"
+    },
+    ledger: {
+      date: "01-Apr-2024",
+      particulars: "Bharat Electronics Ltd",
+      vchNo: "1",
+      vchType: "Purchase",
+      debit: 53100,
+      credit: 0
+    },
+    faultyField: null
+  },
+  {
+    id: 2,
+    invoice: {
+      vendor: "Swift Logistics",
+      invoiceNo: "SL-992",
+      date: "02-Apr-2024",
+      amount: 8000,
+      tax: 1440,
+      total: 9440,
+      gstin: "27BBBBB1111B1Z2",
+      paymentMode: "CASH",
+      description: "Freight Charges"
+    },
+    ledger: {
+      date: "02-Apr-2024",
+      particulars: "Swift Logistics",
+      vchNo: "2",
+      vchType: "Payment",
+      debit: 9440,
+      credit: 0
+    },
+    faultyField: null
+  },
+  {
+    id: 3,
+    invoice: {
+      vendor: "Vertex Solutions",
+      invoiceNo: "VS/INV/44",
+      date: "04-Apr-2024",
+      amount: 15000,
+      tax: 2700,
+      total: 17700,
+      gstin: "19CCCCC2222C1Z8",
+      paymentMode: "UPI",
+      description: "Software Subscription"
+    },
+    ledger: {
+      date: "04-Apr-2024",
+      particulars: "Vertex Solutions",
+      vchNo: "3",
+      vchType: "Purchase",
+      debit: 17700,
+      credit: 0
+    },
+    faultyField: "Amount"
+  },
+  {
+    id: 4,
+    invoice: {
+      vendor: "Reliable Stationery",
+      invoiceNo: "RS-881",
+      date: "05-Apr-2024",
+      amount: 2500,
+      tax: 0,
+      total: 2500,
+      gstin: "URD-NON-GST",
+      paymentMode: "CASH",
+      description: "Office Supplies"
+    },
+    ledger: {
+      date: "05-Apr-2024",
+      particulars: "Reliable Stationery",
+      vchNo: "4",
+      vchType: "Contra",
+      debit: 2500,
+      credit: 0
+    },
+    faultyField: null
+  },
+  {
+    id: 5,
+    invoice: {
+      vendor: "Global Tech Corp",
+      invoiceNo: "GTC-001",
+      date: "07-Apr-2024",
+      amount: 120000,
+      tax: 21600,
+      total: 141600,
+      gstin: "08DDDDD3333D1Z0",
+      paymentMode: "BANK",
+      description: "Server Hardware"
+    },
+    ledger: {
+      date: "07-Apr-2024",
+      particulars: "Global Tech Corp",
+      vchNo: "5",
+      vchType: "Purchase",
+      debit: 141600,
+      credit: 0
+    },
+    faultyField: null
+  }
+];
 
-const MAX_TIME = 30.0;
+const MAX_TIME = 60.0;
 
 interface SimulationViewProps {
   caseId: string;
@@ -60,6 +177,16 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const [timeLeft, setTimeLeft] = useState(MAX_TIME);
   const [gameState, setGameState] = useState<'PLAYING' | 'RESULT' | 'FINISHED' | 'GAME_OVER'>('PLAYING');
   const [result, setResult] = useState<'SUCCESS' | 'FAILURE' | null>(null);
+  const [phase, setPhase] = useState<'BRIEF' | 'PLANNING' | 'SAMPLING' | 'TESTING' | 'REPORTING'>('BRIEF');
+  const [materiality, setMateriality] = useState(10000);
+  const [clientBriefData, setClientBriefData] = useState<any>(null);
+  const [selectedSamples, setSelectedSamples] = useState<number[]>([]);
+  const [foundErrors, setFoundErrors] = useState<number>(0);
+
+  // For Debugging / Tracking
+  useEffect(() => {
+    if (foundErrors > 0) console.log(`Current caught mistakes: ${foundErrors}`);
+  }, [foundErrors]);
 
   // Animation State
 
@@ -72,10 +199,10 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const AUDIT_FIELDS: AuditField[] = ['Vendor', 'Date', 'Amount', 'Tax', 'Compliance'];
 
   // DYNAMIC DATA
-  const [levels, setLevels] = useState<Level[]>([]);
+  const [levels, setLevels] = useState<Level[]>(GAME_LEVELS);
   const [loading, setLoading] = useState(true);
   const { getToken } = useClerkAuth();
-  const { refreshUser, awardBadges } = useAuth();
+  const { refreshUser } = useAuth();
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -98,15 +225,56 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
         }
 
         if (fetchedData.length > 0) {
-          // Transform Data
-          const mappedLevels: Level[] = fetchedData.map((item: any, idx: number) => ({
-            id: item.id || idx,
-            invoice: item.invoiceDetails,
-            ledger: item.ledgerDetails,
-            faultyField: item.faultyField || null, // Ensure null if empty string
-            violationReason: item.violationReason
-          }));
-          setLevels(mappedLevels);
+          // Transform Data (Only if it looks valid)
+          const primaryCase = fetchedData[0]; // Assuming fetchedData contains at least one case
+
+          if (primaryCase.vouchers && Array.isArray(primaryCase.vouchers)) {
+            // Use the handcrafted voucher pool
+            const mappedLevels: Level[] = primaryCase.vouchers.map((v: any, idx: number) => ({
+              id: idx + 1,
+              // These fields might be on the primaryCase or the voucher itself, adjust as needed
+              // For now, assuming they are on the primaryCase for context
+              // title: primaryCase.title, 
+              // companyName: primaryCase.companyName,
+              // difficulty: primaryCase.difficulty,
+              // description: primaryCase.description,
+              invoice: v.invoice,
+              ledger: v.ledger,
+              // expectedAction: v.expectedAction, // Not part of Level interface
+              violationReason: v.violationReason,
+              faultyField: v.faultyField,
+              // tags: primaryCase.tags // Not part of Level interface
+            }));
+            setLevels(mappedLevels);
+
+            // Set basic info if BRIEF phase needs it
+            if (primaryCase.clientBrief) {
+              setClientBriefData(primaryCase.clientBrief);
+              setMateriality(primaryCase.clientBrief.industry === 'MANUFACTURING' ? 15000 : 10000); // Default or derive
+            }
+          } else {
+            // Legacy / Dynamic shuffling logic
+            const mappedLevels: Level[] = fetchedData
+              .filter((item: any) => item.invoiceDetails?.vendor || item.ledgerDetails?.particulars)
+              .map((item: any, idx: number) => ({
+                id: typeof item.id === 'number' ? item.id : (parseInt(item.id) || idx + 1),
+                // title: item.title, // Not part of Level interface
+                // companyName: item.companyName, // Not part of Level interface
+                // difficulty: item.difficulty, // Not part of Level interface
+                // description: item.description, // Not part of Level interface
+                invoice: item.invoiceDetails,
+                ledger: item.ledgerDetails,
+                // expectedAction: item.expectedAction, // Not part of Level interface
+                violationReason: item.violationReason,
+                faultyField: item.faultyField || null,
+                // tags: item.tags || [] // Not part of Level interface
+              }));
+            if (mappedLevels.length > 0) {
+              setLevels(mappedLevels);
+            } else {
+              setLevels(GAME_LEVELS);
+            }
+          }
         } else {
           // Fallback to MOCK if API returns empty (e.g. dev env)
           console.warn("API returned no stats, using mock.");
@@ -148,20 +316,31 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   }, [currentLevelIdx]);
 
   // Helper Functions
-  const logAttempt = async (isSuccess: boolean) => {
+  const logAttempt = async (isSuccess: boolean, correctInc?: number, totalInc?: number) => {
     try {
       const token = await getToken();
+      console.log(`[XP-FRONTEND] Logging attempt for case: ${caseId}, success: ${isSuccess}`);
       const res = await api.post<any>('/api/audit/complete', {
         caseId,
         score: isSuccess ? 100 : 0,
-        success: isSuccess
+        success: isSuccess,
+        correctIncrement: correctInc,
+        totalIncrement: totalInc
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      refreshUser();
+
+      console.log("[XP-FRONTEND] Response from server:", res);
+
+      if (res.alreadyRecorded) {
+        console.warn("[XP-FRONTEND] Duplicate prevented by server.");
+      } else {
+        console.log(`[XP-FRONTEND] XP Awarded! New Total: ${res.totalXp}`);
+        refreshUser();
+      }
       return res;
-    } catch (error) {
-      console.error("Failed to log activity:", error);
+    } catch (error: any) {
+      console.error("[XP-FRONTEND] FATAL ERROR logging activity:", error);
       return null;
     }
   };
@@ -193,34 +372,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     frame();
   };
 
-  const handleLevelComplete = (success: boolean) => {
-    if (isProcessingRef.current) return;
-    isProcessingRef.current = true;
-
-    if (success) {
-      setGameState('RESULT');
-      setResult('SUCCESS');
-      setScore(s => s + 5000);
-      setStreak(s => s + 1);
-      triggerVictoryConfetti();
-
-      setTimeout(async () => {
-        if (currentLevelIdx >= levels.length - 1) {
-          setResult(null);
-          setGameState('FINISHED');
-          const res = await logAttempt(true);
-          if (res?.newBadges && res.newBadges.length > 0) {
-            awardBadges(res.newBadges);
-          }
-        } else {
-          setGameState('PLAYING');
-          setResult(null);
-          setTimeLeft(MAX_TIME);
-          setCurrentLevelIdx(prev => prev + 1);
-        }
-      }, 1500);
-    }
-  };
+  // handleLevelComplete removed in favor of handleVoucherSubmit
 
   // Timer Logic
   useEffect(() => {
@@ -235,7 +387,7 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
           setResult('FAILURE');
           if (currentLevel) currentLevel.violationReason = "Time's up! Audit incomplete.";
           setGameState('GAME_OVER');
-          logAttempt(false); // Log failure to backend
+          logAttempt(false, currentLevelIdx, currentLevelIdx + 1); // Log failure to backend
           return 0;
         }
         return prev - 0.1;
@@ -246,61 +398,356 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   }, [gameState, currentLevel]);
 
 
-  const handleStepDecision = (field: AuditField, choice: FieldStatus) => {
-    if (gameState !== 'PLAYING' || !currentLevel) return;
+  const handleVoucherSubmit = async (userData: LedgerData) => {
+    if (gameState !== 'PLAYING' || !currentLevel || isProcessingRef.current) return;
+    isProcessingRef.current = true;
 
-    // 1. Record the visual selection (logic here if needed)
+    // SCORING ENGINE (Partial XP)
+    let totalXpEarned = 0;
+    const results = {
+      date: userData.date.toLowerCase() === currentLevel.ledger.date.toLowerCase(),
+      ledger: userData.particulars.toLowerCase() === currentLevel.ledger.particulars.toLowerCase(),
+      amount: (userData.debit === currentLevel.ledger.debit) || (userData.credit === currentLevel.ledger.credit),
+    };
 
-    // 2. Validate IMMEDIATELY
-    const isFaultyField = currentLevel.faultyField === field;
+    if (results.date) totalXpEarned += 10;
+    if (results.ledger) totalXpEarned += 50;
+    if (results.amount) totalXpEarned += 40;
 
-    let isCorrectStep = false;
-    let gameOverReason = "";
+    setScore(s => s + totalXpEarned);
 
-    if (isFaultyField) {
-      // This IS the error. User must catch it.
-      if (choice === 'FRAUD') {
-        isCorrectStep = true;
-        handleLevelComplete(true);
-        return;
-      } else {
-        // User marked a Fraud field as Valid.
-        isCorrectStep = false;
-        gameOverReason = `Missed the error in ${field}.`;
+    if (totalXpEarned >= 60) {
+      setGameState('RESULT');
+      setResult('SUCCESS');
+      triggerVictoryConfetti();
+
+      // Check if this level had a hidden fault and we "passed" it correctly
+      if (currentLevel.faultyField) {
+        setFoundErrors(prev => prev + 1);
       }
-    } else {
-      // This is a normal valid field.
-      if (choice === 'VALID') {
-        isCorrectStep = true;
-        const nextStep = auditStep + 1;
-        // Check if we exhausted all fields
-        if (nextStep >= AUDIT_FIELDS.length) {
-          handleLevelComplete(true);
-          return;
+
+      setTimeout(async () => {
+        const currentSampleIdxInSelected = selectedSamples.indexOf(levels.indexOf(currentLevel));
+        const hasNextSample = currentSampleIdxInSelected !== -1 && currentSampleIdxInSelected < selectedSamples.length - 1;
+
+        if (!hasNextSample) {
+          setPhase('REPORTING');
+          setResult(null);
+          setGameState('PLAYING'); // Active for the report screen
         } else {
-          // Advance to next random field
-          setAuditStep(nextStep);
-          return;
+          setGameState('PLAYING');
+          setResult(null);
+          setTimeLeft(MAX_TIME);
+          setCurrentLevelIdx(selectedSamples[currentSampleIdxInSelected + 1]);
         }
-      } else {
-        // User marked a Valid field as Fraud.
-        isCorrectStep = false;
-        gameOverReason = `False Accusation! ${field} is actually correct.`;
-      }
-    }
-
-    // Handing Failure
-    if (!isCorrectStep) {
+      }, 2000);
+    } else {
       setResult('FAILURE');
-      setStreak(0);
-      currentLevel.violationReason = gameOverReason;
       setGameState('GAME_OVER');
-      logAttempt(false); // Log failure to backend
+      currentLevel.violationReason = `Entry Invalid. Scored ${totalXpEarned}/100 XP. Needs 60+ to pass. Errors in: ${!results.date ? 'Date, ' : ''}${!results.ledger ? 'Ledger, ' : ''}${!results.amount ? 'Values' : ''}`;
+      logAttempt(false, totalXpEarned, 100);
     }
   };
 
 
   if (loading) return <div className="text-white">Loading...</div>;
+
+  if (phase === 'BRIEF') {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <div className="max-w-2xl w-full bg-slate-800 rounded-2xl md:rounded-3xl p-6 md:p-10 border border-slate-700 shadow-2xl animate-in fade-in zoom-in duration-500 my-8">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-lg shadow-blue-600/20">
+            <Shield size={32} className="text-white md:hidden" />
+            <Shield size={40} className="text-white hidden md:block" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">
+            Client Profile: {levels[0]?.companyName || 'Swastik Enterprises'}
+          </h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-[10px] md:text-xs font-bold mb-6">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            INDUSTRY: {clientBriefData?.industry?.toUpperCase() || 'MANUFACTURING'}
+          </div>
+
+          <div className="space-y-4 md:space-y-6 text-slate-400 text-sm md:text-base leading-relaxed mb-8 md:mb-10">
+            <p>
+              {levels[0]?.description || 'Swastik Enterprises is a leading manufacturer of specialized industrial components. They have recently scaled operations.'}
+            </p>
+            <p className="bg-slate-900/50 p-4 rounded-xl border-l-4 border-blue-500">
+              <span className="text-blue-400 font-bold block mb-1">AUDIT FOCUS:</span>
+              {clientBriefData?.auditFocus || 'Your firm has been engaged for a Statutory Audit. We need to verify that all high-value purchases are correctly recorded.'}
+            </p>
+          </div>
+
+          <button
+            onClick={() => setPhase('PLANNING')}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-sm md:text-base"
+          >
+            START PLANNING PHASE
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'PLANNING') {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <div className="max-w-2xl w-full bg-slate-800 rounded-2xl md:rounded-3xl p-6 md:p-10 border border-slate-700 shadow-2xl animate-in fade-in slide-in-from-right-10 duration-500 my-8">
+          <div className="flex items-center gap-3 mb-6 md:mb-8">
+            <Target size={28} className="text-yellow-500 md:hidden" />
+            <Target size={32} className="text-yellow-500 hidden md:block" />
+            <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter">Audit Planning: Materiality</h1>
+          </div>
+
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 md:mb-8">
+            <p className="text-yellow-500 text-[10px] md:text-sm font-bold mb-2 uppercase tracking-widest">Auditor's Note</p>
+            <p className="text-slate-300 text-sm leading-relaxed">
+              {clientBriefData?.materialityGuidance || 'Materiality is a threshold. Errors above this limit are considered "Material" and could influence economic decisions.'}
+            </p>
+          </div>
+
+          <div className="space-y-4 md:space-y-6 mb-8 md:mb-10">
+            <label className="block text-slate-400 font-bold text-[10px] md:text-sm uppercase">Set Materiality Threshold (₹)</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
+              <input
+                type="number"
+                value={materiality}
+                onChange={(e) => setMateriality(parseInt(e.target.value))}
+                className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 md:py-4 pl-8 pr-4 text-white font-mono text-lg md:text-xl focus:border-blue-500 outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+            <button
+              onClick={() => setPhase('BRIEF')}
+              className="w-full sm:flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 md:py-4 rounded-xl transition-all active:scale-95 text-sm md:text-base"
+            >
+              BACK
+            </button>
+            <button
+              onClick={() => setPhase('SAMPLING')}
+              className="w-full sm:flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-black py-3 md:py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-sm md:text-base"
+            >
+              SAVE & PROCEED
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'SAMPLING') {
+    return (
+      <div className="min-h-screen bg-slate-900 p-6 overflow-y-auto">
+        <div className="max-w-5xl mx-auto space-y-8 py-10">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-tight">Audit Phase: Sampling</h1>
+              <p className="text-slate-400 text-sm mt-2">Select 1 high-risk transaction from the Day Book to perform detailed testing.</p>
+            </div>
+            <div className="flex gap-3 md:gap-4 w-full md:w-auto">
+              <div className="flex-1 md:flex-none bg-slate-800 p-3 md:p-4 border border-slate-700 rounded-xl">
+                <p className="text-[10px] text-slate-500 uppercase font-black">Materiality</p>
+                <p className="text-yellow-500 font-mono font-bold text-sm md:text-base">₹{materiality.toLocaleString()}</p>
+              </div>
+              <div className="flex-1 md:flex-none bg-slate-800 p-3 md:p-4 border border-slate-700 rounded-xl">
+                <p className="text-[10px] text-slate-500 uppercase font-black">Selected</p>
+                <p className="text-blue-400 font-mono font-bold text-sm md:text-base">{selectedSamples.length} / 1</p>
+              </div>
+            </div>
+          </header>
+
+          {/* DESKTOP TABLE VIEW */}
+          <div className="hidden md:block bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-900 text-slate-500 uppercase font-black border-b border-slate-700">
+                <tr>
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Particulars</th>
+                  <th className="p-4">Vch No.</th>
+                  <th className="p-4 text-right">Debit (₹)</th>
+                  <th className="p-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-300">
+                {levels.map((lvl, idx) => {
+                  const isSelected = selectedSamples.includes(idx);
+                  const isAboveMateriality = (lvl.ledger.debit || 0) >= materiality;
+
+                  return (
+                    <tr key={idx} className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${isSelected ? 'bg-blue-600/10' : ''}`}>
+                      <td className="p-4">{lvl.ledger.date}</td>
+                      <td className="p-4 font-bold">{lvl.ledger.particulars}</td>
+                      <td className="p-4 text-slate-500">#{lvl.ledger.vchNo}</td>
+                      <td className={`p-4 text-right font-bold ${isAboveMateriality ? 'text-orange-400' : ''}`}>
+                        {lvl.ledger.debit?.toLocaleString() || '0.00'}
+                      </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedSamples(prev => prev.filter(i => i !== idx));
+                            } else if (selectedSamples.length < 1) {
+                              setSelectedSamples(prev => [...prev, idx]);
+                            }
+                          }}
+                          className={`px-4 py-2 rounded-lg font-bold transition-all ${isSelected
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                        >
+                          {isSelected ? 'SELECTED' : 'SELECT'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* MOBILE CARD VIEW */}
+          <div className="md:hidden space-y-4">
+            {levels.map((lvl, idx) => {
+              const isSelected = selectedSamples.includes(idx);
+              const isAboveMateriality = (lvl.ledger.debit || 0) >= materiality;
+
+              return (
+                <div
+                  key={idx}
+                  className={`p-4 bg-slate-800 rounded-2xl border-2 transition-all ${isSelected ? 'border-blue-600 shadow-lg shadow-blue-600/10' : 'border-slate-700'
+                    }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-mono mb-1">{lvl.ledger.date}</p>
+                      <h4 className="text-sm font-black text-white uppercase">{lvl.ledger.particulars}</h4>
+                      <p className="text-[10px] text-slate-500 font-mono mt-1">VCH: #{lvl.ledger.vchNo}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-base font-black font-mono ${isAboveMateriality ? 'text-orange-400' : 'text-slate-300'}`}>
+                        ₹{lvl.ledger.debit?.toLocaleString() || '0.00'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedSamples(prev => prev.filter(i => i !== idx));
+                      } else if (selectedSamples.length < 1) {
+                        setSelectedSamples(prev => [...prev, idx]);
+                      }
+                    }}
+                    className={`w-full py-3 rounded-xl font-bold transition-all text-sm ${isSelected
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-700 text-slate-400'
+                      }`}
+                  >
+                    {isSelected ? 'SELECTED' : 'SELECT TRANSACTION'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center">
+            <button
+              onClick={() => setPhase('PLANNING')}
+              className="px-8 py-4 bg-slate-800 text-slate-400 font-bold rounded-xl hover:bg-slate-700 hover:text-white transition-all text-sm sm:text-base"
+            >
+              BACK TO PLANNING
+            </button>
+            <button
+              disabled={selectedSamples.length < 1}
+              onClick={() => {
+                setCurrentLevelIdx(selectedSamples[0]);
+                setPhase('TESTING');
+              }}
+              className={`px-12 py-4 font-black rounded-xl transition-all shadow-xl active:scale-95 text-sm sm:text-base ${selectedSamples.length === 1
+                ? 'bg-green-600 text-white shadow-green-600/20 hover:bg-green-500'
+                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                }`}
+            >
+              COMMENCE TESTING
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'REPORTING') {
+    const totalFaultsInSubset = selectedSamples.filter(i => levels[i].faultyField !== null).length;
+
+    const handleOpinion = async (opinion: 'UNMODIFIED' | 'QUALIFIED' | 'ADVERSE') => {
+      let isCorrect = false;
+      if (totalFaultsInSubset === 0 && opinion === 'UNMODIFIED') isCorrect = true;
+      if (totalFaultsInSubset > 0 && totalFaultsInSubset < 3 && opinion === 'QUALIFIED') isCorrect = true;
+      if (totalFaultsInSubset === 3 && opinion === 'ADVERSE') isCorrect = true;
+
+      if (isCorrect) {
+        setGameState('FINISHED');
+        await logAttempt(true, 500, 500);
+      } else {
+        setResult('FAILURE');
+        setGameState('GAME_OVER');
+        levels[currentLevelIdx].violationReason = `Wrong Audit Opinion. There were ${totalFaultsInSubset} faulty vouchers in your sample, but you issued a ${opinion} opinion. You caught ${foundErrors} mistakes during testing.`;
+        await logAttempt(false, 0, 500);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <div className="max-w-4xl w-full bg-slate-800 rounded-2xl md:rounded-3xl p-6 md:p-10 border border-slate-700 shadow-2xl animate-in zoom-in duration-500 my-8">
+          <header className="text-center mb-8 md:mb-10">
+            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 show-lg shadow-blue-600/20">
+              <Shield size={32} className="text-white" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">Final Phase: Audit Opinion</h1>
+            <p className="text-slate-400 text-sm md:text-base mt-2">Based on your testing, what is your professional conclusion?</p>
+          </header>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-10">
+            {[
+              { id: 'UNMODIFIED', label: 'Unmodified', desc: 'Books are true and fair. No material errors.', color: 'bg-green-600' },
+              { id: 'QUALIFIED', label: 'Qualified', desc: 'True & fair, except for specific items found.', color: 'bg-yellow-600' },
+              { id: 'ADVERSE', label: 'Adverse', desc: 'Significant fraud or pervasive errors detected.', color: 'bg-red-600' }
+            ].map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => handleOpinion(opt.id as any)}
+                className="group p-5 md:p-6 bg-slate-900 border border-slate-700 rounded-2xl text-left sm:text-center hover:border-blue-500 transition-all active:scale-95"
+              >
+                <div className={`w-10 h-10 ${opt.color} rounded-lg mb-4 flex items-center justify-center mx-3 sm:mx-auto`}>
+                  <Check size={20} className="text-white" />
+                </div>
+                <h3 className="text-white font-bold text-sm md:text-lg mb-1 md:mb-2">{opt.label}</h3>
+                <p className="text-slate-500 text-[10px] md:text-xs leading-relaxed">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-slate-900/50 p-6 rounded-2xl border border-dashed border-slate-700">
+            <h4 className="text-[10px] text-slate-500 uppercase font-black mb-4">Testing Summary</h4>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Total Samples Tested</span>
+              <span className="text-white font-mono">01</span>
+            </div>
+            <div className="flex justify-between text-sm mt-2 border-t border-slate-700/50 pt-2">
+              <span className="text-slate-400">Mistakes Caught in Sample</span>
+              <span className="text-blue-400 font-mono">{foundErrors} / {totalFaultsInSubset}</span>
+            </div>
+            <div className="flex justify-between text-sm mt-2 border-t border-slate-700/50 pt-2">
+              <span className="text-slate-400">Materiality Limit Set</span>
+              <span className="text-yellow-500 font-mono">₹{materiality.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentLevel) {
     return (
@@ -317,41 +764,49 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     );
   }
 
-
-  if (loading) return <div className="text-white">Loading...</div>;
-
-  // Active Field to Display
-  const activeField = auditOrder[auditStep];
-
   return (
     <div className="flex flex-col h-screen bg-slate-900 text-white font-sans overflow-hidden relative">
 
       {/* 1. HEADER (Fixed) */}
-      <div className="flex-none p-2 md:p-4 bg-slate-800 border-b-4 border-slate-700 shadow-lg z-20 relative">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-4 md:gap-0">
-          <div className="flex-1 w-full md:w-auto text-center md:text-left">
-            <button onClick={onBack} className="flex items-center justify-center md:justify-start gap-2 text-slate-400 hover:text-white mb-1 transition-colors">
+      <div className="flex-none p-3 md:p-4 bg-slate-800 border-b-4 border-slate-700 shadow-lg z-20 relative">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex-1 w-full text-center md:text-left">
+            <button onClick={onBack} className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-2 transition-colors">
               <ArrowLeft size={16} />
-              <span className="text-xs font-bold uppercase">Exit Audit</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">Exit Audit</span>
             </button>
-            <h1 className="text-lg md:text-xl font-bold text-slate-200 leading-tight truncate">Mehta & Co. Chartered Accountants</h1>
-            <p className="text-xs md:text-sm text-slate-400">Client: Swastik Enterprises - Tax Audit</p>
+            <div className="flex flex-col md:flex-row md:items-baseline md:gap-3">
+              <h1 className="text-base md:text-xl font-bold text-slate-200 leading-tight truncate">Mehta & Co. Accountants</h1>
+              <div className="flex items-center justify-center md:justify-start gap-2 mt-1 md:mt-0">
+                <p className="text-[10px] md:text-sm text-slate-400">Swastik Enterprises</p>
+                <span className="text-slate-600 hidden md:inline">•</span>
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded">
+                  Sample {selectedSamples.indexOf(levels.indexOf(currentLevel)) + 1} / {selectedSamples.length}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* TIMER */}
-          <div className="order-first md:order-none md:absolute md:left-1/2 md:top-4 md:-translate-x-1/2 w-full md:w-auto flex justify-center">
-            <div className={`px-4 py-1.5 rounded-md font-mono font-bold text-sm transition-colors duration-300 shadow-inner ${timeLeft < 5 ? 'bg-red-600 animate-pulse' : 'bg-red-800/80'}`}>
-              {Math.ceil(timeLeft)}s remaining
+          {/* TIMER - Sticky/Center for focus */}
+          <div className="hidden sm:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className={`px-4 py-1.5 rounded-lg font-mono font-bold text-sm transition-colors duration-300 shadow-inner ${timeLeft < 5 ? 'bg-red-600 animate-pulse' : 'bg-slate-900 border border-slate-700 text-red-500'}`}>
+              {Math.ceil(timeLeft)}s
             </div>
+          </div>
+
+          {/* MOBILE TIMER */}
+          <div className="sm:hidden w-full bg-slate-900 rounded-lg p-2 border border-slate-700 flex justify-between items-center">
+            <span className="text-[10px] text-slate-500 font-black uppercase">Time Remaining</span>
+            <span className={`font-mono font-bold ${timeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-white'}`}>{Math.ceil(timeLeft)}s</span>
           </div>
 
           {/* STATS */}
-          <div className="flex gap-4 md:gap-6 items-center flex-1 justify-center md:justify-end w-full md:w-auto">
+          <div className="flex gap-4 md:gap-6 items-center flex-1 justify-center md:justify-end w-full">
             <div className="text-center">
-              <p className="text-[10px] text-slate-400 uppercase">Billable Value</p>
-              <p className="text-lg md:text-xl font-mono font-bold text-yellow-400">₹{score.toLocaleString()}</p>
+              <p className="text-[10px] text-slate-400 uppercase">XP Score</p>
+              <p className="text-lg md:text-xl font-mono font-bold text-yellow-500">{score.toLocaleString()}</p>
             </div>
-            <div className="text-center">
+            <div className="text-center hidden sm:block border-l border-slate-700 pl-4 md:pl-6">
               <p className="text-[10px] text-slate-400 uppercase">Streak</p>
               <div className="flex items-center gap-1 justify-center text-orange-500 font-bold text-lg">
                 <Flame size={18} fill="currentColor" />
@@ -363,70 +818,26 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
       </div>
 
       {/* 2. SCROLLABLE CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-40 md:pb-24 scroll-smooth">
-        <div className="max-w-[1400px] mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-40 md:pb-24 scroll-smooth">
+        <div className="max-w-[1500px] mx-auto space-y-6">
 
-          {/* DOCUMENT AREA */}
-          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-            {/* INVOICE CARD */}
-            <div className="flex-1 bg-slate-100 text-slate-900 rounded-lg shadow-xl overflow-hidden relative border-l-8 border-yellow-500 w-full shrink-0">
-              <div className="bg-yellow-500 p-2 flex justify-between text-xs font-bold">
-                <span>PAYMENT VOUCHER</span>
-                <span>ORIGINAL</span>
-              </div>
-              <div className="p-4 lg:p-10 space-y-4">
-                <div className="flex justify-between flex-wrap gap-2">
-                  <h2 className="font-bold text-lg lg:text-3xl break-words">{currentLevel.invoice.vendor}</h2>
-                  <span className="font-mono text-sm lg:text-xl whitespace-nowrap">{currentLevel.invoice.date}</span>
-                </div>
-                <div className="text-xs text-slate-500">{currentLevel.invoice.gstin}</div>
-                <div className="py-4 border-y border-slate-300 my-4">
-                  <div className="flex justify-between text-base lg:text-xl">
-                    <span className="break-words mr-2">{currentLevel.invoice.description}</span>
-                    <span className="font-mono font-bold">₹{currentLevel.invoice.amount.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-xs lg:text-sm text-slate-500 mt-2">
-                    <span>GST (18%)</span>
-                    <span className="font-mono">₹{currentLevel.invoice.tax.toLocaleString()}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center bg-slate-200 p-3 lg:p-4 rounded-xl">
-                  <span className="font-bold text-sm lg:text-lg">TOTAL</span>
-                  <span className="font-bold text-xl lg:text-4xl font-mono">₹{currentLevel.invoice.total.toLocaleString()}</span>
-                </div>
-                <div className="mt-2 text-xs font-bold text-slate-500 uppercase">
-                  Paid via: <span className="text-slate-900">{currentLevel.invoice.paymentMode}</span>
-                </div>
+          {/* DOCUMENT AREA - Refined Dual View */}
+          <div className="flex flex-col xl:flex-row gap-6 items-stretch min-h-0 xl:min-h-[750px] transition-all duration-500">
+            {/* LEFT PANEL: SOURCE DOCUMENT (INVOICE) */}
+            <div className="flex-1 w-full xl:w-1/2 overflow-hidden hover:shadow-2xl transition-shadow xl:scale-[1.005] xl:hover:scale-[1.01] duration-300">
+              <div className="h-full bg-slate-800/50 rounded-2xl p-2 md:p-4 border border-slate-700/50">
+                <InvoiceView data={currentLevel.invoice} />
               </div>
             </div>
 
-            {/* LEDGER CARD */}
-            <div className="flex-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden flex flex-col w-full min-h-[350px] lg:min-h-[550px]">
-              <div className="bg-slate-900 p-2 lg:p-3 text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wider">
-                Tally Prime View
-              </div>
-
-              {/* Scrollable Table Container */}
-              <div className="flex-1 p-4 lg:p-10 font-mono text-xs lg:text-base text-green-400 overflow-x-auto">
-                <div className="min-w-[400px]"> {/* Force min width to prevent squashing */}
-                  <div className="grid grid-cols-[1fr,2fr,1fr] gap-6 border-b border-slate-600 pb-3 mb-4 text-slate-500 uppercase text-[10px] lg:text-xs tracking-widest font-black">
-                    <span>Date</span>
-                    <span>Particulars</span>
-                    <span className="text-right">Debit</span>
-                  </div>
-                  <div className="grid grid-cols-[1fr,2fr,1fr] gap-4 bg-slate-700/50 p-2 rounded hover:bg-slate-700 transition-colors">
-                    <span>{currentLevel.ledger.date}</span>
-                    <span>{currentLevel.ledger.particulars}</span>
-                    <span className="text-right">{(currentLevel.ledger.debit || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 mt-auto border-t border-slate-700/50">
-                <div className="flex items-start gap-3 text-yellow-500 text-xs bg-yellow-900/10 p-3 rounded border border-yellow-700/30">
-                  <ShieldAlert size={16} className="mt-0.5 shrink-0" />
-                  <span className="leading-relaxed">Verify 40A(3) Compliance and GST Input Credit eligibility.</span>
-                </div>
+            {/* RIGHT PANEL: ACCOUNTING RECORD (INTERACTIVE TALLY) */}
+            <div className="flex-1 w-full xl:w-1/2 overflow-hidden hover:shadow-2xl transition-shadow xl:scale-[1.005] xl:hover:scale-[1.01] duration-300">
+              <div className="h-full bg-slate-800/50 rounded-2xl p-2 md:p-4 border border-slate-700/50">
+                <TallyAuditView
+                  ledger={currentLevel.ledger}
+                  onSubmit={handleVoucherSubmit}
+                  isSubmitting={gameState === 'RESULT'}
+                />
               </div>
             </div>
           </div>
@@ -435,49 +846,29 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
         </div>
       </div>
 
-      {/* 3. CHECKLIST UI & ACTIONS (Fixed Bottom) */}
-      <div className="fixed bottom-0 left-0 w-full bg-slate-800 border-t border-slate-700 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] z-50 p-4 md:p-6 pb-6 safe-area-inset-bottom">
-        <div className="max-w-[1400px] mx-auto">
-          {activeField && (
-            <div className="flex flex-col md:flex-row items-center gap-4 justify-between animate-in slide-in-from-bottom-5 duration-300">
-
-              {/* Question / Parameter */}
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
-                  <Shield size={24} />
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Pending Audit Parameter ({auditStep + 1}/{AUDIT_FIELDS.length})</p>
-                  <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                    {activeField} Check
-                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                    </span>
-                  </h3>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex w-full md:w-auto gap-3">
-                <button
-                  onClick={() => handleStepDecision(activeField, 'FRAUD')}
-                  disabled={gameState !== 'PLAYING'}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:bg-red-600 hover:text-white hover:border-red-500 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <AlertCircle size={18} /> Reject
-                </button>
-
-                <button
-                  onClick={() => handleStepDecision(activeField, 'VALID')}
-                  disabled={gameState !== 'PLAYING'}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 hover:shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Check size={18} /> Verify
-                </button>
-              </div>
+      {/* 3. INSTRUCTION BAR */}
+      <div className="fixed bottom-0 left-0 w-full bg-slate-900/90 backdrop-blur-md border-t border-slate-700 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] z-50 p-4">
+        <div className="max-w-[1500px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
+          <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
+            <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg shrink-0">
+              <Shield size={20} className="md:w-6 md:h-6" />
             </div>
-          )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[8px] md:text-[10px] text-slate-500 uppercase font-black tracking-widest truncate">Mission</p>
+              <h3 className="text-white font-bold text-xs md:text-sm truncate leading-tight">Transfer invoice details into the Tally Voucher Entry system</h3>
+            </div>
+          </div>
+
+          <div className="flex gap-6 md:gap-10 w-full sm:w-auto justify-center sm:justify-end border-t border-slate-800 pt-3 sm:pt-0 sm:border-0">
+            <div className="text-center">
+              <p className="text-[8px] md:text-[10px] text-slate-500 uppercase">Max Reward</p>
+              <p className="text-white font-black text-xs md:text-sm">+100 XP</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] md:text-[10px] text-slate-500 uppercase">To Pass</p>
+              <p className="text-yellow-500 font-black text-xs md:text-sm">60 XP</p>
+            </div>
+          </div>
         </div>
       </div>
 

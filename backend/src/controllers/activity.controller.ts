@@ -36,19 +36,20 @@ import { recordActivity, getUserActivities } from "../services/activity.service"
 import { ActivityType } from "@prisma/client";
 
 export const completeActivity = async (req: Request, res: Response) => {
-    // AUTH BOUNDARY
+    const reqId = Math.random().toString(36).substring(7);
     const userId = req.user?.id;
+
+
     if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // PRESENCE VALIDATION
-    const { type, referenceId, score } = req.body;
+    const { type, referenceId, score, correctIncrement, totalIncrement, xpEarned } = req.body;
+
     if (!type || !referenceId) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // ENUM VALIDATION
     if (!Object.values(ActivityType).includes(type)) {
         return res.status(400).json({ error: "Invalid activity type" });
     }
@@ -58,12 +59,18 @@ export const completeActivity = async (req: Request, res: Response) => {
             userId,
             type,
             referenceId,
-            score: score || 0
+            score: score || 0,
+            correctIncrement: correctIncrement !== undefined ? Number(correctIncrement) : undefined,
+            totalIncrement: totalIncrement !== undefined ? Number(totalIncrement) : undefined,
+            xpEarned: xpEarned !== undefined ? Number(xpEarned) : undefined
         });
 
         return res.json(result);
     } catch (err: any) {
-        return res.status(400).json({ error: err.message });
+        return res.status(400).json({
+            error: err.message,
+            debugId: reqId
+        });
     }
 };
 

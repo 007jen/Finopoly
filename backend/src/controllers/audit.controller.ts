@@ -87,54 +87,34 @@ export const deleteAuditCase = async (req: Request, res: Response) => {
 
 // 2. Backend (Express) - User Requested Logic
 export const completeSession = async (req: Request, res: Response) => {
-    // const reqId = Math.random().toString(36).substring(7);
-    // console.log(`[${reqId}] --> completeSession HIT`);
+    const reqId = Math.random().toString(36).substring(7);
     try {
-        const userId = req.user?.id; // Postges ID
-        // console.log(`[${reqId}] --> User ID found:`, userId);
+        const userId = req.user?.id;
+        const { caseId, score, success = true, correctIncrement, totalIncrement } = req.body;
 
-        if (!userId) {
-            // console.log("--> NO USER ID - Unauthorized");
-            return res.status(401).json({ error: "Unauthorized" });
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        if (!caseId) return res.status(400).json({ error: "caseId is required" });
+
+        try {
+            const result = await recordActivity({
+                userId,
+                type: 'audit',
+                referenceId: caseId,
+                score: score || 0,
+                success: Boolean(success),
+                correctIncrement: correctIncrement !== undefined ? Number(correctIncrement) : undefined,
+                totalIncrement: totalIncrement !== undefined ? Number(totalIncrement) : undefined
+            });
+
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(400).json({
+                error: err.message,
+                debugId: reqId
+            });
         }
-
-        // 1. Fetch user's last update time to prevent double-execution
-        const existingUser = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { updatedAt: true }
-        });
-
-        if (existingUser) {
-            const timeDiff = new Date().getTime() - new Date(existingUser.updatedAt).getTime();
-            // console.log(`[${reqId}] --> Time since last update: ${timeDiff}ms`);
-
-            // If updated less than 5 seconds ago, ignore this request (Debounce)
-            if (timeDiff < 5000) {
-                // console.log(`[${reqId}] --> DEBOUNCED: Duplicate request blocked.`);
-                return res.json({ message: 'Session completed (Debounced)', user: existingUser });
-            }
-        }
-
-        // Direct update as requested ("Check my prisma/schema.prisma logic")
-        // console.log(`[${reqId}] --> Attempting Prisma Update for:`, userId);
-
-        const { caseId, score, success = true } = req.body;
-        if (!caseId) {
-            return res.status(400).json({ error: "caseId is required" });
-        }
-
-        const result = await recordActivity({
-            userId,
-            type: 'audit',
-            referenceId: caseId,
-            score: score || 0,
-            success: Boolean(success)
-        });
-
-        // console.log(`[${reqId}] --> Activity Recorded Result:`, result);
-        res.json({ message: 'Session completed', ...result });
     } catch (error) {
-        console.error('Error completing audit session:', error);
         res.status(500).json({ error: 'Failed to record session completion' });
     }
 };

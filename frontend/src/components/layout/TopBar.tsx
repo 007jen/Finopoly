@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Search, Trophy, Flame, Star, Settings, LogOut, ChevronDown, User as UserIcon } from 'lucide-react';
+import { Search, Trophy, Flame, Star, Settings, LogOut, ChevronDown, User as UserIcon, Menu } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 
 interface TopBarProps {
   user: UserType | null;
   setActiveTab: (tab: string) => void;
+  onMenuClick: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab }) => {
+const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab, onMenuClick }) => {
   const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -20,24 +21,34 @@ const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab }) => {
   };
 
   return (
-    <div className="flex-shrink-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 px-3 sm:px-4 lg:px-6 py-3 shadow-sm z-50 relative">
+    <div className="flex-shrink-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 px-3 sm:px-4 lg:px-6 py-3 shadow-sm z-50 relative focus-within:z-[60]">
       <div className="flex items-center justify-between gap-4">
-        {/* Left side - Search (hidden on mobile, shown on tablet+) */}
-        <div className="hidden md:flex items-center flex-1 max-w-lg">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search simulations, case laws, topics..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-200 transition-all duration-200 text-sm"
-            />
-          </div>
-        </div>
+        {/* Left side - Menu Button (Mobile) & Search */}
+        <div className="flex items-center gap-4 flex-1">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+            aria-label="Open Menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
 
-        {/* Mobile: Just show XP */}
-        <div className="flex md:hidden items-center gap-2 bg-gradient-to-r from-yellow-50 to-orange-50 px-3 py-1.5 rounded-lg border border-yellow-200/50">
-          <Trophy className="w-4 h-4 text-yellow-600" />
-          <span className="text-xs font-bold text-yellow-700"><span data-xp-display>0</span> XP</span>
+          <div className="hidden md:flex items-center flex-1 max-w-lg">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search simulations, case laws, topics..."
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-200 transition-all duration-200 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Mobile: Just show XP */}
+          <div className="flex md:hidden items-center gap-2 bg-gradient-to-r from-yellow-50 to-orange-50 px-3 py-1.5 rounded-lg border border-yellow-200/50">
+            <Trophy className="w-4 h-4 text-yellow-600" />
+            <span className="text-xs font-bold text-yellow-700"><span data-xp-display>0</span> XP</span>
+          </div>
         </div>
 
         {/* Right side - User info & Actions */}

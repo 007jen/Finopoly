@@ -9,7 +9,9 @@ import {
     Clock,
     Edit,
     Download,
-    Share2
+    Share2,
+    ArrowLeft,
+    Zap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
@@ -17,7 +19,11 @@ import { useAccuracy } from '../../_accuracy/accuracy-context';
 import { xpService } from '../../_xp/xp-service';
 import { api } from '../../lib/api';
 
-const ProfilePage: React.FC = () => {
+interface ProfilePageProps {
+    onBack?: () => void;
+}
+
+const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
     const { user, logout, updateUser } = useAuth();
     const { getToken } = useClerkAuth();
     const { accuracy } = useAccuracy();
@@ -92,6 +98,35 @@ const ProfilePage: React.FC = () => {
         { quiz: 'Financial Reporting', score: 88, maxScore: 100, date: '2024-01-22' },
     ];
 
+    // --- Mastery Logic ---
+    const calculateMastery = () => {
+        const correctAnswers = user.correctAnswers || 0;
+        const activeSeconds = user.activeSeconds || 0;
+        const activeHours = activeSeconds / 3600;
+
+        // Formula: CorrectAnswers * 1 + ActiveHours * 50
+        const totalPoints = (correctAnswers * 1) + (activeHours * 50);
+
+        // Milestone for 100% = 500 points (Master)
+        const maxPoints = 500;
+        const percentage = Math.min((totalPoints / maxPoints) * 100, 100);
+
+        let title = "Amateur";
+        if (percentage >= 90) title = "Master";
+        else if (percentage >= 60) title = "Expert";
+        else if (percentage >= 30) title = "Specialist";
+
+        return {
+            points: totalPoints,
+            percentage,
+            title,
+            activeMinutes: Math.floor(activeSeconds / 60),
+            remaining: Math.max(0, 100 - (percentage % 100))
+        };
+    };
+
+    const mastery = calculateMastery();
+
     const savedCaseLaws = [
         { title: 'CIT vs. Hindustan Coca Cola Beverages', category: 'Tax', savedDate: '2024-01-27' },
         { title: 'SEBI vs. Sahara India Real Estate Corp', category: 'Corporate Law', savedDate: '2024-01-25' },
@@ -104,7 +139,7 @@ const ProfilePage: React.FC = () => {
         const rows = [
             ["Profile", "Name", user.name || "Unknown"],
             ["Profile", "Email", user.email || "Unknown"],
-            ["Profile", "Role", user.role || "Student"],
+            ["Profile", "Role", mastery.title],
             ["Profile", "Joined", new Date(user.joinedDate).toLocaleDateString()],
             ["Stats", "Total XP", (profileOverview?.xp ?? user.xp).toString()],
             ["Stats", "Level", (profileOverview?.level ?? user.level).toString()],
@@ -134,9 +169,19 @@ const ProfilePage: React.FC = () => {
     return (
         <div className="min-h-full bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30">
             <div className="max-w-7xl mx-auto p-4 lg:p-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">My Profile</h1>
-                    <p className="text-gray-600 text-lg lg:text-xl">Track your learning progress and achievements</p>
+                <div className="flex items-center gap-4 mb-8">
+                    {onBack && (
+                        <button
+                            onClick={onBack}
+                            className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-500 hover:text-gray-900"
+                        >
+                            <ArrowLeft className="w-6 h-6" />
+                        </button>
+                    )}
+                    <div>
+                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-1">My Profile</h1>
+                        <p className="text-gray-600 text-sm lg:text-lg">Track your learning progress and achievements</p>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -154,7 +199,7 @@ const ProfilePage: React.FC = () => {
 
                             <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
                             <p className="text-gray-500 mb-4">{user.email}</p>
-                            <p className="text-gray-600 mb-6 text-lg">{user.role} • Level <span data-level-display>{user.level}</span></p>
+                            <p className="text-gray-600 mb-6 text-lg"><span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">{mastery.title}</span> • Level <span data-level-display>{user.level}</span></p>
 
                             <div className="flex items-center justify-center gap-3 mb-6">
                                 <Star className="w-6 h-6 text-yellow-500" />
@@ -286,6 +331,73 @@ const ProfilePage: React.FC = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Experience Mastery Card */}
+                        <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-blue-50 relative overflow-hidden group">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-blue-100 rounded-lg">
+                                            <Zap className="w-5 h-5 text-blue-600" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900">Mastery Progress</h3>
+                                    </div>
+                                    <p className="text-gray-500 text-sm">Based on active engagement and accuracy</p>
+                                </div>
+
+                                <div className="flex-1 max-w-xl w-full">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <div className="flex flex-col">
+                                            <span className="text-2xl font-black text-blue-600">
+                                                {mastery.percentage.toFixed(1)}%
+                                            </span>
+                                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Current Standing</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-bold text-indigo-600 mb-1">
+                                                {mastery.percentage >= 30
+                                                    ? `${(100 - mastery.percentage).toFixed(1)}% to next evolution`
+                                                    : `${(30 - mastery.percentage).toFixed(1)}% to Specialist`}
+                                            </div>
+                                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Next Milestone</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Horizontal Progress Bar */}
+                                    <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                                        <div
+                                            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md transition-all duration-1000 ease-out"
+                                            style={{ width: `${mastery.percentage}%` }}
+                                        />
+                                        {/* Milestone Markers */}
+                                        <div className="absolute left-[30%] top-0 w-px h-full bg-white/50"></div>
+                                        <div className="absolute left-[60%] top-0 w-px h-full bg-white/50"></div>
+                                        <div className="absolute left-[90%] top-0 w-px h-full bg-white/50"></div>
+                                    </div>
+
+                                    <div className="flex justify-between mt-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                        <span>Amateur</span>
+                                        <div className="flex gap-4">
+                                            <span className={mastery.percentage >= 30 ? 'text-blue-600' : ''}>Specialist</span>
+                                            <span className={mastery.percentage >= 60 ? 'text-blue-600' : ''}>Expert</span>
+                                            <span className={mastery.percentage >= 90 ? 'text-blue-600' : ''}>Master</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stats Breakdown Overlay */}
+                            <div className="mt-6 pt-6 border-t border-gray-50 flex gap-8">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4 text-blue-500" />
+                                    <span className="text-sm font-medium text-gray-600">{mastery.activeMinutes}m Active</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Target className="w-4 h-4 text-green-500" />
+                                    <span className="text-sm font-medium text-gray-600">{user.correctAnswers || 0} Correct</span>
+                                </div>
                             </div>
                         </div>
 

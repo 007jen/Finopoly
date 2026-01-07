@@ -14,20 +14,29 @@ import {
   Shield,
   ChevronDown,
   BookOpen,
-  Menu,
-  X
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  isMobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  setActiveTab,
+  isCollapsed,
+  onToggleCollapse,
+  isMobileOpen,
+  onMobileClose
+}) => {
   const { logout } = useAuth();
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -81,114 +90,121 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const handleModuleClick = (moduleId: string) => {
     const module = modules.find(m => m.id === moduleId);
     if (module?.comingSoon) return;
+
+    // If collapsed, expand when clicking a module
+    if (isCollapsed) {
+      onToggleCollapse();
+    }
+
     setExpandedModule(expandedModule === moduleId ? null : moduleId);
   };
 
   const handleMenuItemClick = (itemId: string) => {
     setActiveTab(itemId);
-    setIsMobileMenuOpen(false);
+    onMobileClose();
   };
+
+  const sidebarWidth = isCollapsed ? 'w-20' : 'w-72';
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        aria-label="Toggle navigation menu"
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
-      >
-        {isMobileMenuOpen ? (
-          <X className="w-6 h-6 text-gray-600" />
-        ) : (
-          <Menu className="w-6 h-6 text-gray-600" />
-        )}
-      </button>
-
       {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
+      {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-          onClick={() => setIsMobileMenuOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={onMobileClose}
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white/95 backdrop-blur-xl border-r border-gray-200/50 flex flex-col shadow-2xl transform transition-transform duration-300 lg:transform-none h-full ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      {/* Sidebar Container */}
+      <div className={`fixed lg:static inset-y-0 left-0 z-50 ${isMobileOpen ? 'w-72' : sidebarWidth} bg-white/95 backdrop-blur-xl border-r border-gray-200/50 flex flex-col shadow-2xl transition-all duration-300 transform ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
 
         {/* Brand Header */}
         <div
-          onClick={() => setActiveTab('dashboard')}
-          className="flex-shrink-0 p-6 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-indigo-50 cursor-pointer hover:bg-blue-50 transition-colors"
+          className={`flex-shrink-0 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-indigo-50 transition-all duration-300`}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-6 h-6 text-white" />
+          <div className={`p-4 flex items-center ${isCollapsed && !isMobileOpen ? 'flex-col gap-4 justify-center' : 'justify-between gap-3'}`}>
+            <div
+              onClick={() => handleMenuItemClick('dashboard')}
+              className={`flex items-center gap-3 cursor-pointer group`}
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              {(!isCollapsed || isMobileOpen) && (
+                <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-none">
+                    Finopoly
+                  </h1>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">CA Excellence</p>
+                </div>
+              )}
             </div>
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Finopoly
-              </h1>
-              <p className="text-xs text-gray-500 font-medium">Master Finance Through Play</p>
-            </div>
+
+            {/* Hamburger Toggle (Desktop) */}
+            <button
+              onClick={onToggleCollapse}
+              className="hidden lg:flex p-2 hover:bg-white/50 rounded-lg text-gray-500 hover:text-blue-600 transition-colors"
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
         {/* Scrollable Navigation Content */}
-        <div className="flex-1 overflow-y-auto">
-          <nav className="p-4">
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <nav className="p-3">
             {/* Learning Modules Section */}
-            <div className="mb-8">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Learning Modules</h3>
-              <div className="space-y-3">
+            <div className="mb-6">
+              {(!isCollapsed || isMobileOpen) && <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-3">Learning Modules</h3>}
+              <div className="space-y-1">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  const isExpanded = expandedModule === module.id;
+                  const isExpanded = expandedModule === module.id && (!isCollapsed || isMobileOpen);
 
                   return (
-                    <div key={module.id}>
+                    <div key={module.id} className="relative group">
                       <button
                         onClick={() => handleModuleClick(module.id)}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-300 group ${(module as any).comingSoon
-                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100'
+                        className={`w-full flex items-center ${isCollapsed && !isMobileOpen ? 'justify-center' : 'justify-between'} p-3 rounded-xl transition-all duration-300 ${(module as any).comingSoon
+                          ? 'opacity-60 cursor-not-allowed grayscale'
                           : isExpanded
-                            ? `bg-gradient-to-r ${module.color} text-white shadow-xl transform scale-105`
-                            : `text-gray-700 hover:bg-gradient-to-r ${module.color} hover:text-white hover:shadow-lg hover:scale-105`
+                            ? `bg-blue-600 text-white shadow-lg`
+                            : `text-gray-600 hover:bg-blue-50 hover:text-blue-600`
                           }`}
                       >
                         <div className="flex items-center gap-3">
-                          <Icon className={`w-6 h-6 transition-all duration-300 ${isExpanded ? 'scale-110 rotate-3' : 'group-hover:scale-110 group-hover:rotate-3'}`} />
-                          <div className="flex flex-col items-start">
-                            <span className="font-semibold text-base">{module.name}</span>
-                            {(module as any).comingSoon && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full mt-0.5">
-                                Coming Soon
-                              </span>
-                            )}
-                          </div>
+                          <Icon className={`w-6 h-6 ${isExpanded ? 'scale-110' : ''}`} />
+                          {(!isCollapsed || isMobileOpen) && (
+                            <div className="flex flex-col items-start min-w-0">
+                              <span className="font-bold text-sm truncate">{module.name}</span>
+                              {(module as any).comingSoon && (
+                                <span className="text-[8px] font-black uppercase tracking-tighter bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full mt-0.5">Coming Soon</span>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {!(module as any).comingSoon && (
-                          <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                        {(!isCollapsed || isMobileOpen) && !(module as any).comingSoon && (
+                          <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                         )}
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-3 ml-6 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                        <div className="mt-2 ml-4 space-y-1 animate-in slide-in-from-top-2 duration-200">
                           {module.options.map((option) => {
                             const OptionIcon = option.icon;
                             return (
                               <button
                                 key={option.id}
-                                onClick={() => {
-                                  handleMenuItemClick(option.id);
-                                  setExpandedModule(null);
-                                }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-300 hover:scale-105 ${activeTab === option.id
-                                  ? 'bg-white/20 text-white font-semibold shadow-lg backdrop-blur-sm'
-                                  : 'text-gray-600 hover:bg-white/10 hover:text-gray-900 hover:shadow-md'
+                                onClick={() => handleMenuItemClick(option.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTab === option.id
+                                  ? 'bg-blue-50 text-blue-600'
+                                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                                   }`}
                               >
-                                <OptionIcon className="w-4 h-4 transition-transform duration-300 hover:scale-110" />
+                                <OptionIcon className="w-4 h-4" />
                                 <span>{option.label}</span>
                               </button>
                             );
@@ -202,23 +218,23 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
             </div>
 
             {/* Main Navigation */}
-            <div className="mb-6">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">Navigation</h3>
-              <ul className="space-y-2">
+            <div>
+              {(!isCollapsed || isMobileOpen) && <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-3">Quick Access</h3>}
+              <ul className="space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
+                  const isActive = activeTab === item.id;
                   return (
-                    <li key={item.id}>
+                    <li key={item.id} className="relative group">
                       <button
                         onClick={() => handleMenuItemClick(item.id)}
-                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all duration-300 hover:scale-105 ${activeTab === item.id
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-xl transform scale-105'
-                          : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-100 hover:to-blue-50 hover:text-gray-900 hover:shadow-lg'
+                        className={`w-full flex items-center ${isCollapsed && !isMobileOpen ? 'justify-center' : 'gap-3'} px-3 py-3 rounded-xl text-left transition-all duration-300 ${isActive
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
                           }`}
                       >
-                        <Icon className={`w-5 h-5 transition-all duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110'
-                          }`} />
-                        <span className="font-semibold">{item.label}</span>
+                        <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''}`} />
+                        {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm truncate">{item.label}</span>}
                       </button>
                     </li>
                   );
@@ -229,13 +245,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200/50 bg-gradient-to-r from-gray-50 to-blue-50">
+        <div className={`p-4 border-t border-gray-200/50 bg-gray-50/10`}>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className={`w-full flex items-center ${isCollapsed && !isMobileOpen ? 'justify-center' : 'gap-3'} px-4 py-3 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all group relative`}
           >
-            <LogOut className="w-5 h-5" />
-            <span className="font-semibold">Logout</span>
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">Logout</span>}
           </button>
         </div>
       </div>
