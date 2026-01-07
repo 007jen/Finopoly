@@ -1,25 +1,92 @@
 import { prisma } from "../utils/prisma";
 
 export async function getPlatformMetrics() {
-    const totalUsers = await prisma.user.count();
+    const [totalUsers, totalActivities, xpAggregate] = await Promise.all([
+        prisma.user.count(),
+        prisma.activity.count(),
+        prisma.activity.aggregate({
+            _sum: { xpEarned: true },
+        })
+    ]);
 
-    const totalActivities = await prisma.activity.count();
-
-    const xpAggregate = await prisma.activity.aggregate({
-        _sum: {
-            xpEarned: true,
-        },
-    });
     const totalXp = xpAggregate._sum.xpEarned ?? 0;
+    const avgXpPerUser = totalUsers > 0 ? Math.floor(totalXp / totalUsers) : 0;
 
-    const avgXpPerUser =
-        totalUsers > 0 ? Math.floor(totalXp / totalUsers) : 0;
+    // Fetch Recent Activities for Feed
+    const recentActivities = await prisma.activity.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true
+                }
+            }
+        }
+    });
+
+    // Fetch Pulse Data (Last 24 Hours, Hourly)
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+    const activityPulseRaw = await prisma.activity.findMany({
+        where: {
+            createdAt: { gte: twentyFourHoursAgo }
+        },
+        select: {
+            createdAt: true
+        }
+    });
+
+    // Bucket pulse data by hour
+    const pulseBuckets: Record<string, number> = {};
+    for (let i = 0; i < 24; i++) {
+        const d = new Date();
+        d.setHours(d.getHours() - i, 0, 0, 0);
+        pulseBuckets[d.toISOString()] = 0;
+    }
+
+    activityPulseRaw.forEach(act => {
+        const d = new Date(act.createdAt);
+        d.setMinutes(0, 0, 0);
+        const key = d.toISOString();
+        if (pulseBuckets[key] !== undefined) {
+            pulseBuckets[key]++;
+        }
+    });
+
+    const activityPulse = Object.entries(pulseBuckets).map(([time, count]) => ({
+        time: new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        count
+    })).reverse();
+
+    // Fetch Module Distribution for Pie Chart
+    const moduleStats = await prisma.activity.groupBy({
+        by: ['activityType'],
+        _count: {
+            id: true
+        }
+    });
+
+    const moduleDistribution = moduleStats.map(stat => ({
+        name: stat.activityType.charAt(0).toUpperCase() + stat.activityType.slice(1),
+        value: stat._count.id
+    }));
 
     return {
         totalUsers,
         totalActivities,
         totalXp,
         avgXpPerUser,
+        recentActivities: recentActivities.map(act => ({
+            user: act.user?.name || act.user?.email || 'Anonymous Collector',
+            action: act.title || act.activityType,
+            time: act.createdAt,
+            type: act.activityType
+        })),
+        activityPulse,
+        moduleDistribution
     };
 }
 

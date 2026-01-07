@@ -108,11 +108,9 @@ const AdminAuditPanel: React.FC = () => {
             materialityGuidance: c.clientBrief?.materialityGuidance || '',
         });
 
-        // Initialize vouchers list
         if (c.vouchers && Array.isArray(c.vouchers)) {
             setVouchers(c.vouchers);
         } else {
-            // Fallback: Create one voucher from top-level details if available
             setVouchers([{
                 id: Math.random().toString(36).substr(2, 9),
                 invoice: c.invoiceDetails || DEFAULT_JSON_TEMPLATE.invoice,
@@ -169,7 +167,6 @@ const AdminAuditPanel: React.FC = () => {
                     materialityGuidance: form.materialityGuidance
                 },
                 vouchers: vouchers,
-                // Legacy fields (v0 compatibility) - use first voucher
                 invoiceDetails: vouchers[0]?.invoice,
                 ledgerDetails: vouchers[0]?.ledger,
                 expectedAction: vouchers[0]?.expectedAction,
@@ -179,22 +176,22 @@ const AdminAuditPanel: React.FC = () => {
 
             if (editingId) {
                 await api.updateAuditCase(editingId, payload);
-                setSuccess("Audit case successfully updated!");
+                setSuccess("Simulation logic successfully updated.");
             } else {
                 await api.createAuditCase(payload);
-                setSuccess("Audit case successfully created!");
+                setSuccess("New simulation successfully deployed.");
             }
 
             setIsAdding(false);
             setEditingId(null);
             fetchCases();
         } catch (err: any) {
-            setError(err.message || "Failed to save audit case.");
+            setError(err.message || "Protocol failure: Deployment aborted.");
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this case?")) return;
+        if (!confirm("Are you sure you want to decommission this simulation?")) return;
         try {
             await api.deleteAuditCase(id);
             fetchCases();
@@ -226,132 +223,133 @@ const AdminAuditPanel: React.FC = () => {
         }]);
     };
 
-    if (isLoading) return <div className="p-10 text-white text-center font-black animate-pulse uppercase tracking-widest">Initialising Audit Control Systems...</div>;
+    if (isLoading) return <div className="p-20 text-blue-600 text-center font-black animate-pulse uppercase tracking-[0.2em] text-sm">Synchronizing Simulation Pool...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+        <div className="bg-transparent text-gray-900 animate-in fade-in duration-700">
             <div className="max-w-7xl mx-auto">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                     <div>
-                        <div className="flex items-center gap-4 mb-3">
-                            <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/30">
-                                <Shield className="text-white w-6 h-6" />
-                            </div>
-                            <h1 className="text-4xl font-black uppercase tracking-tighter">Simulation Forge</h1>
-                        </div>
-                        <p className="text-slate-400 font-medium">Create complex multi-voucher audit sessions for cloud deployment.</p>
+                        <h2 className="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Simulation Forge</h2>
+                        <p className="text-gray-500 font-medium text-sm">Engineer complex multi-vector audit scenarios for the ecosystem.</p>
                     </div>
                     {!isAdding ? (
                         <button
                             onClick={() => { resetForm(); setIsAdding(true); }}
-                            className="flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-600/20 active:scale-95 uppercase tracking-widest text-sm"
+                            className="flex items-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-200 active:scale-95 uppercase tracking-widest text-xs"
                         >
-                            <Plus size={20} />
-                            BUILD NEW CASE
+                            <Plus size={16} />
+                            Deploy New Logic
                         </button>
                     ) : (
                         <button
                             onClick={resetForm}
-                            className="flex items-center gap-3 px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black transition-all active:scale-95 uppercase tracking-widest text-sm"
+                            className="flex items-center gap-2 px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl font-black transition-all active:scale-95 uppercase tracking-widest text-xs"
                         >
-                            <X size={20} />
-                            ABORT FORGE
+                            <X size={16} />
+                            Abort Sequence
                         </button>
                     )}
                 </header>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-center gap-4 mb-8 animate-in slide-in-from-top-4">
-                        <AlertCircle className="text-red-500" />
-                        <p className="text-red-200 text-sm font-bold">{error}</p>
+                    <div className="bg-red-50 border border-red-100 p-5 rounded-[2rem] flex items-center gap-4 mb-8 text-red-700 animate-in slide-in-from-top-4">
+                        <div className="p-2 bg-red-100 rounded-lg">
+                            <AlertCircle className="w-5 h-5" />
+                        </div>
+                        <p className="text-sm font-bold uppercase tracking-tight">{error}</p>
                     </div>
                 )}
 
                 {success && (
-                    <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-2xl flex items-center gap-4 mb-8 animate-in slide-in-from-top-4">
-                        <CheckCircle2 className="text-green-500" />
-                        <p className="text-green-200 text-sm font-bold">{success}</p>
+                    <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-[2rem] flex items-center gap-4 mb-8 text-emerald-700 animate-in slide-in-from-top-4">
+                        <div className="p-2 bg-emerald-100 rounded-lg">
+                            <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <p className="text-sm font-bold uppercase tracking-tight">{success}</p>
                     </div>
                 )}
 
                 {isAdding ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in fade-in zoom-in duration-300">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
                         {/* Sidebar: Navigation for Form */}
                         <div className="lg:col-span-1 space-y-3">
-                            <button
-                                onClick={() => setActiveFormTab('setup')}
-                                className={`w-full flex items-center gap-4 p-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeFormTab === 'setup' ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                    }`}
-                            >
-                                <Settings size={18} />
-                                Case Setup
-                            </button>
-                            <button
-                                onClick={() => setActiveFormTab('brief')}
-                                className={`w-full flex items-center gap-4 p-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeFormTab === 'brief' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                    }`}
-                            >
-                                <FileText size={18} />
-                                Client Briefing
-                            </button>
-                            <button
-                                onClick={() => setActiveFormTab('vouchers')}
-                                className={`w-full flex items-center gap-4 p-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${activeFormTab === 'vouchers' ? 'bg-green-600 text-white shadow-xl shadow-green-600/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                                    }`}
-                            >
-                                <Database size={18} />
-                                Sampling Pool ({vouchers.length})
-                            </button>
+                            {[
+                                { id: 'setup', label: 'Case Setup', icon: Settings, color: 'blue' },
+                                { id: 'brief', label: 'Client Brief', icon: FileText, color: 'amber' },
+                                { id: 'vouchers', label: `Samples (${vouchers.length})`, icon: Database, color: 'emerald' },
+                            ].map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeFormTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveFormTab(tab.id as any)}
+                                        className={`w-full flex items-center gap-4 p-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all duration-300 ${isActive
+                                            ? `bg-white text-${tab.color}-600 shadow-xl shadow-gray-200 border border-gray-50 scale-105`
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        <div className={`p-2 rounded-lg ${isActive ? `bg-${tab.color}-50` : 'bg-transparent'}`}>
+                                            <Icon size={16} />
+                                        </div>
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
 
-                            <div className="pt-8 border-t border-slate-800">
+                            <div className="pt-8 mt-4 border-t border-gray-100">
                                 <button
                                     onClick={handleSubmit}
-                                    className="w-full bg-slate-100 hover:bg-white text-slate-900 font-black py-5 rounded-2xl transition-all shadow-xl active:scale-[0.98] uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+                                    className="w-full bg-gray-900 hover:bg-black text-white font-black py-5 rounded-[2rem] transition-all shadow-xl shadow-gray-300 active:scale-95 uppercase tracking-widest text-xs flex items-center justify-center gap-3"
                                 >
-                                    <Save size={20} />
-                                    {editingId ? 'UPDATE FORGE' : 'FINALIZE FORGE'}
+                                    <Save size={18} />
+                                    {editingId ? 'Push Update' : 'Finalize Logic'}
                                 </button>
                             </div>
                         </div>
 
                         {/* Main Editor Area */}
-                        <div className="lg:col-span-3 bg-slate-800 border border-slate-700 rounded-[2.5rem] overflow-hidden shadow-2xl">
-                            <div className="p-8 md:p-12 h-full overflow-y-auto">
+                        <div className="lg:col-span-3 bg-white border border-gray-100 rounded-[3rem] shadow-sm overflow-hidden min-h-[600px]">
+                            <div className="p-10 md:p-14 h-full">
 
                                 {activeFormTab === 'setup' && (
-                                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
-                                        <h2 className="text-2xl font-black uppercase tracking-tighter text-blue-400">Identity & Metadata</h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-6">
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-8">
+                                        <div className="flex items-center gap-4 border-b border-gray-50 pb-6 mb-8">
+                                            <div className="w-2 h-8 bg-blue-600 rounded-full" />
+                                            <h3 className="text-xl font-black uppercase tracking-tight text-gray-900">General Parameters</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="space-y-8">
                                                 <div>
-                                                    <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Case Title</label>
+                                                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Simulation Title</label>
                                                     <input
                                                         required
                                                         value={form.title}
                                                         onChange={e => setForm({ ...form, title: e.target.value })}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-blue-500 outline-none transition-all font-bold text-slate-200"
+                                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-gray-800 placeholder-gray-300"
                                                         placeholder="e.g. FY 24-25 Statutory Audit"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Client Legal Name</label>
+                                                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Legal Entity Name</label>
                                                     <input
                                                         required
                                                         value={form.companyName}
                                                         onChange={e => setForm({ ...form, companyName: e.target.value })}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-blue-500 outline-none transition-all font-bold text-slate-200"
-                                                        placeholder="e.g. Swastik Enterprises Pvt Ltd"
+                                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-gray-800 placeholder-gray-300"
+                                                        placeholder="e.g. Finopoly Global Solutions"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="space-y-6">
-                                                <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-8">
+                                                <div className="grid grid-cols-2 gap-6">
                                                     <div>
-                                                        <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Difficulty</label>
+                                                        <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Complexity</label>
                                                         <select
                                                             value={form.difficulty}
                                                             onChange={e => setForm({ ...form, difficulty: e.target.value })}
-                                                            className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-blue-500 outline-none transition-all font-bold text-slate-200 cursor-pointer"
+                                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-gray-800 cursor-pointer appearance-none"
                                                         >
                                                             <option>Beginner</option>
                                                             <option>Intermediate</option>
@@ -359,147 +357,159 @@ const AdminAuditPanel: React.FC = () => {
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">XP Reward</label>
+                                                        <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">XP Yield</label>
                                                         <input
                                                             type="number"
                                                             value={form.xpReward}
                                                             onChange={e => setForm({ ...form, xpReward: parseInt(e.target.value) })}
-                                                            className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-blue-500 outline-none transition-all font-mono font-black"
+                                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-blue-500 outline-none transition-all font-black text-blue-600"
                                                         />
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Tags (Searchability)</label>
+                                                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Categorization Tags</label>
                                                     <input
                                                         value={form.tags}
                                                         onChange={e => setForm({ ...form, tags: e.target.value })}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-blue-500 outline-none transition-all font-bold text-slate-400 italic"
+                                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-gray-400 italic placeholder-gray-300"
                                                         placeholder="Manufacturing, GST, Inventory..."
                                                     />
                                                 </div>
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Scenario Summary</label>
+                                            <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Executive Summary</label>
                                             <textarea
                                                 required
                                                 value={form.description}
                                                 onChange={e => setForm({ ...form, description: e.target.value })}
                                                 rows={4}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-blue-500 outline-none transition-all text-sm font-medium leading-relaxed"
-                                                placeholder="Briefly explain the audit scenario..."
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-blue-500 outline-none transition-all text-sm font-medium leading-relaxed text-gray-600"
+                                                placeholder="Articulate the scope and objectives of this simulation..."
                                             />
                                         </div>
                                     </div>
                                 )}
 
                                 {activeFormTab === 'brief' && (
-                                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
-                                        <h2 className="text-2xl font-black uppercase tracking-tighter text-orange-400">Contextual Briefing</h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-8">
+                                        <div className="flex items-center gap-4 border-b border-gray-50 pb-6 mb-8">
+                                            <div className="w-2 h-8 bg-amber-500 rounded-full" />
+                                            <h3 className="text-xl font-black uppercase tracking-tight text-gray-900">Contextual Framework</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                             <div>
-                                                <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Primary Industry</label>
+                                                <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Primary Industry</label>
                                                 <input
                                                     value={form.industry}
                                                     onChange={e => setForm({ ...form, industry: e.target.value })}
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-orange-500 outline-none transition-all font-bold"
-                                                    placeholder="e.g. Manufacturing & Textiles"
+                                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-amber-500 outline-none transition-all font-bold text-gray-800"
+                                                    placeholder="e.g. Fintech & Payments"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Audit Focus Area</label>
+                                                <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Audit Strategic Focus</label>
                                                 <input
                                                     value={form.auditFocus}
                                                     onChange={e => setForm({ ...form, auditFocus: e.target.value })}
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-orange-500 outline-none transition-all font-bold"
-                                                    placeholder="e.g. Input tax Credit (ITC) Verification"
+                                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-amber-500 outline-none transition-all font-bold text-gray-800"
+                                                    placeholder="e.g. Statutory Deductions Compliance"
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[10px] text-slate-500 font-black uppercase mb-2 tracking-widest">Materiality & Guidance Notes</label>
+                                            <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-[0.15em]">Materiality Threshold & Protocols</label>
                                             <textarea
                                                 value={form.materialityGuidance}
                                                 onChange={e => setForm({ ...form, materialityGuidance: e.target.value })}
                                                 rows={8}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-5 py-4 focus:border-orange-500 outline-none transition-all text-sm font-medium leading-relaxed"
-                                                placeholder="Provide the user with professional clues or materiality logic..."
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 focus:bg-white focus:border-amber-500 outline-none transition-all text-sm font-medium leading-relaxed text-gray-600"
+                                                placeholder="Establish the materiality logic and procedural hints for the analyst..."
                                             />
                                         </div>
                                     </div>
                                 )}
 
                                 {activeFormTab === 'vouchers' && (
-                                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 h-full flex flex-col">
-                                        <header className="flex justify-between items-center">
-                                            <h2 className="text-2xl font-black uppercase tracking-tighter text-green-400">Voucher Pool</h2>
+                                    <div className="space-y-8 animate-in fade-in slide-in-from-right-8 h-full flex flex-col">
+                                        <div className="flex justify-between items-center border-b border-gray-50 pb-6 mb-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-2 h-8 bg-emerald-500 rounded-full" />
+                                                <h3 className="text-xl font-black uppercase tracking-tight text-gray-900">Intelligence Pool</h3>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={handleAddNewVoucher}
-                                                className="px-4 py-2 bg-green-600/20 text-green-400 rounded-xl font-black text-[10px] uppercase hover:bg-green-600 hover:text-white transition-all flex items-center gap-2"
+                                                className="px-5 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-[10px] uppercase hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2 shadow-sm border border-emerald-100"
                                             >
                                                 <Plus size={14} />
-                                                ADD SAMPLE
+                                                Inject Sample
                                             </button>
-                                        </header>
+                                        </div>
 
-                                        {/* Voucher Carousel / List */}
-                                        <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide border-b border-slate-700">
+                                        {/* Voucher Carousel */}
+                                        <div className="flex gap-3 overflow-x-auto pb-6 scrollbar-hide">
                                             {vouchers.map((v, i) => (
                                                 <button
                                                     key={v.id}
                                                     type="button"
                                                     onClick={() => setActiveVoucherIdx(i)}
-                                                    className={`px-4 py-3 rounded-xl font-bold text-[10px] uppercase transition-all flex-shrink-0 border ${activeVoucherIdx === i
-                                                        ? 'bg-green-600 border-green-500 text-white shadow-lg'
-                                                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                                    className={`px-6 py-4 rounded-2xl font-black text-[10px] uppercase transition-all flex-shrink-0 border-2 ${activeVoucherIdx === i
+                                                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-xl shadow-emerald-100 scale-105'
+                                                        : 'bg-white border-gray-100 text-gray-400 hover:border-emerald-200'
                                                         }`}
                                                 >
-                                                    VOUCHER #{i + 1}
+                                                    LOG {i + 1}
                                                 </button>
                                             ))}
                                         </div>
 
                                         {/* Active Voucher Editor */}
                                         {vouchers[activeVoucherIdx] && (
-                                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 flex-1">
+                                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 flex-1">
                                                 <div className="flex justify-between items-center">
-                                                    <h3 className="font-black uppercase tracking-widest text-[11px] text-slate-500">Editing Voucher Entry #{activeVoucherIdx + 1}</h3>
+                                                    <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                        <Database size={14} className="text-emerald-500" />
+                                                        Configuration: Vector #{activeVoucherIdx + 1}
+                                                    </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => removeVoucher(activeVoucherIdx)}
-                                                        className="text-red-500 hover:text-red-400 font-bold text-[10px] uppercase underline underline-offset-4"
+                                                        className="text-red-500 hover:text-red-600 font-black text-[10px] uppercase underline underline-offset-4"
                                                     >
-                                                        Delete Sample
+                                                        Purge Logic
                                                     </button>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                    <div className="space-y-4">
-                                                        <label className="block text-[10px] text-slate-500 font-black uppercase tracking-widest">Expected Auditor Action</label>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                                    <div>
+                                                        <label className="block text-[10px] text-gray-400 font-black uppercase tracking-[0.15em] mb-3">Expected Outcome</label>
                                                         <select
                                                             value={vouchers[activeVoucherIdx].expectedAction}
                                                             onChange={e => updateVoucher(activeVoucherIdx, { expectedAction: e.target.value })}
-                                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 font-bold"
+                                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 font-black text-gray-800 focus:bg-white transition-all appearance-none"
                                                         >
-                                                            <option value="VERIFY">VERIFY (Correct)</option>
-                                                            <option value="DISALLOW">DISALLOW (Error)</option>
+                                                            <option value="VERIFY">VERIFY (Acceptable)</option>
+                                                            <option value="DISALLOW">DISALLOW (Audit Failure)</option>
                                                         </select>
                                                     </div>
-                                                    <div className="space-y-4">
-                                                        <label className="block text-[10px] text-slate-500 font-black uppercase tracking-widest">Faulty Field (If Error)</label>
+                                                    <div>
+                                                        <label className="block text-[10px] text-gray-400 font-black uppercase tracking-[0.15em] mb-3">Target Discrepancy (if Failure)</label>
                                                         <input
                                                             value={vouchers[activeVoucherIdx].faultyField || ''}
                                                             onChange={e => updateVoucher(activeVoucherIdx, { faultyField: e.target.value })}
-                                                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3"
+                                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-5 font-bold text-gray-800"
                                                             placeholder="Amount, Date, GSTIN..."
                                                         />
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[400px]">
-                                                    <div className="flex flex-col gap-3">
-                                                        <span className="text-[10px] text-blue-400 font-black uppercase">Source Invoice (JSON)</span>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[400px]">
+                                                    <div className="flex flex-col gap-4">
+                                                        <span className="text-[10px] text-blue-600 font-black uppercase tracking-widest flex items-center gap-2">
+                                                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                                                            Invoice Schema (JSON)
+                                                        </span>
                                                         <textarea
                                                             value={JSON.stringify(vouchers[activeVoucherIdx].invoice, null, 2)}
                                                             onChange={e => {
@@ -508,11 +518,14 @@ const AdminAuditPanel: React.FC = () => {
                                                                     updateVoucher(activeVoucherIdx, { invoice: val });
                                                                 } catch (err) { }
                                                             }}
-                                                            className="flex-1 bg-slate-950 border border-slate-700 rounded-2xl p-4 font-mono text-[11px] outline-none focus:border-blue-500 text-blue-300 transition-all resize-none"
+                                                            className="flex-1 bg-gray-900 border border-gray-800 rounded-3xl p-6 font-mono text-[11px] outline-none focus:ring-4 focus:ring-blue-500/10 text-blue-400 transition-all resize-none shadow-inner"
                                                         />
                                                     </div>
-                                                    <div className="flex flex-col gap-3">
-                                                        <span className="text-[10px] text-green-400 font-black uppercase">Accounting Entry (JSON)</span>
+                                                    <div className="flex flex-col gap-4">
+                                                        <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest flex items-center gap-2">
+                                                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                                            General Ledger Logic (JSON)
+                                                        </span>
                                                         <textarea
                                                             value={JSON.stringify(vouchers[activeVoucherIdx].ledger, null, 2)}
                                                             onChange={e => {
@@ -521,7 +534,7 @@ const AdminAuditPanel: React.FC = () => {
                                                                     updateVoucher(activeVoucherIdx, { ledger: val });
                                                                 } catch (err) { }
                                                             }}
-                                                            className="flex-1 bg-slate-950 border border-slate-700 rounded-2xl p-4 font-mono text-[11px] outline-none focus:border-green-500 text-green-300 transition-all resize-none"
+                                                            className="flex-1 bg-gray-900 border border-gray-800 rounded-3xl p-6 font-mono text-[11px] outline-none focus:ring-4 focus:ring-emerald-500/10 text-emerald-400 transition-all resize-none shadow-inner"
                                                         />
                                                     </div>
                                                 </div>
@@ -533,60 +546,63 @@ const AdminAuditPanel: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {cases.map(c => (
-                            <div key={c.id} className="bg-slate-800 border border-slate-700 rounded-3xl p-8 shadow-2xl hover:border-blue-500/50 transition-all group relative overflow-hidden flex flex-col">
-                                <div className="absolute top-0 right-0 p-5 opacity-0 group-hover:opacity-100 transition-opacity flex gap-3">
+                            <div key={c.id} className="bg-white border border-gray-100 rounded-[2.5rem] p-10 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group relative flex flex-col min-h-[420px]">
+                                <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex gap-3 z-10">
                                     <button
                                         onClick={() => handleEdit(c)}
-                                        className="p-3 bg-blue-500 text-white rounded-2xl hover:bg-blue-400 transition-all shadow-xl shadow-blue-500/20"
+                                        className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-xl shadow-blue-200"
                                     >
-                                        <Edit3 size={18} />
+                                        <Edit3 size={16} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(c.id)}
-                                        className="p-3 bg-red-500 text-white rounded-2xl hover:bg-red-400 transition-all shadow-xl shadow-red-500/20"
+                                        className="p-3 bg-red-50 text-red-600 border border-red-50 rounded-xl hover:bg-red-600 hover:text-white"
                                     >
-                                        <Trash2 size={18} />
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${c.difficulty === 'Pro' ? 'bg-red-500 text-white' :
-                                        c.difficulty === 'Intermediate' ? 'bg-yellow-500 text-black' : 'bg-green-500 text-black'
+
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${c.difficulty === 'Pro' ? 'bg-red-600 text-white' :
+                                        c.difficulty === 'Intermediate' ? 'bg-amber-400 text-amber-900' : 'bg-emerald-500 text-white'
                                         }`}>
                                         {c.difficulty}
                                     </div>
-                                    <div className="flex items-center gap-1.5 text-slate-500 font-mono text-xs font-bold">
+                                    <div className="flex items-center gap-2 text-gray-300 font-bold text-[10px] uppercase">
                                         <Layers size={14} />
-                                        <span>{c.vouchers ? JSON.parse(JSON.stringify(c.vouchers)).length : 1} SAMPLES</span>
+                                        <span>{c.vouchers ? JSON.parse(JSON.stringify(c.vouchers)).length : 1} Vectors</span>
                                     </div>
                                 </div>
 
-                                <h3 className="text-2xl font-black text-slate-100 mb-2 leading-tight uppercase tracking-tighter">{c.title}</h3>
-                                <div className="flex items-center gap-2 mb-6">
+                                <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight uppercase tracking-tighter line-clamp-2">{c.title}</h3>
+                                <div className="flex items-center gap-2 mb-8">
                                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                    <p className="text-blue-400 text-xs font-black uppercase tracking-widest">{c.companyName}</p>
+                                    <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em]">{c.companyName}</p>
                                 </div>
 
-                                <p className="text-slate-400 text-sm font-medium line-clamp-3 mb-8 flex-1 leading-relaxed">{c.description}</p>
+                                <p className="text-gray-400 text-sm font-medium line-clamp-3 mb-10 flex-1 leading-relaxed">{c.description}</p>
 
-                                <div className="space-y-3 pt-6 border-t border-slate-700">
-                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                        <span>Materiality Threshold</span>
-                                        <span className="text-slate-200">{c.clientBrief?.industry || 'Unknown'}</span>
+                                <div className="space-y-4 pt-8 border-t border-gray-50">
+                                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-[0.15em] text-gray-400">
+                                        <span>Economic Sector</span>
+                                        <span className="text-gray-900">{c.clientBrief?.industry || 'Unspecified'}</span>
                                     </div>
-                                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                                        <div className="bg-blue-600 h-full w-[65%]" />
+                                    <div className="w-full bg-gray-50 h-2.5 rounded-full overflow-hidden border border-gray-100">
+                                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full w-[65%] rounded-full shadow-[0_0_10px_rgba(37,99,235,0.3)]" />
                                     </div>
                                 </div>
                             </div>
                         ))}
 
                         {cases.length === 0 && (
-                            <div className="col-span-full py-32 bg-slate-800/30 rounded-[3rem] border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-center">
-                                <Shield className="w-16 h-16 text-slate-700 mb-6" />
-                                <h3 className="text-2xl font-black text-slate-400 uppercase tracking-tighter">The Vault is Empty</h3>
-                                <p className="text-slate-500 max-w-sm mt-2">Start your simulation deployment by forging your first audit case.</p>
+                            <div className="col-span-full py-40 bg-gray-50 rounded-[4rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center">
+                                <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-lg mb-8">
+                                    <Shield className="w-10 h-10 text-gray-200" />
+                                </div>
+                                <h3 className="text-2xl font-black text-gray-300 uppercase tracking-tighter">Forge Repository Empty</h3>
+                                <p className="text-gray-400 max-w-sm mt-4 font-medium">Initialize the ecosystem by deploying your first simulation binary.</p>
                             </div>
                         )}
                     </div>

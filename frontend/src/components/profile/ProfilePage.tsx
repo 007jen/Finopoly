@@ -11,8 +11,12 @@ import {
     Download,
     Share2,
     ArrowLeft,
-    Zap
+    Zap,
+    Shield
 } from 'lucide-react';
+import {
+    Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer
+} from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAccuracy } from '../../_accuracy/accuracy-context';
@@ -111,10 +115,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
         const maxPoints = 500;
         const percentage = Math.min((totalPoints / maxPoints) * 100, 100);
 
-        let title = "Amateur";
-        if (percentage >= 90) title = "Master";
-        else if (percentage >= 60) title = "Expert";
-        else if (percentage >= 30) title = "Specialist";
+        let title = "Junior Associate";
+        if (percentage >= 90) title = "Partner";
+        else if (percentage >= 60) title = "Manager";
+        else if (percentage >= 30) title = "Senior Auditor";
 
         return {
             points: totalPoints,
@@ -199,7 +203,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
 
                             <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
                             <p className="text-gray-500 mb-4">{user.email}</p>
-                            <p className="text-gray-600 mb-6 text-lg"><span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold">{mastery.title}</span> • Level <span data-level-display>{user.level}</span></p>
+                            <p className="text-gray-600 mb-6 text-lg"><span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold underline decoration-blue-100 decoration-4 underline-offset-4">{mastery.title}</span> • Level <span data-level-display>{user.level}</span></p>
 
                             <div className="flex items-center justify-center gap-3 mb-6">
                                 <Star className="w-6 h-6 text-yellow-500" />
@@ -334,69 +338,72 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                             </div>
                         </div>
 
-                        {/* Experience Mastery Card */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-blue-50 relative overflow-hidden group">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="space-y-1">
+                        {/* Competency Profile - Professional Alternative to Mastery */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 border border-white/50 relative overflow-hidden group">
+                            <div className="flex flex-col lg:flex-row items-center gap-8">
+                                <div className="lg:w-1/2 space-y-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-blue-100 rounded-lg">
-                                            <Zap className="w-5 h-5 text-blue-600" />
+                                        <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200">
+                                            <Shield className="w-6 h-6 text-white" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-gray-900">Mastery Progress</h3>
+                                        <div>
+                                            <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Competency Profile</h3>
+                                            <p className="text-gray-500 text-sm font-medium">Analytical skill mapping for accreditation</p>
+                                        </div>
                                     </div>
-                                    <p className="text-gray-500 text-sm">Based on active engagement and accuracy</p>
-                                </div>
 
-                                <div className="flex-1 max-w-xl w-full">
-                                    <div className="flex justify-between items-end mb-2">
-                                        <div className="flex flex-col">
-                                            <span className="text-2xl font-black text-blue-600">
-                                                {mastery.percentage.toFixed(1)}%
-                                            </span>
-                                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Current Standing</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-sm font-bold text-indigo-600 mb-1">
-                                                {mastery.percentage >= 30
-                                                    ? `${(100 - mastery.percentage).toFixed(1)}% to next evolution`
-                                                    : `${(30 - mastery.percentage).toFixed(1)}% to Specialist`}
+                                    <div className="space-y-4">
+                                        <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-sm font-bold text-gray-700">Audit Forensic</span>
+                                                <span className="text-sm font-black text-blue-600">{user.accuracy.audit}%</span>
                                             </div>
-                                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Next Milestone</span>
+                                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                <div className="bg-blue-600 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${user.accuracy.audit}%` }}></div>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    {/* Horizontal Progress Bar */}
-                                    <div className="relative h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
-                                        <div
-                                            className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md transition-all duration-1000 ease-out"
-                                            style={{ width: `${mastery.percentage}%` }}
-                                        />
-                                        {/* Milestone Markers */}
-                                        <div className="absolute left-[30%] top-0 w-px h-full bg-white/50"></div>
-                                        <div className="absolute left-[60%] top-0 w-px h-full bg-white/50"></div>
-                                        <div className="absolute left-[90%] top-0 w-px h-full bg-white/50"></div>
-                                    </div>
-
-                                    <div className="flex justify-between mt-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                                        <span>Amateur</span>
-                                        <div className="flex gap-4">
-                                            <span className={mastery.percentage >= 30 ? 'text-blue-600' : ''}>Specialist</span>
-                                            <span className={mastery.percentage >= 60 ? 'text-blue-600' : ''}>Expert</span>
-                                            <span className={mastery.percentage >= 90 ? 'text-blue-600' : ''}>Master</span>
+                                        <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-sm font-bold text-gray-700">Tax Compliance</span>
+                                                <span className="text-sm font-black text-emerald-600">{user.accuracy.tax}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                <div className="bg-emerald-600 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${user.accuracy.tax}%` }}></div>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-sm font-bold text-gray-700">Diligence (Engagement)</span>
+                                                <span className="text-sm font-black text-orange-600">{Math.min(Math.round(((user.activeSeconds || 0) / 36000) * 100), 100)}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                                <div className="bg-orange-600 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${Math.min(((user.activeSeconds || 0) / 36000) * 100, 100)}%` }}></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Stats Breakdown Overlay */}
-                            <div className="mt-6 pt-6 border-t border-gray-50 flex gap-8">
-                                <div className="flex items-center gap-2">
-                                    <Clock className="w-4 h-4 text-blue-500" />
-                                    <span className="text-sm font-medium text-gray-600">{mastery.activeMinutes}m Active</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Target className="w-4 h-4 text-green-500" />
-                                    <span className="text-sm font-medium text-gray-600">{user.correctAnswers || 0} Correct</span>
+                                <div className="lg:w-1/2 h-[350px] w-full flex items-center justify-center">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
+                                            { subject: 'Compliance', A: user.totalQuestions ? Math.round((user.correctAnswers || 0) / user.totalQuestions * 100) : 0, fullMark: 100 },
+                                            { subject: 'Forensic', A: user.accuracy.audit, fullMark: 100 },
+                                            { subject: 'Tax Law', A: user.accuracy.tax, fullMark: 100 },
+                                            { subject: 'Case Law', A: user.accuracy.caselaw, fullMark: 100 },
+                                            { subject: 'Diligence', A: Math.min(Math.round(((user.activeSeconds || 0) / 36000) * 100), 100), fullMark: 100 },
+                                        ]}>
+                                            <PolarGrid stroke="#e5e7eb" />
+                                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 700 }} />
+                                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                            <Radar
+                                                name="Competency"
+                                                dataKey="A"
+                                                stroke="#2563eb"
+                                                fill="#3b82f6"
+                                                fillOpacity={0.6}
+                                            />
+                                        </RadarChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
@@ -507,7 +514,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

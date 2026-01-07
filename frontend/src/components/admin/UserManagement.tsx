@@ -119,8 +119,17 @@ const UserManagement: React.FC = () => {
   };
 
   const handleExportUsers = () => {
-    console.log('Exporting users:', users);
-    alert('User data exported successfully!');
+    const headers = ['ID', 'Name', 'Email', 'Role', 'Status', 'XP', 'Level', 'Joined'];
+    const csvContent = [
+      headers.join(','),
+      ...users.map(u => [u.id, u.name, u.email, u.role, u.status, u.xp, u.level, u.createdAt].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'finopoly-citizens.csv');
+    link.click();
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -144,22 +153,19 @@ const UserManagement: React.FC = () => {
       fetchUsers();
     } catch (err) {
       console.error("Failed to update user", err);
-      alert("Failed to update user");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
-
+    if (!window.confirm("Are you sure you want to decommission this record?")) return;
     try {
       setLoading(true);
       await api.delete(`/api/admin/users/${userId}`);
       fetchUsers();
     } catch (err) {
       console.error("Failed to delete user", err);
-      alert("Failed to delete user");
     } finally {
       setLoading(false);
     }
@@ -180,36 +186,6 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const downloadCSV = () => {
-    if (!reportData || !editingUser) return;
-
-    const headers = ['Date', 'Audit', 'Tax', 'Case Law', 'Quiz', 'Drill', 'Total'];
-    const rows = reportData.map((d: any) => [
-      d.date,
-      d.audit,
-      d.tax,
-      d.caselaw,
-      d.quiz,
-      d.drill,
-      d.total
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((r: any) => r.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${editingUser.name}-activity-report.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const downloadReport = async () => {
     if (reportRef.current === null) return;
     try {
@@ -223,340 +199,218 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const formatRelativeTime = (dateString: string | null) => {
-    if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-
-    return date.toLocaleDateString();
-  };
-
-  const getStatusBadge = (status: string) => {
-    const s = status.toUpperCase();
-    return s === 'ACTIVE'
-      ? 'bg-green-100 text-green-800'
-      : 'bg-red-100 text-red-800';
-  };
-
-  const getRoleBadge = (role: string) => {
-    const r = role.toLowerCase();
-    if (r === 'admin') return 'bg-orange-100 text-orange-800';
-    return r === 'student'
-      ? 'bg-blue-100 text-blue-800'
-      : 'bg-purple-100 text-purple-800';
-  };
-
   return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50/30 min-h-screen">
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
-            <p className="text-gray-600 text-lg">Manage students, partners, and their learning progress</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleExportUsers}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl"
-            >
-              <Download className="w-4 h-4" />
-              Export Data
-            </button>
-            <button
-              onClick={() => { setEditingUser(null); setShowUserModal(true); }}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl"
-            >
-              <UserPlus className="w-4 h-4" />
-              Add User
-            </button>
-          </div>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-tight text-gray-900 mb-1">Population Registry</h2>
+          <p className="text-gray-500 font-medium text-sm">Manage citizens, roles, and ecosystem permissions.</p>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Total Users</p>
-                <p className="text-3xl font-bold text-gray-900">{pagination.total}</p>
-              </div>
-              <Users className="w-12 h-12 text-blue-600" />
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Active Users</p>
-                <p className="text-3xl font-bold text-gray-900">{users.filter(u => u.status === 'ACTIVE').length}</p>
-              </div>
-              <Shield className="w-12 h-12 text-green-600" />
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Students</p>
-                <p className="text-3xl font-bold text-gray-900">{users.filter(u => u.role === 'student').length}</p>
-              </div>
-              <Target className="w-12 h-12 text-purple-600" />
-            </div>
-          </div>
-          <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-2">Partners</p>
-                <p className="text-3xl font-bold text-gray-900">{users.filter(u => u.role === 'partner').length}</p>
-              </div>
-              <Award className="w-12 h-12 text-orange-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Filters and Search */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/50 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <form onSubmit={handleSearch} className="flex-1 relative">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-            </form>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value as any)}
-                  className="border border-gray-300 rounded-xl px-4 py-3 bg-white text-sm font-medium"
-                >
-                  <option value="All">All Roles</option>
-                  <option value="Student">Students</option>
-                  <option value="Partner">Partners</option>
-                  <option value="Admin">Admins</option>
-                </select>
-              </div>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="border border-gray-300 rounded-xl px-4 py-3 bg-white text-sm font-medium"
-              >
-                <option value="All">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Suspended">Suspended</option>
-              </select>
-            </div>
-          </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportUsers}
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl font-black transition-all hover:bg-gray-50 active:scale-95 uppercase tracking-widest text-[10px]"
+          >
+            <Download size={14} />
+            Export CSV
+          </button>
+          <button
+            onClick={() => { setEditingUser(null); setShowUserModal(true); }}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-black transition-all hover:bg-blue-700 shadow-xl shadow-blue-200 active:scale-95 uppercase tracking-widest text-[10px]"
+          >
+            <UserPlus size={14} />
+            Onboard Citizen
+          </button>
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">
-              Users ({pagination.total})
-            </h2>
-            {selectedUsers.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{selectedUsers.length} selected</span>
-                <button className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-all">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Control Bar */}
+      <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-6 items-center">
+        <form onSubmit={handleSearch} className="relative flex-1 w-full">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search by Name, Email or ID Protocol..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-gray-800 placeholder-gray-300 text-sm"
+          />
+        </form>
 
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            <Filter size={12} />
+            Filters:
+          </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value as any)}
+            className="px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-[11px] text-gray-600 outline-none cursor-pointer hover:bg-white transition-all min-w-[120px]"
+          >
+            <option value="All">All Roles</option>
+            <option value="Student">Student</option>
+            <option value="Partner">Partner</option>
+            <option value="Admin">Council</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl font-bold text-[11px] text-gray-600 outline-none cursor-pointer hover:bg-white transition-all min-w-[120px]"
+          >
+            <option value="All">All Status</option>
+            <option value="Active">Authorized</option>
+            <option value="Suspended">Restricted</option>
+          </select>
+          <button
+            onClick={fetchUsers}
+            className="p-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+      </div>
+
+      {/* Registry Table */}
+      <div className="bg-white rounded-[3rem] shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50/80">
-              <tr>
-                <th className="px-6 py-4 text-left">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-50 bg-gray-50/50">
+                <th className="p-8 w-14">
                   <input
                     type="checkbox"
                     checked={selectedUsers.length === users.length && users.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-blue-500 bg-white"
                   />
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Progress</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">XP</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Last Active</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-8 text-[10px] font-black uppercase text-gray-400 tracking-widest">Identity Protocol</th>
+                <th className="px-6 py-8 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Authorization</th>
+                <th className="px-6 py-8 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Status</th>
+                <th className="px-6 py-8 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">XP Yield</th>
+                <th className="px-6 py-8 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center px-10">Command</th>
               </tr>
             </thead>
-            <tbody className="bg-white/50 divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-50">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-20 text-center text-gray-500">
-                    <div className="flex flex-col items-center gap-2">
-                      <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-                      <span className="font-medium">Loading users...</span>
+                  <td colSpan={6} className="p-20 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-12 h-12 border-4 border-blue-600 border-t-white rounded-full animate-spin" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Population...</span>
                     </div>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-20 text-center text-gray-500">
-                    No users found matching your criteria.
-                  </td>
+                  <td colSpan={6} className="p-20 text-center text-gray-400 font-bold uppercase tracking-tighter text-2xl">No Citizens Identified</td>
                 </tr>
-              ) : users.map((user) => (
-                <tr key={user.id} className="hover:bg-blue-50/50 transition-colors duration-200">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={() => handleSelectUser(user.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4 shadow-lg overflow-hidden">
-                        {user.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-white font-bold text-sm">
-                            {user.name?.split(' ').map(n => n[0]).join('') || '?'}
+              ) : (
+                users.map((user) => (
+                  <tr key={user.id} className="group hover:bg-blue-50/30 transition-all duration-300">
+                    <td className="p-8">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => handleSelectUser(user.id)}
+                        className="w-5 h-5 rounded-lg border-gray-200 text-blue-600 focus:ring-blue-500 transition-all"
+                      />
+                    </td>
+                    <td className="px-6 py-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl flex items-center justify-center text-gray-400 font-black border border-gray-100 group-hover:scale-110 transition-transform overflow-hidden shadow-sm">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            user.name[0]?.toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-black text-gray-900 text-sm uppercase tracking-tighter">{user.name}</p>
+                          <p className="text-xs text-gray-400 font-medium lowercase">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8">
+                      <div className="flex justify-center">
+                        <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm border ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-100' :
+                            user.role === 'Partner' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                              'bg-blue-50 text-blue-700 border-blue-100'
+                          }`}>
+                          {user.role}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8">
+                      <div className="flex justify-center">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white border border-gray-100 rounded-full shadow-sm">
+                          <div className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'} shadow-[0_0_8px] ${user.status === 'Active' ? 'shadow-emerald-200' : 'shadow-red-200'}`} />
+                          <span className={`text-[10px] font-black uppercase tracking-tighter ${user.status === 'Active' ? 'text-emerald-700' : 'text-red-700'}`}>
+                            {user.status}
                           </span>
-                        )}
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-bold text-gray-900">{user.name || 'Anonymous'}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                    </td>
+                    <td className="px-6 py-8 text-right">
+                      <div className="inline-flex flex-col items-end">
+                        <span className="text-sm font-black text-gray-900">{user.xp?.toLocaleString() || 0}</span>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Level {user.level || 1}</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadge(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-2">
-                      {['audit', 'tax', 'caselaw'].map(module => {
-                        const stat = user.stats?.find(s => s.moduleType === module);
-                        let percent = stat ? Math.round(stat.accuracy > 1 ? stat.accuracy : stat.accuracy * 100) : 0;
-
-                        // Fallback to legacy counters
-                        if (percent === 0) {
-                          if (module === 'audit' && user.auditTotal > 0) percent = Math.round((user.auditCorrect / user.auditTotal) * 100);
-                          if (module === 'tax' && user.taxTotal > 0) percent = Math.round((user.taxCorrect / user.taxTotal) * 100);
-                          if (module === 'caselaw' && user.caselawTotal > 0) percent = Math.round((user.caselawCorrect / user.caselawTotal) * 100);
-                        }
-                        const colors = {
-                          audit: 'bg-blue-600',
-                          tax: 'bg-green-600',
-                          caselaw: 'bg-purple-600'
-                        }[module];
-
-                        return (
-                          <div key={module} className="flex items-center gap-2">
-                            <div className="w-10 text-[10px] uppercase font-bold text-gray-400">{module}</div>
-                            <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className={`${colors} h-full transition-all duration-500`}
-                                style={{ width: `${percent}%` }}
-                              />
-                            </div>
-                            <div className="w-6 text-[10px] font-bold text-gray-600">{percent}%</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-gray-900">{user.xp.toLocaleString()} XP</span>
-                      <span className="text-[10px] font-medium text-blue-600 uppercase">Level {user.level}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-500">
-                    {formatRelativeTime(user.lastActivityDate)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => handleShowReport(user)}
-                        className="p-1 hover:bg-green-100 text-green-600 rounded transition-colors"
-                        title="View Analytics"
-                      >
-                        <BarChart2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="p-1 hover:bg-blue-100 text-blue-600 rounded transition-colors"
-                        title="Edit User"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="p-1 hover:bg-red-100 text-red-600 rounded transition-colors"
-                        title="Delete User"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-8">
+                      <div className="flex justify-center gap-3">
+                        <button
+                          onClick={() => handleShowReport(user)}
+                          className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-900 hover:text-white transition-all shadow-sm active:scale-95"
+                          title="Diagnostics"
+                        >
+                          <BarChart2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-95"
+                          title="Modify Record"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-95"
+                          title="Decommission"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50/50 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {Math.min(pagination.total, (pagination.currentPage - 1) * pagination.limit + 1)} to {Math.min(pagination.total, pagination.currentPage * pagination.limit)} of {pagination.total} users
-          </div>
+        {/* Sentinel Pagination */}
+        <div className="p-8 bg-gray-50/50 border-t border-gray-50 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Showing <span className="text-gray-900">{users.length}</span> of <span className="text-gray-900">{pagination.total}</span> Registered Citizens
+          </p>
           <div className="flex items-center gap-2">
             <button
-              disabled={pagination.currentPage === 1 || loading}
-              onClick={() => setPagination(p => ({ ...p, currentPage: p.currentPage - 1 }))}
-              className="p-2 rounded-lg hover:bg-white border border-gray-200 disabled:opacity-50 transition-all font-medium flex items-center gap-1 text-sm"
+              disabled={pagination.currentPage === 1}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+              className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 disabled:opacity-30 transition-all shadow-sm"
             >
-              <ChevronLeft className="w-4 h-4" /> Prev
+              <ChevronLeft size={18} />
             </button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  onClick={() => setPagination(p => ({ ...p, currentPage: page }))}
-                  className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${pagination.currentPage === page ? 'bg-blue-600 text-white' : 'hover:bg-white text-gray-600'
-                    }`}
-                >
-                  {page}
-                </button>
-              ))}
+            <div className="px-6 py-4 bg-white border border-gray-200 rounded-2xl font-black text-xs text-blue-600 shadow-xl shadow-gray-200">
+              {pagination.currentPage} <span className="text-gray-300 mx-2">/</span> {pagination.pages}
             </div>
             <button
-              disabled={pagination.currentPage === pagination.pages || loading}
-              onClick={() => setPagination(p => ({ ...p, currentPage: p.currentPage + 1 }))}
-              className="p-2 rounded-lg hover:bg-white border border-gray-200 disabled:opacity-50 transition-all font-medium flex items-center gap-1 text-sm"
+              disabled={pagination.currentPage === pagination.pages}
+              onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+              className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 disabled:opacity-30 transition-all shadow-sm"
             >
-              Next <ChevronRight className="w-4 h-4" />
+              <ChevronRight size={18} />
             </button>
           </div>
         </div>
@@ -564,112 +418,82 @@ const UserManagement: React.FC = () => {
 
       {/* User Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {editingUser ? 'Edit User' : 'Add New User'}
-              </h2>
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[3rem] shadow-2xl p-10 w-full max-w-lg border border-gray-100 animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-10">
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight text-gray-900">{editingUser ? 'Modify Citizenship' : 'Onboard New Citizen'}</h3>
+                <p className="text-gray-400 text-xs font-bold mt-1">Update parameters and authorization levels.</p>
+              </div>
               <button
-                onClick={() => {
-                  setShowUserModal(false);
-                  setEditingUser(null);
-                }}
-                className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors text-2xl"
+                onClick={() => { setShowUserModal(false); setEditingUser(null); }}
+                className="p-2 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-xl transition-all"
               >
-                &times;
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateUser}>
+            <form onSubmit={handleUpdateUser} className="space-y-8">
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      defaultValue={editingUser?.name || ''}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      placeholder="Enter full name"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    <input
-                      type="email"
-                      name="email"
-                      defaultValue={editingUser?.email || ''}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      placeholder="Enter email address"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Full Identity Name</label>
+                  <input
+                    name="name"
+                    required
+                    defaultValue={editingUser?.name || ''}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-gray-800"
+                  />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Credential Email</label>
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    defaultValue={editingUser?.email || ''}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-gray-800"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Protocol Role</label>
                     <select
                       name="role"
-                      defaultValue={editingUser?.role || 'student'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all uppercase"
+                      defaultValue={editingUser?.role || 'Student'}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-blue-500 outline-none transition-all font-black"
                     >
-                      <option value="student">Student</option>
-                      <option value="partner">Partner</option>
-                      <option value="admin">Admin</option>
+                      <option value="Student">Student</option>
+                      <option value="Partner">Partner</option>
+                      <option value="Admin">Council</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Status</label>
                     <select
                       name="status"
-                      defaultValue={editingUser?.status || 'ACTIVE'}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all uppercase"
+                      defaultValue={editingUser?.status || 'Active'}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-blue-500 outline-none transition-all font-black"
                     >
-                      <option value="ACTIVE">Active</option>
-                      <option value="SUSPENDED">Suspended</option>
+                      <option value="Active">Authorized</option>
+                      <option value="Suspended">Restricted</option>
                     </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Assigned Modules</label>
-                  <div className="grid grid-cols-3 gap-4">
-                    {['Audit', 'Tax', 'Case Law'].map((module) => (
-                      <label key={module} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          defaultChecked={true}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm font-medium text-gray-700">{module}</span>
-                      </label>
-                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-8">
+              <div className="flex gap-4 pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowUserModal(false);
-                    setEditingUser(null);
-                  }}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-semibold"
+                  onClick={() => { setShowUserModal(false); setEditingUser(null); }}
+                  className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-200 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50"
+                  className="flex-2 px-10 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all"
                 >
-                  {loading ? 'Processing...' : (editingUser ? 'Update User' : 'Create User')}
+                  Deploy Changes
                 </button>
               </div>
             </form>
@@ -677,175 +501,105 @@ const UserManagement: React.FC = () => {
         </div>
       )}
 
-      {showReportModal && editingUser && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                  <BarChart2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Student Performance Report</h2>
-                  <p className="text-sm text-gray-500">{editingUser.name} &bull; {editingUser.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={downloadCSV}
-                  disabled={loadingReport || !reportData}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-all font-semibold disabled:opacity-50"
-                  title="Export to Excel"
-                >
-                  <FileText className="w-4 h-4" />
-                  Excel (CSV)
-                </button>
-                <button
-                  onClick={downloadReport}
-                  disabled={loadingReport}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all font-semibold disabled:opacity-50"
-                >
-                  <Download className="w-4 h-4" />
-                  Save as PNG
-                </button>
-                <button
-                  onClick={() => { setShowReportModal(false); setReportData(null); }}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[4rem] shadow-2xl p-12 w-full max-w-4xl border border-gray-100 animate-in slide-in-from-bottom-10 duration-500 overflow-hidden relative">
+            <button
+              onClick={() => setShowReportModal(false)}
+              className="absolute top-8 right-8 p-3 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-2xl transition-all z-10"
+            >
+              <X size={24} />
+            </button>
 
-            <div className="flex-1 overflow-y-auto p-8" ref={reportRef}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                {/* Radar Chart for Skills */}
-                <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Expertise Distribution</h3>
-                  <div className="h-[300px] w-full">
+            <div ref={reportRef} className="bg-white">
+              <div className="flex justify-between items-start mb-12">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest mb-4">
+                    Analytical Diagnostic Report
+                  </div>
+                  <h3 className="text-4xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-2">{editingUser?.name}</h3>
+                  <p className="text-gray-400 font-bold text-sm">Citizen ID Protocol: {editingUser?.id}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-300 font-black text-5xl uppercase tracking-tighter opacity-20">FINOPOLY</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+                <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Core Competency</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-black text-gray-900">{editingUser?.xp?.toLocaleString() || 0}</span>
+                    <span className="text-sm font-black text-blue-600 mb-1 uppercase">XP</span>
+                  </div>
+                  <div className="mt-6 flex items-center gap-2">
+                    <div className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-gray-600 border border-gray-100 uppercase tracking-widest">
+                      Rank: Level {editingUser?.level || 1}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Simulations Deployed</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-black text-gray-900">{editingUser?.completedSimulations || 0}</span>
+                    <span className="text-sm font-black text-emerald-600 mb-1 uppercase">Units</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">System Engagement</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-4xl font-black text-gray-900">{Math.floor((editingUser?.activeSeconds || 0) / 3600)}</span>
+                    <span className="text-sm font-black text-amber-600 mb-1 uppercase">Hours</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[300px]">
+                <div className="bg-gray-50 rounded-[3rem] p-8 border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+                  <p className="absolute top-6 left-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">Competency Vectors</p>
+                  {/* Simplified Radar Chart representation */}
+                  <div className="w-full h-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
-                        {
-                          subject: 'Audit',
-                          A: (() => {
-                            const s = editingUser.stats?.find(st => st.moduleType === 'audit');
-                            if (s) return s.accuracy > 1 ? s.accuracy : s.accuracy * 100;
-                            return editingUser.auditTotal > 0 ? (editingUser.auditCorrect / editingUser.auditTotal) * 100 : 0;
-                          })(),
-                          fullMark: 100
-                        },
-                        {
-                          subject: 'Tax',
-                          A: (() => {
-                            const s = editingUser.stats?.find(st => st.moduleType === 'tax');
-                            if (s) return s.accuracy > 1 ? s.accuracy : s.accuracy * 100;
-                            return editingUser.taxTotal > 0 ? (editingUser.taxCorrect / editingUser.taxTotal) * 100 : 0;
-                          })(),
-                          fullMark: 100
-                        },
-                        {
-                          subject: 'Case Law',
-                          A: (() => {
-                            const s = editingUser.stats?.find(st => st.moduleType === 'caselaw');
-                            if (s) return s.accuracy > 1 ? s.accuracy : s.accuracy * 100;
-                            return editingUser.caselawTotal > 0 ? (editingUser.caselawCorrect / editingUser.caselawTotal) * 100 : 0;
-                          })(),
-                          fullMark: 100
-                        },
-                        {
-                          subject: 'Quiz',
-                          A: (() => {
-                            const s = editingUser.stats?.find(st => st.moduleType === 'quiz');
-                            if (s) return s.accuracy > 1 ? s.accuracy : s.accuracy * 100;
-                            return 0;
-                          })(),
-                          fullMark: 100
-                        },
-                        {
-                          subject: 'Overall',
-                          A: editingUser.totalQuestions > 0 ? (editingUser.correctAnswers / editingUser.totalQuestions) * 100 : 0,
-                          fullMark: 100
-                        }
+                        { subject: 'Forensic Audit', A: editingUser?.auditCorrect || 0, fullMark: editingUser?.auditTotal || 100 },
+                        { subject: 'Tax Law', A: editingUser?.taxCorrect || 0, fullMark: editingUser?.taxTotal || 100 },
+                        { subject: 'Case Law', A: editingUser?.caselawCorrect || 0, fullMark: editingUser?.caselawTotal || 100 },
+                        { subject: 'Compliance', A: editingUser?.correctAnswers || 0, fullMark: editingUser?.totalQuestions || 100 },
+                        { subject: 'Ethics', A: 85, fullMark: 100 },
                       ]}>
                         <PolarGrid stroke="#e5e7eb" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 12, fontWeight: 600 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                        <Radar
-                          name={editingUser.name}
-                          dataKey="A"
-                          stroke="#2563eb"
-                          fill="#3b82f6"
-                          fillOpacity={0.6}
-                        />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 900 }} />
+                        <Radar name="Competency" dataKey="A" stroke="#2563eb" fill="#3b82f6" fillOpacity={0.4} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
-
-                {/* Daily Activity Listing (Numbers Instead of Chart) */}
-                <div className="bg-gray-50/50 rounded-2xl p-6 border border-gray-100 flex flex-col">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Activity Log (Last 7 Days)</h3>
-                  {loadingReport ? (
-                    <div className="h-[300px] flex items-center justify-center">
-                      <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-                    </div>
-                  ) : reportData ? (
-                    <div className="flex-1 overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="text-[10px] font-black text-gray-400 uppercase border-b border-gray-200">
-                            <th className="pb-3 px-2">Date</th>
-                            <th className="pb-3 px-2 text-center text-green-600">Audit</th>
-                            <th className="pb-3 px-2 text-center text-red-600">Tax</th>
-                            <th className="pb-3 px-2 text-center text-gray-500">Case</th>
-                            <th className="pb-3 px-2 text-center text-orange-600">Quiz</th>
-                            <th className="pb-3 px-2 text-center text-blue-600">Drill</th>
-                            <th className="pb-3 px-2 text-right">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {[...reportData].reverse().map((day) => (
-                            <tr key={day.date} className="text-xs group hover:bg-white/50 transition-colors">
-                              <td className="py-2 px-2 font-medium text-gray-600">
-                                {new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                              </td>
-                              <td className={`py-2 px-2 text-center font-bold ${day.audit > 0 ? 'text-green-600' : 'text-gray-300'}`}>{day.audit}</td>
-                              <td className={`py-2 px-2 text-center font-bold ${day.tax > 0 ? 'text-red-600' : 'text-gray-300'}`}>{day.tax}</td>
-                              <td className={`py-2 px-2 text-center font-bold ${day.caselaw > 0 ? 'text-gray-600' : 'text-gray-300'}`}>{day.caselaw}</td>
-                              <td className={`py-2 px-2 text-center font-bold ${day.quiz > 0 ? 'text-orange-600' : 'text-gray-300'}`}>{day.quiz}</td>
-                              <td className={`py-2 px-2 text-center font-bold ${day.drill > 0 ? 'text-blue-600' : 'text-gray-300'}`}>{day.drill}</td>
-                              <td className="py-2 px-2 text-right font-black text-gray-900">{day.total}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-gray-400 italic">
-                      No activity data found for this period.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Stats Summary Table */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-8">
-                <div className="flex justify-center">
-                  <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100 w-full max-w-sm text-center">
-                    <p className="text-xs font-bold text-blue-400 uppercase mb-2 tracking-widest">Total XP Earned</p>
-                    <p className="text-5xl font-black text-blue-600">{editingUser.xp.toLocaleString()}</p>
-                    <div className="mt-4 flex items-center justify-center gap-2 text-blue-400">
-                      <div className="h-[1px] flex-1 bg-blue-100"></div>
-                      <span className="text-[10px] font-bold">LIFETIME ACHIEVEMENT</span>
-                      <div className="h-[1px] flex-1 bg-blue-100"></div>
-                    </div>
+                <div className="bg-gray-50 rounded-[3rem] p-8 border border-gray-100 flex flex-col">
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-8">Performance Progression</p>
+                  <div className="flex-1 flex items-end justify-between gap-1">
+                    {reportData ? reportData.map((d: any, i: number) => (
+                      <div key={i} className="flex-1 bg-white rounded-t-lg relative group border-x border-transparent hover:border-blue-100">
+                        <div className="absolute bottom-0 left-0 w-full bg-blue-500 rounded-t-lg opacity-20" style={{ height: '100%' }} />
+                        <div className="absolute bottom-0 left-0 w-full bg-blue-600 rounded-t-lg" style={{ height: `${(d.total / 1000) * 100}%` }} />
+                      </div>
+                    )) : (
+                      <div className="flex-1 flex items-center justify-center text-gray-300 font-black uppercase text-[10px] tracking-widest">Synchronizing History...</div>
+                    )}
                   </div>
+                  <p className="text-center text-[8px] font-black text-gray-400 uppercase tracking-widest mt-4">Last 7 Operational Cycles</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 border-t border-gray-100 text-center text-[10px] text-gray-400 font-medium">
-              FINOPOLY &bull; STUDENT PERFORMANCE CERTIFICATE &bull; {new Date().toLocaleDateString()}
+            <div className="mt-12 flex gap-4">
+              <button
+                onClick={downloadReport}
+                className="flex-1 py-5 bg-gray-900 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-3"
+              >
+                <Download size={18} />
+                Download PNG Directive
+              </button>
             </div>
           </div>
         </div>

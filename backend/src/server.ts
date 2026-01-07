@@ -19,9 +19,13 @@ import auditRoutes from "./routes/audit.routes";
 import challengeRoutes from "./routes/challenge.routes";
 import adminChallengeRoutes from "./routes/adminChallenge.routes";
 import badgeRoutes from "./routes/badge.routes";
+import { performanceLogger } from "./middleware/performanceLogger";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Performance Logging (First)
+app.use(performanceLogger);
 
 // Webhook handling (Pre-middleware)
 app.post(

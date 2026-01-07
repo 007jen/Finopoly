@@ -4,30 +4,29 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { XPProvider } from './_xp/xp-provider';
 import { AccuracyProvider } from './_accuracy/accuracy-context';
 import { LeaderboardProvider } from './context/LeaderboardContext';
-import { ChallengePage } from './Pages/ChallengePage';
+const ChallengePage = React.lazy(() => import('./Pages/ChallengePage').then(m => ({ default: m.ChallengePage })));
+const Dashboard = React.lazy(() => import('./components/dashboard/Dashboard'));
+const SimulationsList = React.lazy(() => import('./components/simulations/SimulationsList'));
+const SimulationView = React.lazy(() => import('./components/simulations/SimulationView'));
+const AuditLobby = React.lazy(() => import('./components/simulations/AuditLobby.tsx').then(m => ({ default: m.AuditLobby })));
+const TaxSimulation = React.lazy(() => import('./components/simulations/TaxSimulation'));
+const CaseLawModuleLive = React.lazy(() => import('./components/caselaws/CaseLawModuleLive'));
+const CaseLawExplorer = React.lazy(() => import('./components/caselaw/CaseLawExplorer'));
+const CaseDetailView = React.lazy(() => import('./components/caselaw/CaseDetailView'));
+const QuizArena = React.lazy(() => import('./components/quiz/QuizArena'));
+const Leaderboard = React.lazy(() => import('./components/leaderboard/Leaderboard'));
+const ProgressModule = React.lazy(() => import('./components/progress/ProgressModule'));
+const ProfilePage = React.lazy(() => import('./components/profile/ProfilePage'));
+const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
+const Phase1Chat = React.lazy(() => import('./components/Phase1Chat.tsx'));
 import LoginPage from './components/auth/LoginPage';
 import OnboardingModal from './components/auth/OnboardingModal';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
-import Dashboard from './components/dashboard/Dashboard';
-import SimulationsList from './components/simulations/SimulationsList';
-import SimulationView from './components/simulations/SimulationView';
-import { AuditLobby } from './components/simulations/AuditLobby.tsx'; // Updated import
-import TaxSimulation from './components/simulations/TaxSimulation';
-import CaseLawModuleLive from './components/caselaws/CaseLawModuleLive';
-import CaseLawExplorer from './components/caselaw/CaseLawExplorer';
-import CaseDetailView from './components/caselaw/CaseDetailView';
-import QuizArena from './components/quiz/QuizArena';
-import Leaderboard from './components/leaderboard/Leaderboard';
-import ProgressModule from './components/progress/ProgressModule';
-import ProfilePage from './components/profile/ProfilePage';
-import AdminPanel from './components/admin/AdminPanel';
 import BadgeAwardModal from './components/badges/BadgeAwardModal';
-// import CommunityUI from './Community/Community';
-import Phase1Chat from './components/Phase1Chat.tsx';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import LandingPage from './components/landing/LandingPage';
-// import { ActivityTrackerProvider } from './services/ActivityTracker';
+import { Suspense } from 'react';
 
 const AppContent: React.FC = () => {
   const { showOnboarding, user, loading, pendingBadges, clearPendingBadges } = useAuth();
@@ -181,53 +180,58 @@ const AppContent: React.FC = () => {
           />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col min-w-0 h-full">
+          <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
             <TopBar
-              user={user!}
+              user={user}
               setActiveTab={setActiveTab}
               onMenuClick={() => setIsMobileMenuOpen(true)}
             />
 
-            {/* Scrollable Content */}
-            <main className="flex-1 overflow-y-auto">
-              <div className="min-h-full pb-20 lg:pb-6">
-                {renderContent()}
-              </div>
-            </main>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-[60vh]">
+                  <div className="w-10 h-10 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                </div>
+              }>
+                <div className="min-h-full pb-20 lg:pb-6">
+                  {renderContent()}
+                </div>
+              </Suspense>
+            </div>
+          </main>
 
-            {/* Mobile Bottom Navigation */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-              <div className="bg-white/95 backdrop-blur-xl border-t border-gray-200/50 shadow-2xl">
-                <div className="safe-area-inset-bottom">
-                  <div className="flex items-center justify-around px-2 py-3">
-                    {[
-                      { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
-                      { id: 'quiz-arena', icon: Zap, label: 'Quiz' },
-                      { id: 'audit-arena', icon: PlayCircle, label: 'Learn' },
-                      { id: 'leaderboard', icon: Trophy, label: 'Ranks' },
-                      { id: 'profile', icon: User, label: 'Profile' }
-                    ].map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeTab === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => setActiveTab(item.id)}
-                          className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 min-w-0 flex-1 max-w-20 ${isActive
-                            ? 'bg-gradient-to-t from-blue-100 to-indigo-100 text-blue-700 shadow-lg scale-105 transform'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:scale-95'
-                            }`}
-                        >
-                          <Icon className={`w-5 h-5 mb-1 transition-all duration-300 ${isActive ? 'scale-110' : ''
-                            }`} />
-                          <span className={`text-xs font-medium truncate w-full text-center transition-all duration-300 ${isActive ? 'font-semibold' : ''
-                            }`}>
-                            {item.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+          {/* Mobile Bottom Navigation */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+            <div className="bg-white/95 backdrop-blur-xl border-t border-gray-200/50 shadow-2xl">
+              <div className="safe-area-inset-bottom">
+                <div className="flex items-center justify-around px-2 py-3">
+                  {[
+                    { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
+                    { id: 'quiz-arena', icon: Zap, label: 'Quiz' },
+                    { id: 'audit-arena', icon: PlayCircle, label: 'Learn' },
+                    { id: 'leaderboard', icon: Trophy, label: 'Ranks' },
+                    { id: 'profile', icon: User, label: 'Profile' }
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 min-w-0 flex-1 max-w-20 ${isActive
+                          ? 'bg-gradient-to-t from-blue-100 to-indigo-100 text-blue-700 shadow-lg scale-105 transform'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:scale-95'
+                          }`}
+                      >
+                        <Icon className={`w-5 h-5 mb-1 transition-all duration-300 ${isActive ? 'scale-110' : ''
+                          }`} />
+                        <span className={`text-xs font-medium truncate w-full text-center transition-all duration-300 ${isActive ? 'font-semibold' : ''
+                          }`}>
+                          {item.label}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -235,7 +239,6 @@ const AppContent: React.FC = () => {
         </>
       )}
     </div>
-    // </ActivityTrackerProvider>
   );
 };
 

@@ -49,7 +49,11 @@ async function internalFetch<T>(url: string, options: RequestOptions = {}): Prom
     };
 
     try {
+        const startTime = performance.now();
         const response = await fetch(fullUrl, config);
+        const duration = (performance.now() - startTime).toFixed(2);
+
+        console.log(`⏱️ [API] ${options.method || 'GET'} ${url} - ${duration}ms`);
 
         // 4. Handle 4xx and 5xx errors
         if (!response.ok) {
