@@ -295,7 +295,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 lg:p-8">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl lg:text-2xl font-bold text-gray-900">Recent Quiz Scores</h3>
-                                <button
+                                {/* <button
                                     onClick={async () => {
                                         try {
                                             const token = await getToken();
@@ -312,7 +312,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                                     className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200 transition-colors"
                                 >
                                     + Test Activity
-                                </button>
+                                </button> */}
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                 {recentQuizScores.map((quiz, index) => (

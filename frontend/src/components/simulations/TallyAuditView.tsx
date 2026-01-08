@@ -110,7 +110,7 @@ const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSub
                         />
                         {activeField === 'particulars' && !formData.particulars && (
                             <div className="absolute top-full left-0 w-full bg-[#135d66] border border-[#77b0aa]/50 shadow-2xl z-20 mt-1 max-h-48 overflow-y-auto">
-                                {['Cash', 'Sales A/c', 'Purchase A/c', 'Bank A/c', 'GST Input'].map(ledgerName => (
+                                {Array.from(new Set(['Cash', 'Sales A/c', 'Purchase A/c', 'Bank A/c', 'GST Input', ledger.particulars])).map(ledgerName => (
                                     <div
                                         key={ledgerName}
                                         onClick={() => { handleChange('particulars', ledgerName); setActiveField('debit'); }}

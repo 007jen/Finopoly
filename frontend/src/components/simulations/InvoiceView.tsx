@@ -132,15 +132,15 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ data }) => {
                 <div className="w-full sm:w-64 space-y-2">
                     <div className="flex justify-between text-[10px] md:text-[11px] font-bold">
                         <span className="text-slate-400 uppercase">SUBTOTAL</span>
-                        <span className="text-slate-900 font-mono">₹{data.amount.toLocaleString()}.00</span>
+                        <span className="text-slate-900 font-mono">₹{(data.amount || 0).toLocaleString()}.00</span>
                     </div>
                     <div className="flex justify-between text-[10px] md:text-[11px] font-bold border-b border-slate-100 pb-2">
                         <span className="text-slate-400 uppercase">GST (18%)</span>
-                        <span className="text-slate-900 font-mono">₹{data.tax.toLocaleString()}.00</span>
+                        <span className="text-slate-900 font-mono">₹{(data.tax || 0).toLocaleString()}.00</span>
                     </div>
                     <div className="flex justify-between text-base md:text-lg font-black bg-blue-900 text-white p-3 rounded shadow-lg shadow-blue-900/20">
                         <span className="tracking-tighter uppercase text-sm md:text-base">Total</span>
-                        <span className="font-mono">₹{data.total.toLocaleString()}.00</span>
+                        <span className="font-mono">₹{(data.total || 0).toLocaleString()}.00</span>
                     </div>
                     <p className="text-[9px] text-left sm:text-right text-slate-400 font-bold uppercase mt-2">
                         MODE: <span className="text-blue-800">{data.paymentMode}</span>
