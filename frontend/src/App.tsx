@@ -56,29 +56,41 @@ const AppContent: React.FC = () => {
 
 
   const handleStartSimulation = (caseId: string) => {
-    setCurrentSimulation(caseId);
+    startTransition(() => {
+      setCurrentSimulation(caseId);
+    });
   };
 
   const handleBackToSimulations = () => {
-    setCurrentSimulation(null);
+    startTransition(() => {
+      setCurrentSimulation(null);
+    });
   };
 
   const handleOpenCaseDetail = (caseId: string) => {
-    setCurrentCaseDetail(caseId);
+    startTransition(() => {
+      setCurrentCaseDetail(caseId);
+    });
   };
 
   const handleCloseCaseDetail = () => {
-    setCurrentCaseDetail(null);
+    startTransition(() => {
+      setCurrentCaseDetail(null);
+    });
   };
 
   const handleStartChallenge = (challengeId: string) => {
-    setCurrentChallengeId(challengeId);
-    setActiveTab('challenge-detail');
+    startTransition(() => {
+      setCurrentChallengeId(challengeId);
+      setActiveTab('challenge-detail');
+    });
   };
 
   const handleBackToChallenges = () => {
-    setCurrentChallengeId(null);
-    setActiveTab('quiz-arena');
+    startTransition(() => {
+      setCurrentChallengeId(null);
+      setActiveTab('quiz-arena');
+    });
   };
 
   const renderContent = () => {
@@ -101,14 +113,16 @@ const AppContent: React.FC = () => {
       return <AdminPanel />;
     }
 
+    const wrappedSetActiveTab = (tab: string) => startTransition(() => setActiveTab(tab));
+
     // Regular content based on active tab
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard setActiveTab={setActiveTab} />;
+        return <Dashboard setActiveTab={wrappedSetActiveTab} />;
       case 'simulations':
         return <SimulationsList onStartSimulation={handleStartSimulation} />;
       case 'audit-arena':
-        return <AuditLobby onStartAudit={handleStartSimulation} onBack={() => setActiveTab('dashboard')} />;
+        return <AuditLobby onStartAudit={handleStartSimulation} onBack={() => wrappedSetActiveTab('dashboard')} />;
       case 'caselaw-simulation':
         return <CaseLawModuleLive />;
       case 'caselaw-explorer':
@@ -117,13 +131,13 @@ const AppContent: React.FC = () => {
         }
         return <CaseLawExplorer onOpenCase={handleOpenCaseDetail} />;
       case 'tax-simulation':
-        return <TaxSimulation onBack={() => setActiveTab('dashboard')} />;
+        return <TaxSimulation onBack={() => wrappedSetActiveTab('dashboard')} />;
       case 'tax-cases':
         return <div className="flex items-center justify-center min-h-[60vh]"><h2 className="text-2xl font-bold text-gray-900">Tax Cases Coming Soon</h2></div>;
       case 'quiz-arena':
-        return <QuizArena onStartDrill={handleStartChallenge} onBack={() => setActiveTab('dashboard')} />;
+        return <QuizArena onStartDrill={handleStartChallenge} onBack={() => wrappedSetActiveTab('dashboard')} />;
       case 'leaderboard':
-        return <Leaderboard onBack={() => setActiveTab('dashboard')} />;
+        return <Leaderboard onBack={() => wrappedSetActiveTab('dashboard')} />;
       case 'community':
         return <Phase1Chat />;
       case 'socket-test':
@@ -131,17 +145,17 @@ const AppContent: React.FC = () => {
       case 'progress':
         return <ProgressModule />;
       case 'profile':
-        return <ProfilePage onBack={() => setActiveTab('dashboard')} />;
+        return <ProfilePage onBack={() => wrappedSetActiveTab('dashboard')} />;
       case 'challenge-detail':
         return currentChallengeId ? (
           <ChallengePage
             id={currentChallengeId}
             onBack={handleBackToChallenges}
-            onNext={(nextId: string) => setCurrentChallengeId(nextId)}
+            onNext={(nextId: string) => startTransition(() => setCurrentChallengeId(nextId))}
           />
-        ) : <Dashboard setActiveTab={setActiveTab} />;
+        ) : <Dashboard setActiveTab={wrappedSetActiveTab} />;
       default:
-        return <Dashboard setActiveTab={setActiveTab} />;
+        return <Dashboard setActiveTab={wrappedSetActiveTab} />;
     }
   };
 
@@ -161,9 +175,15 @@ const AppContent: React.FC = () => {
 
       {/* Show full simulation view or normal layout */}
       {currentSimulation ? (
-        <div className="w-full h-full">
-          {renderContent()}
-        </div>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen bg-slate-900">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        }>
+          <div className="w-full h-full">
+            {renderContent()}
+          </div>
+        </Suspense>
       ) : (
         <>
           {/* Desktop & Mobile Sidebar */}
