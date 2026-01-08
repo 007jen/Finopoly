@@ -322,7 +322,7 @@ const UserManagement: React.FC = () => {
                           {user.avatar ? (
                             <img src={user.avatar} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            user.name[0]?.toUpperCase()
+                            user.name?.[0]?.toUpperCase() || '?'
                           )}
                         </div>
                         <div>
@@ -334,8 +334,8 @@ const UserManagement: React.FC = () => {
                     <td className="px-6 py-8">
                       <div className="flex justify-center">
                         <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm border ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-100' :
-                            user.role === 'Partner' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                              'bg-blue-50 text-blue-700 border-blue-100'
+                          user.role === 'Partner' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                            'bg-blue-50 text-blue-700 border-blue-100'
                           }`}>
                           {user.role}
                         </span>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { LayoutDashboard, Zap, PlayCircle, Trophy, User } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { XPProvider } from './_xp/xp-provider';
@@ -31,6 +31,7 @@ import { Suspense } from 'react';
 const AppContent: React.FC = () => {
   const { showOnboarding, user, loading, pendingBadges, clearPendingBadges } = useAuth();
   const [activeTab, setActiveTab] = useState(window.location.pathname.toLowerCase().includes('/admin') ? 'admin' : 'dashboard');
+  const [isPending, startTransition] = useTransition();
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
   const [currentChallengeId, setCurrentChallengeId] = useState<string | null>(null);
   const [currentCaseDetail, setCurrentCaseDetail] = useState<string | null>(null);
@@ -168,7 +169,7 @@ const AppContent: React.FC = () => {
           {/* Desktop & Mobile Sidebar */}
           <Sidebar
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={(tab) => startTransition(() => setActiveTab(tab))}
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => {
               const newState = !isSidebarCollapsed;
@@ -183,7 +184,7 @@ const AppContent: React.FC = () => {
           <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
             <TopBar
               user={user}
-              setActiveTab={setActiveTab}
+              setActiveTab={(tab) => startTransition(() => setActiveTab(tab))}
               onMenuClick={() => setIsMobileMenuOpen(true)}
             />
 
@@ -217,7 +218,7 @@ const AppContent: React.FC = () => {
                     return (
                       <button
                         key={item.id}
-                        onClick={() => setActiveTab(item.id)}
+                        onClick={() => startTransition(() => setActiveTab(item.id))}
                         className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 min-w-0 flex-1 max-w-20 ${isActive
                           ? 'bg-gradient-to-t from-blue-100 to-indigo-100 text-blue-700 shadow-lg scale-105 transform'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:scale-95'
