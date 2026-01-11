@@ -1,6 +1,7 @@
 // src/lib/api.ts
 
 // 1. Determine the Base URL based on environment
+// Force Re-deploy V2
 const isProduction = import.meta.env.MODE === 'production';
 const BASE_URL = isProduction
     ? "https://api.tryfinopoly.com"
