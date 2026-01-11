@@ -11,6 +11,12 @@ router.get('/catalog', requireAuth, listCatalog);
 router.post('/complete', requireAuth, completeSession);
 router.get('/playable/:id', requireAuth, getPlayableCaseById);
 
+/* --- AZURE CLOUD START --- */
+import { analyzeInvoice } from '../controllers/audit.controller';
+router.post('/analyze-invoice', requireAuth, analyzeInvoice);
+/* --- AZURE CLOUD END --- */
+
+
 // Admin Routes
 router.post('/create', requireAuth, requireAdmin, createAuditCase);
 router.get('/list', requireAuth, requireAdmin, listAuditCases);

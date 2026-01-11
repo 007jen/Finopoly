@@ -4,8 +4,11 @@ import { Send, Zap, Users, Sparkles, CheckCircle, MessageSquare, Shield, Trendin
 import confetti from "canvas-confetti";
 import { useAuth } from "../context/AuthContext";
 
-// Backend port is 5000
-const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Backend port is 5000 (Local) or Production URL
+const isProduction = import.meta.env.MODE === 'production';
+const SOCKET_URL = isProduction
+    ? "https://api.tryfinopoly.com"
+    : (import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 // Financial/Professional avatar colors
 const getAvatarColor = (name: string) => {
@@ -26,6 +29,10 @@ export default function Phase1Chat() {
     const [isChallMode, setIsChallMode] = useState(false);
     const [challQuest, setChallQuest] = useState("");
     const [challAns, setChallAns] = useState("");
+
+    // --- Foul Police UI State ---
+    const [showWarning, setShowWarning] = useState(false);
+    const [warningMessage, setWarningMessage] = useState("");
 
     // --- SOCKET LOGIC ---
     useEffect(() => {
@@ -64,6 +71,16 @@ export default function Phase1Chat() {
             });
             scrollToBottom();
         });
+
+        /* --- AZURE CLOUD START --- */
+        // 🛡️ Listen for AI safety blocks
+        socketRef.current.on("message_error", (data: { message: string }) => {
+            setWarningMessage(data.message);
+            setShowWarning(true);
+            // Remove the latest optimistic message if it was blocked
+            setMessageList((prev) => prev.filter(m => !String(m.id).startsWith("temp-")));
+        });
+        /* --- AZURE CLOUD END --- */
 
         // 🏆 Challenge results (Solved notifications)
         socketRef.current.on("challenge_solved_globally", (data: { messageId: string; winner: string }) => {
@@ -160,7 +177,7 @@ export default function Phase1Chat() {
     };
 
     return (
-        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-3 sm:p-6 lg:p-8 flex items-center justify-center relative overflow-hidden">
+        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-0 sm:p-6 lg:p-8 flex items-center justify-center relative overflow-hidden">
 
             {/* --- ADAPTIVE ANIMATED BACKGROUND IMPROVED --- */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -169,16 +186,16 @@ export default function Phase1Chat() {
             </div>
 
             {/* --- MAIN CONTAINED BODY (Reduced by ~6%) --- */}
-            <div className="flex flex-col w-full h-full max-w-[96%] bg-[#f8fafc] text-slate-900 font-sans rounded-[2rem] shadow-2xl shadow-slate-800/60 border border-white/60 overflow-hidden relative z-10 flex-1">
+            <div className="flex flex-col w-full h-full max-w-full sm:max-w-[96%] bg-[#f8fafc] text-slate-900 font-sans rounded-none sm:rounded-[2rem] shadow-none sm:shadow-2xl sm:shadow-slate-800/60 border-none sm:border sm:border-white/60 overflow-hidden relative z-10 flex-1">
 
                 {/* --- HEADER --- */}
-                <div className="h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-4 sm:px-6 z-20">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="bg-blue-600 p-2 sm:p-2.5 rounded-xl shadow-lg shadow-blue-600/20 transition-transform hover:scale-105 active:scale-95">
-                            <MessageSquare size={18} className="text-white sm:w-5 sm:h-5" />
+                <div className="h-14 sm:h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-6 z-20">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <div className="bg-blue-600 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl shadow-lg shadow-blue-600/20 transition-transform hover:scale-105 active:scale-95">
+                            <MessageSquare size={16} className="text-white sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <h1 className="font-extrabold text-sm sm:text-base lg:text-lg tracking-tight text-slate-900 uppercase">Community Hub</h1>
+                            <h1 className="font-extrabold text-[11px] sm:text-base lg:text-lg tracking-tight text-slate-900 uppercase">Community Hub</h1>
                             <p className="text-[9px] sm:text-[10px] text-blue-600 font-black flex items-center gap-1.5 uppercase tracking-widest">
                                 <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.4)]"></span>
                                 Live Discussion
@@ -201,13 +218,13 @@ export default function Phase1Chat() {
                 </div>
 
                 {/* --- CHAT STREAM --- */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 relative no-scrollbar z-10">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-6 relative no-scrollbar z-10">
                     {/* Professional Mesh Pattern */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mt-12"></div>
 
                     {/* System Notification */}
-                    <div className="flex justify-center my-6">
-                        <div className="bg-white/60 backdrop-blur-md text-slate-500 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] py-2 px-6 rounded-full border border-slate-200/50 shadow-sm transition-all hover:bg-white/80">
+                    <div className="flex justify-center my-4 sm:my-6">
+                        <div className="bg-white/60 backdrop-blur-md text-slate-500 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] py-1.5 px-4 sm:px-6 rounded-full border border-slate-200/50 shadow-sm transition-all hover:bg-white/80 text-center mx-4">
                             Instant Peer-to-Peer Learning Network Established
                         </div>
                     </div>
@@ -222,38 +239,38 @@ export default function Phase1Chat() {
                             <div key={msg.id || `msg-${idx}`} className={`flex gap-3 sm:gap-4 ${isMe ? "flex-row-reverse" : "flex-row"} animate-in fade-in slide-in-from-bottom-2 duration-400`}>
 
                                 {/* Avatar */}
-                                <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-xs sm:text-sm font-black text-white shadow-lg flex-shrink-0 transition-all hover:scale-110 ring-2 ring-white/50 ${getAvatarColor(authorName)}`}>
+                                <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-[10px] sm:text-sm font-black text-white shadow-lg flex-shrink-0 transition-all hover:scale-110 ring-2 ring-white/50 ${getAvatarColor(authorName)}`}>
                                     {authorName.charAt(0).toUpperCase()}
                                 </div>
 
                                 {/* Content Bubble */}
                                 <div className={`flex flex-col max-w-[90%] sm:max-w-[75%] lg:max-w-[65%] ${isMe ? "items-end" : "items-start"}`}>
                                     <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-                                        <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${isMe ? "text-blue-600" : "text-slate-500"}`}>
+                                        <span className={`text-[8.5px] sm:text-[10px] font-black uppercase tracking-widest ${isMe ? "text-blue-600" : "text-slate-500"}`}>
                                             {authorName}
                                         </span>
-                                        <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold opacity-80 uppercase tracking-tighter">
+                                        <span className="text-[7.5px] sm:text-[9px] text-slate-400 font-bold opacity-80 uppercase tracking-tighter">
                                             {msg.time ? new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just Now"}
                                         </span>
                                     </div>
 
                                     {isChallenge ? (
                                         /* --- 🏆 THE CHALLENGE WIDGET --- */
-                                        <div className={`bg-white/90 backdrop-blur-sm border-2 ${isSolved ? 'border-emerald-100 shadow-sm' : 'border-blue-100/80 shadow-xl shadow-blue-500/5'} rounded-2xl p-4 sm:p-5 w-full max-w-sm group transition-all hover:border-blue-400/30`}>
-                                            <div className="flex justify-between items-center mb-4">
-                                                <div className={`flex items-center ${isSolved ? 'text-emerald-600' : 'text-blue-600'} text-[9px] sm:text-[10px] font-black uppercase tracking-widest`}>
-                                                    <div className={`p-1 rounded-lg mr-2 ${isSolved ? 'bg-emerald-50' : 'bg-blue-50'}`}>
-                                                        <Zap size={14} className={`${isSolved ? 'fill-emerald-600' : 'fill-blue-600'}`} />
+                                        <div className={`bg-white/90 backdrop-blur-sm border-2 ${isSolved ? 'border-emerald-100 shadow-sm' : 'border-blue-100/80 shadow-xl shadow-blue-500/5'} rounded-xl sm:rounded-2xl p-3 sm:p-5 w-full max-w-sm group transition-all hover:border-blue-400/30`}>
+                                            <div className="flex justify-between items-center mb-2 sm:mb-4">
+                                                <div className={`flex items-center ${isSolved ? 'text-emerald-600' : 'text-blue-600'} text-[8px] sm:text-[10px] font-black uppercase tracking-widest`}>
+                                                    <div className={`p-1 rounded-lg mr-1.5 sm:mr-2 ${isSolved ? 'bg-emerald-50' : 'bg-blue-50'}`}>
+                                                        <Zap size={12} className={`${isSolved ? 'fill-emerald-600' : 'fill-blue-600'} sm:w-[14px] sm:h-[14px]`} />
                                                     </div>
                                                     {isSolved ? "Drill Resolved" : "Active Peer Drill"}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-slate-400 group-hover:text-blue-400 transition-colors">
-                                                    <TrendingUp size={12} />
-                                                    <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-tighter">Skill Booster</span>
+                                                <div className="flex items-center gap-1 text-slate-400 group-hover:text-blue-400 transition-colors">
+                                                    <TrendingUp size={10} className="sm:w-[12px] sm:h-[12px]" />
+                                                    <span className="text-[7.5px] sm:text-[9px] font-bold uppercase tracking-tighter">Skill Booster</span>
                                                 </div>
                                             </div>
 
-                                            <p className={`font-bold text-sm sm:text-[15px] mb-4 leading-relaxed ${isSolved ? 'text-slate-400 italic' : 'text-slate-800'}`}>
+                                            <p className={`font-bold text-[12.5px] sm:text-[15px] mb-3 sm:mb-4 leading-relaxed ${isSolved ? 'text-slate-400 italic' : 'text-slate-800'}`}>
                                                 {msg.content}
                                             </p>
 
@@ -285,7 +302,7 @@ export default function Phase1Chat() {
                                         </div>
                                     ) : (
                                         /* --- 💬 STANDARD TEXT --- */
-                                        <div className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-[13px] sm:text-[14px] font-bold shadow-sm leading-relaxed relative group transition-all border
+                                        <div className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-[11.5px] sm:text-[14px] font-bold shadow-sm leading-relaxed relative group transition-all border
                                             ${isMe ? "bg-blue-600 text-white border-blue-700 rounded-tr-none shadow-blue-600/10"
                                                 : "bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200/70 rounded-tl-none hover:border-slate-300"
                                             }`}>
@@ -353,9 +370,9 @@ export default function Phase1Chat() {
                 )}
 
                 {/* --- INPUT AREA --- */}
-                <div className="p-3 sm:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/40 z-20">
+                <div className="p-2 sm:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/40 z-20">
                     <div className="max-w-4xl mx-auto">
-                        <div className="flex items-center gap-2 sm:gap-3 bg-white p-1 rounded-2xl border border-slate-200 focus-within:border-blue-500/50 focus-within:ring-8 focus-within:ring-blue-500/5 transition-all shadow-lg shadow-slate-200/50">
+                        <div className="flex items-center gap-1.5 sm:gap-3 bg-white p-1 rounded-xl sm:rounded-2xl border border-slate-200 focus-within:border-blue-500/50 focus-within:ring-8 focus-within:ring-blue-500/5 transition-all shadow-lg shadow-slate-200/50">
                             <button
                                 onClick={() => setIsChallMode(!isChallMode)}
                                 className={`p-2.5 sm:p-3 rounded-xl transition-all ${isChallMode ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 ring-4 ring-blue-500/10' : 'bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
@@ -370,15 +387,15 @@ export default function Phase1Chat() {
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                                 placeholder="Collaborate with peers..."
-                                className="flex-1 bg-transparent text-slate-700 text-[13px] sm:text-sm px-2 sm:px-3 py-2.5 outline-none placeholder-slate-400 font-bold"
+                                className="flex-1 bg-transparent text-slate-700 text-[11.5px] sm:text-sm px-1.5 sm:px-3 py-2 outline-none placeholder-slate-400 font-bold"
                             />
 
                             <button
                                 onClick={sendMessage}
                                 disabled={!message.trim()}
-                                className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale transform active:scale-90 shadow-xl shadow-blue-600/20"
+                                className="w-9 h-9 sm:w-11 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale transform active:scale-90 shadow-xl shadow-blue-600/20"
                             >
-                                <Send size={18} className="sm:w-[18px] sm:h-[18px] translate-x-0.5 -translate-y-0.5" />
+                                <Send size={16} className="sm:w-[18px] sm:h-[18px] translate-x-0.5 -translate-y-0.5" />
                             </button>
                         </div>
 
@@ -391,6 +408,38 @@ export default function Phase1Chat() {
                     </div>
                 </div>
             </div>
+
+            {/* --- FOUL POLICE MODAL (HIDDEN) --- */}
+            {false && showWarning && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-4 border-red-500 max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-300">
+                        <div className="bg-red-500 p-6 flex flex-col items-center gap-2">
+                            <div className="flex gap-2">
+                                <span className="text-4xl animate-bounce">🚨</span>
+                                <Shield className="text-white w-12 h-12" />
+                                <span className="text-4xl animate-bounce">🚔</span>
+                            </div>
+                            <h2 className="text-white font-black text-2xl uppercase tracking-tighter">Foul Police Active</h2>
+                        </div>
+                        <div className="p-8 text-center">
+                            <p className="text-slate-600 font-bold mb-6 leading-relaxed">
+                                {warningMessage.replace("Message blocked: ", "")}
+                            </p>
+                            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-8">
+                                <p className="text-red-600 text-[10px] font-black uppercase tracking-widest">
+                                    Final Warning: Please maintain professional conduct in the community hub.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowWarning(false)}
+                                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
+                            >
+                                Understood, Officer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Custom Animations in Tailwind Global (Conceptual - standard classes used above) */}
             <style>{`

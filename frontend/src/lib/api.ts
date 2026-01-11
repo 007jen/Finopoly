@@ -1,9 +1,10 @@
 // src/lib/api.ts
 
 // 1. Determine the Base URL based on environment
-// ⚠️ Hardcoded to force connection to Render Backend
-// const BASE_URL = "https://finopoly-api.onrender.com";
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const isProduction = import.meta.env.MODE === 'production';
+const BASE_URL = isProduction
+    ? "https://api.tryfinopoly.com"
+    : (import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 type RequestOptions = RequestInit & {
     headers?: Record<string, string>;
@@ -108,4 +109,10 @@ export const api = {
         api.put(`/api/audit/${id}`, data),
     deleteAuditCase: (id: string) =>
         api.delete(`/api/audit/${id}`),
+
+    /* --- AZURE CLOUD START --- */
+    // Azure AI Endpoints
+    analyzeInvoice: (invoiceData: any) =>
+        api.post('/api/audit/analyze-invoice', { invoiceData }),
+    /* --- AZURE CLOUD END --- */
 };

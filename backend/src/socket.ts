@@ -2,6 +2,11 @@ import { z } from "zod";
 import { Server, Socket } from "socket.io";
 import { prisma } from "./utils/prisma";
 import { ProgressService } from "./services/progress.service";
+
+/* --- AZURE CLOUD START --- */
+import { AzureService } from "./services/azure.service";
+/* --- AZURE CLOUD END --- */
+
 // import { PrismaClient } from "@prisma/client";
 // const prisma = new PrismaClient(); // Architect note: Use a singleton in production
 
@@ -74,6 +79,16 @@ export const setupSocketHandlers = (io: Server) => {
                     }
                 );
                 if (channel) {
+                    /* --- AZURE CLOUD START (PAUSED) --- */
+                    // const toxicityResult = await AzureService.analyzeCommunityMessage(validatedData.content);
+                    // if (!toxicityResult.isSafe) {
+                    //     socket.emit("message_error", {
+                    //         message: `Message blocked: ${toxicityResult.reason || "Foul language detected."}`
+                    //     });
+                    //     return; // Stop message from being saved or broadcast
+                    // }
+                    /* --- AZURE CLOUD END --- */
+
                     await prisma.message.create({
                         data: {
                             content: validatedData.content,

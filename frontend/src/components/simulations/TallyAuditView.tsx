@@ -13,9 +13,12 @@ interface TallyAuditViewProps {
     ledger: LedgerData;
     onSubmit: (userData: LedgerData) => void;
     isSubmitting?: boolean;
+    /* --- AZURE CLOUD START --- */
+    autoFillData?: any;
+    /* --- AZURE CLOUD END --- */
 }
 
-const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSubmitting }) => {
+const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSubmitting, autoFillData }) => {
     const [formData, setFormData] = useState<LedgerData>({
         date: '',
         particulars: '',
@@ -39,6 +42,19 @@ const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSub
         });
         setActiveField('particulars');
     }, [ledger]);
+
+    /* --- AZURE CLOUD START --- */
+    useEffect(() => {
+        if (autoFillData) {
+            setFormData(prev => ({
+                ...prev,
+                date: autoFillData.date || prev.date,
+                particulars: autoFillData.vendor || prev.particulars,
+                debit: autoFillData.total || autoFillData.amount || prev.debit
+            }));
+        }
+    }, [autoFillData]);
+    /* --- AZURE CLOUD END --- */
 
     const handleChange = (field: keyof LedgerData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { server, PORT } from "./server";
 
 server.listen(PORT, () => {

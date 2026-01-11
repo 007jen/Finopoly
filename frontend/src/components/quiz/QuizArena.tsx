@@ -402,18 +402,18 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
   return (
     <div className="min-h-full bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30">
       <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
-        <div className="flex items-center gap-4">
+        <div className="relative flex flex-col items-center justify-center py-4">
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400 hover:text-gray-900"
+              className="absolute left-0 p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400 hover:text-gray-900 z-10"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
           )}
-          <div className="text-center lg:text-left">
-            <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-3 tracking-tight">Quiz Arcade</h1>
-            <p className="text-gray-600 text-base lg:text-xl">Challenge yourself with different quiz formats</p>
+          <div className="text-center w-full">
+            <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-1 lg:mb-3 tracking-tight">Quiz Arcade</h1>
+            <p className="text-gray-600 text-[12px] lg:text-xl">Challenge yourself with different quiz formats</p>
           </div>
         </div>
 

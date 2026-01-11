@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Check, X, Flame, ShieldAlert, ArrowLeft, Shield, Target } from 'lucide-react';
+import { Check, X, ArrowLeft, Shield, Sparkles } from 'lucide-react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAuth } from '../../context/AuthContext';
 import confetti from 'canvas-confetti';
@@ -9,7 +9,6 @@ import TallyAuditView from './TallyAuditView';
 
 // --- Types ---
 type PaymentMode = 'CASH' | 'BANK' | 'UPI';
-type AuditField = 'Vendor' | 'Date' | 'Amount' | 'Tax' | 'Compliance';
 
 interface InvoiceData {
   vendor: string;
@@ -79,7 +78,6 @@ interface SimulationViewProps {
 const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
   const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
   const [timeLeft, setTimeLeft] = useState(MAX_TIME);
   const [gameState, setGameState] = useState<'PLAYING' | 'RESULT' | 'FINISHED' | 'GAME_OVER'>('PLAYING');
   const [result, setResult] = useState<'SUCCESS' | 'FAILURE' | null>(null);
@@ -90,10 +88,33 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const [foundErrors, setFoundErrors] = useState<number>(0);
   const [levels, setLevels] = useState<Level[]>(GAME_LEVELS);
   const [loading, setLoading] = useState(true);
+  /* --- AZURE CLOUD START --- */
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedData, setScannedData] = useState<any>(null);
+  /* --- AZURE CLOUD END --- */
 
   const { getToken } = useClerkAuth();
   const { refreshUser } = useAuth();
   const isProcessingRef = useRef(false);
+
+  /* --- AZURE CLOUD START --- */
+  const handleAiScan = async () => {
+    setIsScanning(true);
+    try {
+      // Send the real digital invoice data for semantic analysis
+      const res = await api.analyzeInvoice(currentLevel.invoice) as any;
+
+      if (res && res.explanation) {
+        setScannedData(res.explanation);
+        console.log("AI Analysis Result:", res.explanation);
+      }
+    } catch (err) {
+      console.error("AI Analysis failed", err);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+  /* --- AZURE CLOUD END --- */
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -405,8 +426,60 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
         </header>
         <div className="flex-1 overflow-y-auto p-6 pb-32">
           <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
-            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700"><InvoiceView data={currentLevel.invoice} /></div>
-            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700"><TallyAuditView ledger={currentLevel.ledger} onSubmit={handleVoucherSubmit} isSubmitting={gameState === 'RESULT'} /></div>
+            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700">
+              <InvoiceView data={currentLevel.invoice} />
+            </div>
+            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700 flex flex-col">
+              <TallyAuditView
+                ledger={currentLevel.ledger}
+                onSubmit={handleVoucherSubmit}
+                isSubmitting={gameState === 'RESULT'}
+                /* --- AZURE CLOUD START --- */
+                autoFillData={scannedData}
+              /* --- AZURE CLOUD END --- */
+              />
+
+              {/* --- AZURE CLOUD START (HIDDEN) --- */}
+              {false && (
+                <div className="mt-6 pt-6 border-t border-slate-700/50">
+                  {!scannedData ? (
+                    <button
+                      onClick={handleAiScan}
+                      disabled={isScanning}
+                      className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98] group"
+                    >
+                      {isScanning ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          <Sparkles size={18} className="text-blue-200 group-hover:animate-pulse" />
+                          <span className="uppercase tracking-widest">✨ Explain Audit</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div className="p-5 bg-blue-900/30 border border-blue-500/20 rounded-2xl animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 text-blue-400 font-black text-[10px] uppercase tracking-widest">
+                          <Sparkles size={14} />
+                          <span>Audit Explanation</span>
+                        </div>
+                        <button
+                          onClick={() => setScannedData(null)}
+                          className="text-blue-400/50 hover:text-blue-400 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      <div className="text-xs text-blue-100 leading-relaxed italic whitespace-pre-wrap">
+                        {(typeof scannedData === 'string' ? scannedData : (scannedData as any)?.explanation || '').replace(/\*\*/g, '')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* --- AZURE CLOUD END --- */}
+            </div>
           </div>
         </div>
       </div>
@@ -449,6 +522,8 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
           </div>
         </div>
       )}
+
+      {/* Azure logic ends above */}
     </div>
   );
 };

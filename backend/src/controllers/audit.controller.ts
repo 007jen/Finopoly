@@ -4,6 +4,11 @@ import { AuditService } from '../services/audit.service';
 import { recordActivity } from '../services/activity.service';
 import { prisma } from '../utils/prisma';
 
+/* --- AZURE CLOUD START --- */
+import { AzureService } from '../services/azure.service';
+/* --- AZURE CLOUD END --- */
+
+
 export const getPlayableCases = async (req: Request, res: Response) => {
     try {
         const count = req.query.count ? parseInt(req.query.count as string) : 5;
@@ -118,3 +123,24 @@ export const completeSession = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to record session completion' });
     }
 };
+
+/* --- AZURE CLOUD START --- */
+
+/**
+ * analyzeInvoice (Pivoted to Semantic Explanation)
+ * POST /api/audit/analyze-invoice
+ */
+export const analyzeInvoice = async (req: Request, res: Response) => {
+    try {
+        const { invoiceData } = req.body;
+        if (!invoiceData) return res.status(400).json({ error: "No invoice data provided" });
+
+        const data = await AzureService.analyzeInvoice(invoiceData);
+        res.json(data);
+    } catch (error) {
+        console.error("AI Analysis Error:", error);
+        res.status(500).json({ error: "Internal AI Error" });
+    }
+};
+
+/* --- AZURE CLOUD END --- */
