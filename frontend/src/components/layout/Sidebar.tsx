@@ -23,17 +23,13 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  isMobileOpen: boolean;
-  onMobileClose: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
   isCollapsed,
-  onToggleCollapse,
-  isMobileOpen,
-  onMobileClose
+  onToggleCollapse
 }) => {
   const { logout } = useAuth();
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
@@ -42,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'quiz-arena', label: 'Quiz Arcade', icon: Zap },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+    { id: 'courses', label: 'Industry Insights', icon: PlayCircle },
     { id: 'community', label: 'Community', icon: Users },
     { id: 'progress', label: 'Progress', icon: TrendingUp },
     { id: 'profile', label: 'Profile', icon: User },
@@ -101,30 +98,20 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleMenuItemClick = (itemId: string) => {
     setActiveTab(itemId);
-    onMobileClose();
   };
 
   const sidebarWidth = isCollapsed ? 'w-20' : 'w-72';
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
-          onClick={onMobileClose}
-        />
-      )}
-
-      {/* Sidebar Container */}
-      <div className={`fixed lg:static inset-y-0 left-0 z-50 ${isMobileOpen ? 'w-72' : sidebarWidth} bg-white/95 backdrop-blur-xl border-r border-gray-200/50 flex flex-col shadow-2xl transition-all duration-300 transform ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}>
+      {/* Sidebar Container - Desktop Only now */}
+      <div className={`hidden lg:flex flex-col fixed lg:static inset-y-0 left-0 z-50 ${sidebarWidth} bg-white/95 backdrop-blur-xl border-r border-gray-200/50 shadow-2xl transition-all duration-300`}>
 
         {/* Brand Header */}
         <div
           className={`flex-shrink-0 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-indigo-50 transition-all duration-300`}
         >
-          <div className={`p-4 flex items-center ${isCollapsed && !isMobileOpen ? 'flex-col gap-4 justify-center' : 'justify-between gap-3'}`}>
+          <div className={`p-4 flex items-center ${isCollapsed ? 'flex-col gap-4 justify-center' : 'justify-between gap-3'}`}>
             <div
               onClick={() => handleMenuItemClick('dashboard')}
               className={`flex items-center gap-3 cursor-pointer group`}
@@ -132,7 +119,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              {(!isCollapsed || isMobileOpen) && (
+              {!isCollapsed && (
                 <div className="animate-in fade-in slide-in-from-left-2 duration-300">
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-none">
                     Finopoly
@@ -158,17 +145,17 @@ const Sidebar: React.FC<SidebarProps> = ({
           <nav className="p-3">
             {/* Learning Modules Section */}
             <div className="mb-6">
-              {(!isCollapsed || isMobileOpen) && <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-3">Learning Modules</h3>}
+              {!isCollapsed && <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-3">Learning Modules</h3>}
               <div className="space-y-1">
                 {modules.map((module) => {
                   const Icon = module.icon;
-                  const isExpanded = expandedModule === module.id && (!isCollapsed || isMobileOpen);
+                  const isExpanded = expandedModule === module.id && !isCollapsed;
 
                   return (
                     <div key={module.id} className="relative group">
                       <button
                         onClick={() => handleModuleClick(module.id)}
-                        className={`w-full flex items-center ${isCollapsed && !isMobileOpen ? 'justify-center' : 'justify-between'} p-3 rounded-xl transition-all duration-300 ${(module as any).comingSoon
+                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-3 rounded-xl transition-all duration-300 ${(module as any).comingSoon
                           ? 'opacity-60 cursor-not-allowed grayscale'
                           : isExpanded
                             ? `bg-blue-600 text-white shadow-lg`
@@ -177,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       >
                         <div className="flex items-center gap-3">
                           <Icon className={`w-6 h-6 ${isExpanded ? 'scale-110' : ''}`} />
-                          {(!isCollapsed || isMobileOpen) && (
+                          {!isCollapsed && (
                             <div className="flex flex-col items-start min-w-0">
                               <span className="font-bold text-sm truncate">{module.name}</span>
                               {(module as any).comingSoon && (
@@ -186,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             </div>
                           )}
                         </div>
-                        {(!isCollapsed || isMobileOpen) && !(module as any).comingSoon && (
+                        {!isCollapsed && !(module as any).comingSoon && (
                           <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                         )}
                       </button>
@@ -219,7 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Main Navigation */}
             <div>
-              {(!isCollapsed || isMobileOpen) && <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-3">Quick Access</h3>}
+              {!isCollapsed && <h3 className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-4 px-3">Quick Access</h3>}
               <ul className="space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
@@ -228,13 +215,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <li key={item.id} className="relative group">
                       <button
                         onClick={() => handleMenuItemClick(item.id)}
-                        className={`w-full flex items-center ${isCollapsed && !isMobileOpen ? 'justify-center' : 'gap-3'} px-3 py-3 rounded-xl text-left transition-all duration-300 ${isActive
+                        className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-3 py-3 rounded-xl text-left transition-all duration-300 ${isActive
                           ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                           : 'text-gray-600 hover:bg-blue-50 hover:text-blue-600'
                           }`}
                       >
                         <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''}`} />
-                        {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm truncate">{item.label}</span>}
+                        {!isCollapsed && <span className="font-bold text-sm truncate">{item.label}</span>}
                       </button>
                     </li>
                   );
@@ -248,10 +235,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className={`p-4 border-t border-gray-200/50 bg-gray-50/10`}>
           <button
             onClick={logout}
-            className={`w-full flex items-center ${isCollapsed && !isMobileOpen ? 'justify-center' : 'gap-3'} px-4 py-3 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all group relative`}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all group relative`}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            {(!isCollapsed || isMobileOpen) && <span className="font-bold text-sm">Logout</span>}
+            {!isCollapsed && <span className="font-bold text-sm">Logout</span>}
           </button>
         </div>
       </div>

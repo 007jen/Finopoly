@@ -414,29 +414,29 @@ const AdminPanel: React.FC = () => {
   );
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen pb-24 md:pb-8">
       <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 sm:mb-10">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-200">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">Platform Control</h1>
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter uppercase">Platform Control</h1>
             </div>
-            <p className="text-gray-500 font-medium">Mission Control for Finopoly Ecosystem & Governance</p>
+            <p className="text-gray-500 font-medium text-sm sm:text-base">Mission Control for Finopoly Ecosystem & Governance</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full md:w-auto">
             <button
               onClick={fetchMetrics}
               disabled={loadingMetrics}
-              className="p-3 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm hover:shadow-md active:scale-95"
+              className="p-3 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm hover:shadow-md active:scale-95 flex-1 md:flex-none flex justify-center"
               title="Refresh Global Metrics"
             >
               <Save className={`w-5 h-5 ${loadingMetrics ? 'animate-spin' : ''}`} />
             </button>
-            <div className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs uppercase border border-emerald-100 flex items-center gap-2">
+            <div className="px-4 py-3 md:py-2 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs uppercase border border-emerald-100 flex items-center justify-center gap-2 flex-1 md:flex-none">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               Systems Online
             </div>
@@ -444,7 +444,7 @@ const AdminPanel: React.FC = () => {
         </header>
 
         {/* Tab Navigation - Command Bar Style */}
-        <div className="flex flex-wrap gap-2 mb-10 p-1.5 bg-gray-200/50 backdrop-blur-sm rounded-[2rem] border border-gray-200 w-fit">
+        <div className="flex flex-wrap gap-2 mb-8 sm:mb-10 p-1.5 bg-gray-200/50 backdrop-blur-sm rounded-[2rem] border border-gray-200 w-full sm:w-fit overflow-x-auto">
           {[
             { id: 'analytics', label: 'Monitor', icon: BarChart3 },
             { id: 'users', label: 'Inhabitants', icon: Users },
@@ -457,20 +457,21 @@ const AdminPanel: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2.5 px-6 py-3 rounded-[1.5rem] transition-all duration-300 font-bold text-sm uppercase tracking-wider ${isActive
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-4 sm:px-6 py-3 rounded-[1.5rem] transition-all duration-300 font-bold text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap ${isActive
                   ? 'bg-white text-blue-600 shadow-xl shadow-gray-200/50 border border-gray-100 scale-105 z-10'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-white/50'
                   }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="inline sm:hidden">{tab.label.split(' ')[0]}</span>
               </button>
             );
           })}
         </div>
 
         {/* Tab Content Area */}
-        <div className="min-h-[600px] animate-in fade-in duration-500">
+        <div className="min-h-[600px] animate-in fade-in duration-500 pb-20 sm:pb-0">
           {activeTab === 'analytics' && renderAnalyticsTab()}
           {activeTab === 'users' && renderUsersTab()}
           {activeTab === 'content' && renderContentTab()}
@@ -480,8 +481,8 @@ const AdminPanel: React.FC = () => {
 
       {/* Create Content Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-[2rem] shadow-2xl p-6 sm:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Create New Content</h2>
               <button
@@ -757,8 +758,9 @@ const AdminPanel: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 

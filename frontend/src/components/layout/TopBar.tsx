@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Search, Trophy, Flame, Star, Settings, LogOut, ChevronDown, User as UserIcon, Menu } from 'lucide-react';
+import { Search, Trophy, Flame, Star, Settings, LogOut, ChevronDown, User as UserIcon } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 
 interface TopBarProps {
   user: UserType | null;
   setActiveTab: (tab: string) => void;
-  onMenuClick: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab, onMenuClick }) => {
+const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab }) => {
   const { logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -25,14 +24,8 @@ const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab, onMenuClick }) => {
       <div className="flex items-center justify-between gap-4">
         {/* Left side - Menu Button (Mobile) & Search */}
         <div className="flex items-center gap-4 flex-1">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
-            aria-label="Open Menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-
+          {/* Mobile Menu Button - Hidden since we now use Bottom Nav */}
+          <div className="lg:hidden w-8" />
           <div className="hidden md:flex items-center flex-1 max-w-lg">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -98,49 +91,51 @@ const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab, onMenuClick }) => {
                   className="w-9 h-9 rounded-full object-cover border border-gray-200 shadow-sm"
                 />
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
-              </div>
+              </div >
 
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 hidden sm:block ${isProfileOpen ? 'rotate-180' : ''}`} />
-            </button>
+            </button >
 
             {/* Dropdown Menu */}
-            {isProfileOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
-                  <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
-                  <p className="text-xs text-gray-500 truncate mb-2">{user?.email}</p>
-                  <span className="inline-block bg-blue-100 text-blue-700 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
-                    {user?.role || 'Student'}
-                  </span>
-                </div>
+            {
+              isProfileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+                    <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
+                    <p className="text-xs text-gray-500 truncate mb-2">{user?.email}</p>
+                    <span className="inline-block bg-blue-100 text-blue-700 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider">
+                      {user?.role || 'Student'}
+                    </span>
+                  </div>
 
-                <div className="py-1">
-                  <button
-                    onClick={handleProfileClick}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <UserIcon className="w-4 h-4 text-gray-400" /> View Profile
-                  </button>
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-gray-400" /> Settings
-                  </button>
-                </div>
+                  <div className="py-1">
+                    <button
+                      onClick={handleProfileClick}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <UserIcon className="w-4 h-4 text-gray-400" /> View Profile
+                    </button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-gray-400" /> Settings
+                    </button>
+                  </div>
 
-                <div className="border-t border-gray-50 py-1">
-                  <button
-                    onClick={() => logout()}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium"
-                  >
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
+                  <div className="border-t border-gray-50 py-1">
+                    <button
+                      onClick={() => logout()}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium"
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )
+            }
+          </div >
 
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 };
 

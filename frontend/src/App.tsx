@@ -1,5 +1,4 @@
 import React, { useState, useTransition } from 'react';
-import { LayoutDashboard, Zap, PlayCircle, Trophy, User } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { XPProvider } from './_xp/xp-provider';
 import { AccuracyProvider } from './_accuracy/accuracy-context';
@@ -18,11 +17,13 @@ const Leaderboard = React.lazy(() => import('./components/leaderboard/Leaderboar
 const ProgressModule = React.lazy(() => import('./components/progress/ProgressModule'));
 const ProfilePage = React.lazy(() => import('./components/profile/ProfilePage'));
 const AdminPanel = React.lazy(() => import('./components/admin/AdminPanel'));
+const CoursesPage = React.lazy(() => import('./components/courses/CoursesPage'));
 const Phase1Chat = React.lazy(() => import('./components/Phase1Chat.tsx'));
 import LoginPage from './components/auth/LoginPage';
 import OnboardingModal from './components/auth/OnboardingModal';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
+import MobileBottomNav from './components/layout/MobileBottomNav';
 import BadgeAwardModal from './components/badges/BadgeAwardModal';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import LandingPage from './components/landing/LandingPage';
@@ -31,7 +32,7 @@ import { Suspense } from 'react';
 const AppContent: React.FC = () => {
   const { showOnboarding, user, loading, pendingBadges, clearPendingBadges } = useAuth();
   const [activeTab, setActiveTab] = useState(window.location.pathname.toLowerCase().includes('/admin') ? 'admin' : 'dashboard');
-  const [isPending, startTransition] = useTransition();
+  const [_, startTransition] = useTransition();
   const [currentSimulation, setCurrentSimulation] = useState<string | null>(null);
   const [currentChallengeId, setCurrentChallengeId] = useState<string | null>(null);
   const [currentCaseDetail, setCurrentCaseDetail] = useState<string | null>(null);
@@ -39,7 +40,6 @@ const AppContent: React.FC = () => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved === 'true';
   });
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (loading || !user) {
     return (
@@ -140,6 +140,8 @@ const AppContent: React.FC = () => {
         return <Leaderboard onBack={() => wrappedSetActiveTab('dashboard')} />;
       case 'community':
         return <Phase1Chat />;
+      case 'courses':
+        return <CoursesPage />;
       case 'socket-test':
         return <Phase1Chat />;
       case 'progress':
@@ -196,8 +198,6 @@ const AppContent: React.FC = () => {
               setIsSidebarCollapsed(newState);
               localStorage.setItem('sidebar-collapsed', String(newState));
             }}
-            isMobileOpen={isMobileMenuOpen}
-            onMobileClose={() => setIsMobileMenuOpen(false)}
           />
 
           {/* Main Content Area */}
@@ -205,7 +205,6 @@ const AppContent: React.FC = () => {
             <TopBar
               user={user}
               setActiveTab={(tab) => startTransition(() => setActiveTab(tab))}
-              onMenuClick={() => setIsMobileMenuOpen(true)}
             />
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -222,41 +221,10 @@ const AppContent: React.FC = () => {
           </main>
 
           {/* Mobile Bottom Navigation */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-            <div className="bg-white/95 backdrop-blur-xl border-t border-gray-200/50 shadow-2xl">
-              <div className="safe-area-inset-bottom">
-                <div className="flex items-center justify-around px-2 py-3">
-                  {[
-                    { id: 'dashboard', icon: LayoutDashboard, label: 'Home' },
-                    { id: 'quiz-arena', icon: Zap, label: 'Quiz' },
-                    { id: 'audit-arena', icon: PlayCircle, label: 'Learn' },
-                    { id: 'leaderboard', icon: Trophy, label: 'Ranks' },
-                    { id: 'profile', icon: User, label: 'Profile' }
-                  ].map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => startTransition(() => setActiveTab(item.id))}
-                        className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-300 min-w-0 flex-1 max-w-20 ${isActive
-                          ? 'bg-gradient-to-t from-blue-100 to-indigo-100 text-blue-700 shadow-lg scale-105 transform'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 active:scale-95'
-                          }`}
-                      >
-                        <Icon className={`w-5 h-5 mb-1 transition-all duration-300 ${isActive ? 'scale-110' : ''
-                          }`} />
-                        <span className={`text-xs font-medium truncate w-full text-center transition-all duration-300 ${isActive ? 'font-semibold' : ''
-                          }`}>
-                          {item.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
+          <MobileBottomNav
+            activeTab={activeTab}
+            setActiveTab={(tab) => startTransition(() => setActiveTab(tab))}
+          />
         </>
       )}
     </div>

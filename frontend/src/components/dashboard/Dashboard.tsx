@@ -288,8 +288,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
       <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 lg:space-y-8">
         {/* Welcome Header */}
         <div className="text-center lg:text-left">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2 whitespace-nowrap">
-            Welcome, {user.name}! ✨
+          <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-2 whitespace-nowrap">
+            Welcome {user?.name} ✨
           </h1>
           <p className="text-gray-600 text-lg lg:text-xl">Ready to continue your learning journey?</p>
         </div>

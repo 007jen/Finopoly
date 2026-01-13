@@ -103,33 +103,33 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
     ];
 
     // --- Mastery Logic ---
-    const calculateMastery = () => {
-        const correctAnswers = user.correctAnswers || 0;
-        const activeSeconds = user.activeSeconds || 0;
-        const activeHours = activeSeconds / 3600;
+    // const calculateMastery = () => {
+    //     const correctAnswers = user.correctAnswers || 0;
+    //     const activeSeconds = user.activeSeconds || 0;
+    //     const activeHours = activeSeconds / 3600;
 
-        // Formula: CorrectAnswers * 1 + ActiveHours * 50
-        const totalPoints = (correctAnswers * 1) + (activeHours * 50);
+    //     // Formula: CorrectAnswers * 1 + ActiveHours * 50
+    //     const totalPoints = (correctAnswers * 1) + (activeHours * 50);
 
-        // Milestone for 100% = 500 points (Master)
-        const maxPoints = 500;
-        const percentage = Math.min((totalPoints / maxPoints) * 100, 100);
+    //     // Milestone for 100% = 500 points (Master)
+    //     const maxPoints = 500;
+    //     const percentage = Math.min((totalPoints / maxPoints) * 100, 100);
 
-        let title = "Junior Associate";
-        if (percentage >= 90) title = "Partner";
-        else if (percentage >= 60) title = "Manager";
-        else if (percentage >= 30) title = "Senior Auditor";
+    //     let title = "Junior Associate";
+    //     if (percentage >= 90) title = "Partner";
+    //     else if (percentage >= 60) title = "Manager";
+    //     else if (percentage >= 30) title = "Senior Auditor";
 
-        return {
-            points: totalPoints,
-            percentage,
-            title,
-            activeMinutes: Math.floor(activeSeconds / 60),
-            remaining: Math.max(0, 100 - (percentage % 100))
-        };
-    };
+    //     return {
+    //         points: totalPoints,
+    //         percentage,
+    //         title,
+    //         activeMinutes: Math.floor(activeSeconds / 60),
+    //         remaining: Math.max(0, 100 - (percentage % 100))
+    //     };
+    // };
 
-    const mastery = calculateMastery();
+    // const mastery = calculateMastery();
 
     const savedCaseLaws = [
         { title: 'CIT vs. Hindustan Coca Cola Beverages', category: 'Tax', savedDate: '2024-01-27' },
@@ -143,7 +143,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
         const rows = [
             ["Profile", "Name", user.name || "Unknown"],
             ["Profile", "Email", user.email || "Unknown"],
-            ["Profile", "Role", mastery.title],
+            ["Profile", "Role", user.role],
             ["Profile", "Joined", new Date(user.joinedDate).toLocaleDateString()],
             ["Stats", "Total XP", (profileOverview?.xp ?? user.xp).toString()],
             ["Stats", "Level", (profileOverview?.level ?? user.level).toString()],
@@ -183,7 +183,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
                         </button>
                     )}
                     <div>
-                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-1">My Profile</h1>
+                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-2">My Profile</h1>
                         <p className="text-gray-600 text-sm lg:text-lg">Track your learning progress and achievements</p>
                     </div>
                 </div>
@@ -203,7 +203,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
 
                             <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
                             <p className="text-gray-500 mb-4">{user.email}</p>
-                            <p className="text-gray-600 mb-6 text-lg"><span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold underline decoration-blue-100 decoration-4 underline-offset-4">{mastery.title}</span> • Level <span data-level-display>{user.level}</span></p>
+                            <p className="text-gray-600 mb-6 text-lg"><span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold underline decoration-blue-100 decoration-4 underline-offset-4">{user.role}</span> • Level <span data-level-display>{user.level}</span></p>
 
                             <div className="flex items-center justify-center gap-3 mb-6">
                                 <Star className="w-6 h-6 text-yellow-500" />

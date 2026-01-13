@@ -412,8 +412,8 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
             </button>
           )}
           <div className="text-center w-full">
-            <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-1 lg:mb-3 tracking-tight">Quiz Arcade</h1>
-            <p className="text-gray-600 text-[12px] lg:text-xl">Challenge yourself with different quiz formats</p>
+            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-2">Quiz Arcade</h1>
+            <p className="text-gray-500 font-medium max-w-xl mx-auto">Challenge yourself with different quiz formats</p>
           </div>
         </div>
 

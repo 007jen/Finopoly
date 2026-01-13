@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
-import { Clock, Users, ArrowRight, Filter, ArrowLeft, FileText, Target, Star } from 'lucide-react';
+import { Clock, ArrowRight, Filter, ArrowLeft, FileText, Target, AlertTriangle, Award } from 'lucide-react';
 import { api } from '../../lib/api';
 
 interface AuditCaseCard {
@@ -61,29 +61,31 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit, onBack }) 
         : cases.filter(c => c.difficulty === filter);
 
     return (
-        <div className="p-4 sm:p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
+        <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-transparent">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 lg:mb-12">
                 <div className="flex items-center gap-4">
                     {onBack && (
                         <button
                             onClick={onBack}
-                            className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400 hover:text-gray-900"
+                            className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-all shadow-sm text-gray-500 hover:text-gray-900 active:scale-95"
                         >
-                            <ArrowLeft className="w-6 h-6" />
+                            <ArrowLeft className="w-5 h-5" />
                         </button>
                     )}
-                    <div className="text-center lg:text-left">
-                        <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-3 tracking-tight">Audit Simulations</h1>
-                        <p className="text-gray-600 text-base lg:text-xl">Practice with real-world audit scenarios</p>
+                    <div className="text-left">
+                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-2">Audit Simulations</h1>
+                        <p className="text-gray-500 font-medium max-w-xl">Practice with real-world scenarios</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-500" />
+                <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-gray-200 shadow-sm w-full lg:w-auto">
+                    <div className="p-2 bg-gray-100 rounded-xl text-gray-500">
+                        <Filter className="w-4 h-4" />
+                    </div>
                     <select
                         value={filter}
                         onChange={(e) => setFilter(e.target.value as any)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 bg-white"
+                        className="flex-1 bg-transparent border-none text-sm font-bold text-gray-700 outline-none cursor-pointer pr-8 py-1 lg:min-w-[150px]"
                     >
                         <option value="All">All Levels</option>
                         <option value="Beginner">Beginner</option>
@@ -95,80 +97,85 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit, onBack }) 
 
             {loading ? (
                 <div className="flex items-center justify-center h-64">
-                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-xs font-black uppercase tracking-widest text-gray-400">Loading Scenarios...</span>
+                    </div>
                 </div>
             ) : error ? (
-                <div className="text-center py-20 text-red-500 bg-white rounded-xl border border-red-200">
-                    <p className="font-bold">Error loading cases:</p>
-                    <p>{error}</p>
+                <div className="text-center py-20 bg-white rounded-[2rem] border border-red-100 shadow-sm">
+                    <div className="text-red-500 mb-2">
+                        <AlertTriangle className="w-10 h-10 mx-auto" />
+                    </div>
+                    <p className="font-bold text-gray-900">Unable to load catalog</p>
+                    <p className="text-sm text-gray-500 mt-1">{error}</p>
                 </div>
             ) : filteredCases.length === 0 ? (
-                <div className="text-center py-20 text-gray-500 bg-white rounded-xl border border-gray-200">
-                    <p>No audit cases available for this category.</p>
+                <div className="text-center py-20 bg-white rounded-[2rem] border border-gray-200 shadow-sm">
+                    <Target className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-900 font-bold text-lg">No simulations found</p>
+                    <p className="text-gray-500 text-sm mt-1">Try adjusting your filters</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5 lg:gap-8">
                     {filteredCases.map((c) => {
-                        const iconColor = c.difficulty === 'Beginner' ? 'from-green-500 to-green-600' :
-                            c.difficulty === 'Intermediate' ? 'from-yellow-400 to-yellow-500' :
+                        const iconColor = c.difficulty === 'Beginner' ? 'from-green-500 to-emerald-600' :
+                            c.difficulty === 'Intermediate' ? 'from-amber-400 to-amber-500' :
                                 'from-red-500 to-red-600';
 
                         return (
-                            <div key={c.id} className="group bg-white rounded-3xl p-[28px] border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col items-center text-center hover:-translate-y-2">
+                            <div key={c.id} className="group bg-white rounded-[2rem] p-6 lg:p-7 border border-gray-200/60 shadow-lg hover:shadow-2xl hover:border-blue-200/50 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col items-center text-center hover:-translate-y-1">
                                 {/* Difficulty & XP Badges */}
-                                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-                                    <span className={`${getDifficultyColor(c.difficulty)} text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm border border-current opacity-90`}>
+                                <div className="w-full flex justify-between items-start mb-6 z-10">
+                                    <span className={`${getDifficultyColor(c.difficulty)} text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-sm border border-current/10`}>
                                         {c.difficulty}
                                     </span>
-                                    <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-gray-100 shadow-sm">
-                                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                                        <span className="text-gray-700 text-xs font-black">{c.xpReward}</span>
+                                    <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+                                        <Award className="w-3.5 h-3.5 text-amber-500" />
+                                        <span className="text-gray-900 text-xs font-black">{c.xpReward} XP</span>
                                     </div>
                                 </div>
 
                                 {/* Prominent Icon */}
-                                <div className={`w-[71px] h-[71px] bg-gradient-to-br ${iconColor} rounded-2xl flex items-center justify-center mb-[21px] mt-[28px] group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xl`}>
-                                    <Target className="w-[34px] h-[34px] text-white" />
+                                <div className={`w-20 h-20 bg-gradient-to-br ${iconColor} rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-gray-200 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                                    <Target className="w-9 h-9 text-white" />
                                 </div>
 
-                                <div className="space-y-2 mb-[28px] flex-1">
-                                    <h3 className="text-[1.1rem] lg:text-[1.32rem] font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tight">
+                                <div className="flex-1 w-full space-y-2 mb-6">
+                                    <h3 className="text-lg lg:text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tight">
                                         {c.companyName}
                                     </h3>
-                                    <p className="text-gray-1000 font-bold text-[15px] lg:text-[1.02rem] mb-1">{c.title}</p>
-                                    <p className="text-gray-500 text-[12.5px] lg:text-[14.5px] leading-relaxed line-clamp-2">
+                                    <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mb-2">{c.title}</p>
+                                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 px-2">
                                         {c.description}
                                     </p>
                                 </div>
 
                                 {/* Metadata Row */}
-                                <div className="flex items-center justify-center gap-4.5 mb-[28px] text-[10.5px] lg:text-[12.5px] font-bold text-gray-400 uppercase tracking-widest">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-3 h-3" />
+                                <div className="w-full flex items-center justify-center gap-4 py-4 border-t border-dashed border-gray-200 mb-2">
+                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        <Clock className="w-3.5 h-3.5" />
                                         {c.timeLimit ? Math.ceil(c.timeLimit / 60) : 5}m
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <FileText className="w-3 h-3" />
+                                    <div className="w-1 h-1 rounded-full bg-gray-300" />
+                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        <FileText className="w-3.5 h-3.5" />
                                         2 Docs
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Users className="w-3 h-3" />
-                                        1 Tasks
+                                    <div className="w-1 h-1 rounded-full bg-gray-300" />
+                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        <Target className="w-3.5 h-3.5" />
+                                        1 Task
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={() => onStartAudit(c.id)}
-                                    className="w-full bg-gray-50 border-2 border-gray-100 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white py-[14px] rounded-2xl font-black text-[11px] lg:text-[12.5px] uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm group-hover:shadow-xl group-hover:scale-[1.02]"
+                                    className="w-full bg-slate-50 border border-slate-200 group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 active:scale-95"
                                 >
                                     Start Simulation
-                                    <ArrowRight className="w-3 h-3" />
+                                    <ArrowRight className="w-3.5 h-3.5" />
                                 </button>
-
-                                {/* Subtle background decoration */}
-                                <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <Target className="w-32 h-32" />
-                                </div>
                             </div>
                         );
                     })}

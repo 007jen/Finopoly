@@ -294,16 +294,16 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const renderPhaseContent = () => {
     if (phase === 'BRIEF') {
       return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-          <div className="max-w-2xl w-full bg-slate-800 rounded-3xl p-10 border border-slate-700 shadow-2xl">
-            <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-600/20">
-              <Shield size={40} className="text-white" />
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6 text-center sm:text-left">
+          <div className="max-w-2xl w-full bg-slate-800 rounded-[2rem] p-6 sm:p-10 border border-slate-700 shadow-2xl">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 shadow-lg shadow-blue-600/20 mx-auto sm:mx-0">
+              <Shield size={32} className="text-white sm:w-10 sm:h-10" />
             </div>
-            <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">Audit Engagement</h1>
-            <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+            <h1 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tighter mb-3 sm:mb-4">Audit Engagement</h1>
+            <p className="text-slate-400 text-sm sm:text-lg mb-8 leading-relaxed">
               {clientBriefData?.context || `You are assigned to audit ${currentLevel?.companyName || 'the client'}. Your objective is to verify records and issue a professional opinion.`}
             </p>
-            <button onClick={() => setPhase('PLANNING')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-xl">
+            <button onClick={() => setPhase('PLANNING')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 sm:py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-base sm:text-xl">
               ACCEPT ASSIGNMENT
             </button>
           </div>
@@ -313,20 +313,20 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
     if (phase === 'PLANNING') {
       return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-          <div className="max-w-2xl w-full bg-slate-800 rounded-3xl p-10 border border-slate-700 shadow-2xl">
-            <h1 className="text-3xl font-black text-white uppercase mb-8">Phase 1: Planning</h1>
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-6 mb-8">
-              <p className="text-yellow-500 text-sm font-bold mb-2 uppercase tracking-widest">Auditor's Note</p>
-              <p className="text-slate-300">Set your materiality threshold for this audit.</p>
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6">
+          <div className="max-w-2xl w-full bg-slate-800 rounded-[2rem] p-6 sm:p-10 border border-slate-700 shadow-2xl">
+            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase mb-6 sm:mb-8">Phase 1: Planning</h1>
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8">
+              <p className="text-yellow-500 text-xs sm:text-sm font-bold mb-1.5 sm:mb-2 uppercase tracking-widest">Auditor's Note</p>
+              <p className="text-slate-300 text-sm sm:text-base">Set your materiality threshold for this audit.</p>
             </div>
-            <div className="space-y-6 mb-10">
-              <label className="block text-slate-400 font-bold text-sm uppercase">Materiality Threshold (₹)</label>
-              <input type="number" value={materiality} onChange={(e) => setMateriality(parseInt(e.target.value))} className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-4 px-6 text-white font-mono text-xl focus:border-blue-500 outline-none" />
+            <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-10">
+              <label className="block text-slate-400 font-bold text-xs sm:text-sm uppercase">Materiality Threshold (₹)</label>
+              <input type="number" value={materiality} onChange={(e) => setMateriality(parseInt(e.target.value))} className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-3 px-4 sm:py-4 sm:px-6 text-white font-mono text-lg sm:text-xl focus:border-blue-500 outline-none" />
             </div>
-            <div className="flex gap-4">
-              <button onClick={() => setPhase('BRIEF')} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl">BACK</button>
-              <button onClick={() => setPhase('SAMPLING')} className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl">SAVE & PROCEED</button>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <button onClick={() => setPhase('BRIEF')} className="w-full sm:flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3.5 sm:py-4 rounded-xl">BACK</button>
+              <button onClick={() => setPhase('SAMPLING')} className="w-full sm:flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 sm:py-4 rounded-xl shadow-lg">SAVE & PROCEED</button>
             </div>
           </div>
         </div>
@@ -335,19 +335,41 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
     if (phase === 'SAMPLING') {
       return (
-        <div className="min-h-screen bg-slate-900 p-10">
-          <div className="max-w-5xl mx-auto space-y-8">
-            <header className="flex justify-between items-end">
+        <div className="min-h-screen bg-slate-900 p-4 sm:p-10">
+          <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+            <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
               <div>
-                <h1 className="text-3xl font-black text-white uppercase">Phase 2: Sampling</h1>
-                <p className="text-slate-400 mt-2">Select transactions for detailed testing.</p>
+                <h1 className="text-2xl sm:text-3xl font-black text-white uppercase">Phase 2: Sampling</h1>
+                <p className="text-slate-400 text-sm sm:text-base mt-1 sm:mt-2">Select transactions for detailed testing.</p>
               </div>
-              <div className="bg-slate-800 p-4 border border-slate-700 rounded-xl">
-                <p className="text-xs text-slate-500 uppercase font-black">Materiality</p>
-                <p className="text-yellow-500 font-mono font-bold text-lg">₹{materiality.toLocaleString()}</p>
+              <div className="bg-slate-800 p-3 sm:p-4 border border-slate-700 rounded-xl flex sm:block justify-between items-center sm:text-right w-full sm:w-auto">
+                <p className="text-[10px] sm:text-xs text-slate-500 uppercase font-black mr-2 sm:mr-0">Materiality</p>
+                <p className="text-yellow-500 font-mono font-bold text-base sm:text-lg">₹{materiality.toLocaleString()}</p>
               </div>
             </header>
-            <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
+
+            <div className="space-y-3 sm:hidden">
+              {/* Mobile Card List View for Sampling */}
+              {levels.map((lvl, idx) => (
+                <div key={idx} className={`p-4 rounded-xl border ${selectedSamples.includes(idx) ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-800 border-slate-700'}`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="text-xs text-slate-500 font-mono">{lvl.ledger.date}</p>
+                      <p className="text-white font-bold text-sm">{lvl.ledger.particulars}</p>
+                    </div>
+                    <p className="text-white font-mono font-bold">₹{lvl.ledger.debit?.toLocaleString()}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedSamples(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx])}
+                    className={`w-full py-2 rounded-lg font-bold text-xs uppercase tracking-wider ${selectedSamples.includes(idx) ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'}`}
+                  >
+                    {selectedSamples.includes(idx) ? 'Selected for Audit' : 'Select'}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden sm:block bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
               <table className="w-full text-left font-mono text-sm">
                 <thead className="bg-slate-900 text-slate-500 uppercase font-black border-b border-slate-700 text-xs">
                   <tr><th className="p-4">Date</th><th className="p-4">Particulars</th><th className="p-4 text-right">Debit (₹)</th><th className="p-4 text-center">Action</th></tr>
@@ -368,9 +390,10 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
                 </tbody>
               </table>
             </div>
-            <div className="flex justify-between items-center">
-              <button onClick={() => setPhase('PLANNING')} className="px-8 py-4 bg-slate-800 text-slate-400 font-bold rounded-xl">BACK</button>
-              <button disabled={selectedSamples.length === 0} onClick={() => { setCurrentLevelIdx(selectedSamples[0]); setPhase('TESTING'); }} className="px-12 py-4 bg-green-600 text-white font-black rounded-xl shadow-xl">COMMENCE TESTING</button>
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 sticky bottom-4 sm:static z-20">
+              <button onClick={() => setPhase('PLANNING')} className="w-full sm:w-auto px-8 py-3 sm:py-4 bg-slate-800 text-slate-400 font-bold rounded-xl border border-slate-700">BACK</button>
+              <button disabled={selectedSamples.length === 0} onClick={() => { setCurrentLevelIdx(selectedSamples[0]); setPhase('TESTING'); }} className="w-full sm:w-auto px-12 py-3 sm:py-4 bg-green-600 text-white font-black rounded-xl shadow-xl disabled:opacity-50 disabled:grayscale">COMMENCE TESTING</button>
             </div>
           </div>
         </div>
@@ -380,27 +403,27 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     if (phase === 'REPORTING') {
       const totalFaults = selectedSamples.filter(i => levels[i].faultyField !== null).length;
       return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-          <div className="max-w-4xl w-full bg-slate-800 rounded-3xl p-10 border border-slate-700 shadow-2xl">
-            <header className="text-center mb-10">
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6">
+          <div className="max-w-4xl w-full bg-slate-800 rounded-[2rem] p-6 sm:p-10 border border-slate-700 shadow-2xl">
+            <header className="text-center mb-8 sm:mb-10">
               <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><Shield size={32} className="text-white" /></div>
-              <h1 className="text-3xl font-black text-white uppercase">Final Phase: Audit Opinion</h1>
-              <p className="text-slate-400 mt-2">What is your professional conclusion?</p>
+              <h1 className="text-2xl sm:text-3xl font-black text-white uppercase">Final Phase: Audit Opinion</h1>
+              <p className="text-slate-400 mt-2 text-sm sm:text-base">What is your professional conclusion?</p>
             </header>
-            <div className="grid grid-cols-3 gap-6 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
               {[
                 { id: 'UNMODIFIED', label: 'Unmodified', desc: 'Books are true and fair.', color: 'bg-green-600' },
                 { id: 'QUALIFIED', label: 'Qualified', desc: 'True & fair, except specific items.', color: 'bg-yellow-600' },
                 { id: 'ADVERSE', label: 'Adverse', desc: 'Significant errors detected.', color: 'bg-red-600' }
               ].map(opt => (
-                <button key={opt.id} onClick={() => handleOpinion(opt.id as any)} className="p-6 bg-slate-900 border border-slate-700 rounded-2xl text-center hover:border-blue-500 transition-all">
-                  <div className={`w-10 h-10 ${opt.color} rounded-lg mb-4 flex items-center justify-center mx-auto`}><Check size={20} className="text-white" /></div>
+                <button key={opt.id} onClick={() => handleOpinion(opt.id as any)} className="p-4 sm:p-6 bg-slate-900 border border-slate-700 rounded-2xl text-center hover:border-blue-500 transition-all group">
+                  <div className={`w-10 h-10 ${opt.color} rounded-lg mb-4 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform`}><Check size={20} className="text-white" /></div>
                   <h3 className="text-white font-bold mb-2">{opt.label}</h3>
                   <p className="text-slate-500 text-xs">{opt.desc}</p>
                 </button>
               ))}
             </div>
-            <div className="bg-slate-900/50 p-6 rounded-2xl border border-dashed border-slate-700">
+            <div className="bg-slate-900/50 p-4 sm:p-6 rounded-2xl border border-dashed border-slate-700">
               <div className="flex justify-between items-center text-sm mb-4"><span className="text-slate-500 uppercase font-black">Testing Summary</span></div>
               <div className="flex justify-between text-white font-mono mb-2"><span>Samples Tested</span><span>{selectedSamples.length}</span></div>
               <div className="flex justify-between text-blue-400 font-mono"><span>Mistakes Caught</span><span>{foundErrors} / {totalFaults}</span></div>
@@ -413,23 +436,35 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     if (!currentLevel) return <div className="min-screen bg-slate-900"></div>;
 
     return (
-      <div className="flex flex-col h-full bg-slate-900 text-white font-sans overflow-hidden">
-        <header className="p-4 bg-slate-800 border-b-4 border-slate-700 flex justify-between items-center">
+      <div className="flex flex-col h-full bg-slate-900 text-white font-sans overflow-hidden relative">
+        <header className="p-3 sm:p-4 bg-slate-800 border-b-4 border-slate-700 flex justify-between items-center sticky top-0 z-50 shadow-lg">
           <div>
-            <button onClick={onBack} className="flex items-center gap-2 text-slate-400 mb-1"><ArrowLeft size={16} /><span>EXIT</span></button>
-            <h1 className="text-xl font-bold">{currentLevel.companyName}</h1>
+            <button onClick={onBack} className="flex items-center gap-1.5 sm:gap-2 text-slate-400 mb-0.5 sm:mb-1 hover:text-white transition-colors">
+              <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wide">Exit</span>
+            </button>
+            <h1 className="text-sm sm:text-xl font-bold truncate max-w-[200px] sm:max-w-md">{currentLevel.companyName}</h1>
           </div>
-          <div className="flex gap-10">
-            <div className="text-center"><p className="text-[10px] text-slate-500 uppercase">XP Score</p><p className="text-xl font-mono text-yellow-500">{score}</p></div>
-            <div className="text-center font-mono text-red-500 border border-slate-700 px-4 py-1 rounded bg-slate-900">{Math.ceil(timeLeft)}s</div>
+          <div className="flex items-center gap-4 sm:gap-10">
+            <div className="text-center">
+              <p className="text-[8px] sm:text-[10px] text-slate-500 uppercase font-black tracking-wider">XP Score</p>
+              <p className="text-lg sm:text-xl font-mono text-yellow-500 leading-none">{score}</p>
+            </div>
+            <div className={`text-center font-mono text-base sm:text-lg border px-3 py-1 rounded bg-slate-900 min-w-[60px] ${timeLeft < 10 ? 'text-red-500 border-red-900 animate-pulse' : 'text-blue-400 border-slate-700'}`}>
+              {Math.ceil(timeLeft)}s
+            </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-6 pb-32">
-          <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
-            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700">
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-32 bg-slate-900/50">
+          <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 items-start">
+            {/* Invoice Panel - Shows on Top on Mobile */}
+            <div className="bg-slate-800 rounded-2xl md:rounded-3xl p-1 md:p-4 border border-slate-700 overflow-hidden shadow-xl">
               <InvoiceView data={currentLevel.invoice} />
             </div>
-            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700 flex flex-col">
+
+            {/* Tally Panel - Shows below on Mobile */}
+            <div className="bg-slate-800 rounded-2xl md:rounded-3xl p-1 md:p-4 border border-slate-700 flex flex-col shadow-xl">
               <TallyAuditView
                 ledger={currentLevel.ledger}
                 onSubmit={handleVoucherSubmit}

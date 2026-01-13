@@ -177,43 +177,39 @@ export default function Phase1Chat() {
     };
 
     return (
-        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-0 sm:p-6 lg:p-8 flex items-center justify-center relative overflow-hidden">
-
+        <div className="fixed inset-0 top-16 md:top-0 md:relative md:h-[calc(100vh-64px)] bg-slate-100/40 overflow-hidden z-0">
             {/* --- ADAPTIVE ANIMATED BACKGROUND IMPROVED --- */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[50%] bg-blue-100/40 blur-[100px] rounded-full animate-pulse duration-[8s]"></div>
                 <div className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-slate-200/50 blur-[100px] rounded-full animate-pulse duration-[12s]"></div>
             </div>
 
-            {/* --- MAIN CONTAINED BODY (Reduced by ~6%) --- */}
-            <div className="flex flex-col w-full h-full max-w-full sm:max-w-[96%] bg-[#f8fafc] text-slate-900 font-sans rounded-none sm:rounded-[2rem] shadow-none sm:shadow-2xl sm:shadow-slate-800/60 border-none sm:border sm:border-white/60 overflow-hidden relative z-10 flex-1">
+            {/* --- MAIN CONTAINED BODY (Full Screen) --- */}
+            <div className="flex flex-col w-full h-full bg-[#f8fafc] text-slate-900 font-sans overflow-hidden relative z-10 flex-1 pb-[4.5rem] lg:pb-0">
 
                 {/* --- HEADER --- */}
-                <div className="h-14 sm:h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-6 z-20">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <div className="bg-blue-600 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl shadow-lg shadow-blue-600/20 transition-transform hover:scale-105 active:scale-95">
-                            <MessageSquare size={16} className="text-white sm:w-5 sm:h-5" />
-                        </div>
-                        <div>
-                            <h1 className="font-extrabold text-[11px] sm:text-base lg:text-lg tracking-tight text-slate-900 uppercase">Community Hub</h1>
-                            <p className="text-[9px] sm:text-[10px] text-blue-600 font-black flex items-center gap-1.5 uppercase tracking-widest">
-                                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.4)]"></span>
-                                Live Discussion
-                            </p>
-                        </div>
+                <div className="h-auto sm:h-24 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex flex-col md:flex-row items-start md:items-center justify-between px-4 sm:px-8 py-4 z-20 gap-4">
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-1">
+                            Community Hub
+                        </h1>
+                        <p className="text-gray-500 font-medium text-sm sm:text-base flex items-center gap-2">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            Live Discussion & Peer Learning
+                        </p>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-slate-200/50">
-                            <Shield size={14} className="text-blue-600" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200/50">
+                            <Shield size={16} className="text-blue-600" />
+                            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
                                 <span className="text-blue-600">{room}</span>
                             </span>
                         </div>
-                        <div className="flex items-center gap-2 bg-blue-50/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full border border-blue-100/50 transition-colors hover:bg-blue-100">
+                        {/* <div className="flex items-center gap-2 bg-blue-50/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full border border-blue-100/50 transition-colors hover:bg-blue-100">
                             <Users size={14} className="text-blue-700 w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-blue-700">124 Pro Nodes</span>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
