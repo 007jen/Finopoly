@@ -44,11 +44,6 @@ async function internalFetch<T>(url: string, options: RequestOptions = {}): Prom
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // If body is FormData, remove Content-Type to let browser set boundary
-    if (options.body instanceof FormData) {
-        delete headers["Content-Type"];
-    }
-
     const config: RequestInit = {
         ...options,
         headers,
@@ -99,10 +94,6 @@ export const api = {
 
     post: <T>(url: string, body: any, options?: RequestOptions) =>
         internalFetch<T>(url, { ...options, method: "POST", body: JSON.stringify(body) }),
-
-    // New: Handle Multipart Form Data
-    postMultipart: <T>(url: string, formData: FormData, options?: RequestOptions) =>
-        internalFetch<T>(url, { ...options, method: "POST", body: formData }),
 
     put: <T>(url: string, body: any, options?: RequestOptions) =>
         internalFetch<T>(url, { ...options, method: "PUT", body: JSON.stringify(body) }),

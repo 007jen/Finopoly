@@ -81,8 +81,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
           </button>
         )}
         <div className="flex flex-col items-center justify-center text-center gap-2">
-          <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Global Leaderboard</h1>
-          <p className="text-sm md:text-base text-gray-500 font-medium mt-1">Top performers in the finance community.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Global Leaderboard</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-1">Top performers in the finance community.</p>
         </div>
       </div>
 

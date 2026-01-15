@@ -140,8 +140,8 @@ const ProgressModule: React.FC = () => {
       <div className="relative z-10 p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tight mb-2">Your Progress</h1>
-            <p className="text-gray-600 font-medium">Track your learning journey and achievements</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Progress</h1>
+            <p className="text-gray-600">Track your learning journey and achievements</p>
           </div>
         </div>
 

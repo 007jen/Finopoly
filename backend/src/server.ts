@@ -68,14 +68,8 @@ setupSocketHandlers(io);
 // Health Check
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
-// Serve Uploads Static Directory
-import path from "path";
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
 // REST API Routes
-import courseRoutes from "./routes/course.routes";
 app.use("/api/auth", authRoutes);
-app.use("/api/courses", courseRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/admin", adminRoutes);
