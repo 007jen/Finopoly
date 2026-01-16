@@ -5,6 +5,38 @@ interface LandingPageProps {
     onGetStarted: () => void;
 }
 
+const StatCard = ({ icon: Icon, label, value, suffix = '', prefix = '', format }: any) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        const duration = 2000;
+        let startTime: number | null = null;
+
+        const animate = (currentTime: number) => {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+
+            setCount(Math.floor(easeOut * value));
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        requestAnimationFrame(animate);
+    }, [value]);
+
+    const displayValue = format ? format(count) : count;
+
+    return (
+        <>
+            <Icon className="w-5 h-5 text-purple-500 mb-4" />
+            <div className="text-3xl font-black mb-1">{prefix}{displayValue}{suffix}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{label}</div>
+        </>
+    );
+};
+
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
     const [scrolled, setScrolled] = useState(0);
 
@@ -83,7 +115,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
                 <div className="relative z-10 text-center max-w-5xl opacity-0 animate-fade-in">
                     <h1 className="text-4xl sm:text-5xl md:text-[140px] font-black leading-[0.85] tracking-tighter mb-6 md:mb-8 text-gradient">
-                        CHISELED <br /> IN <span className="italic">CODE</span>
+                        CHISELED <br /> With <span className="italic">Brain</span>
                     </h1>
 
                     <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-purple-500/20 bg-purple-500/5 text-purple-400 text-[10px] font-black uppercase tracking-[0.4em] mb-12">
@@ -97,15 +129,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl mx-auto mb-20">
                         {[
-                            { icon: Code2, label: 'Lines written', value: '1K+' },
-                            { icon: Clock, label: 'Hours spent', value: '80+' },
-                            { icon: Layers, label: 'Modules', value: '06' },
-                            { icon: ShieldCheck, label: 'Simulations', value: '150+' }
+                            { icon: Code2, label: 'Lines written', value: 1000, suffix: '+', format: (n: number) => n >= 1000 ? (n / 1000).toFixed(0) + 'K' : n },
+                            { icon: Clock, label: 'Hours spent', value: 80, suffix: '+' },
+                            { icon: Layers, label: 'Modules', value: 6, prefix: '0' },
+                            { icon: ShieldCheck, label: 'Simulations', value: 150, suffix: '+' }
                         ].map((stat, i) => (
                             <div key={i} className="glass-purple p-6 rounded-3xl border border-white/5 animate-fade-in" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>
-                                <stat.icon className="w-5 h-5 text-purple-500 mb-4" />
-                                <div className="text-3xl font-black mb-1">{stat.value}</div>
-                                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{stat.label}</div>
+                                <StatCard {...stat} />
                             </div>
                         ))}
                     </div>
@@ -135,27 +165,53 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
                     {/* Main Feature: Audit Arena */}
                     <div className="lg:col-span-8 glass-purple rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 flex flex-col justify-end group overflow-hidden relative border border-white/5 hover:border-purple-500/50 transition-colors">
-                        <div className="absolute top-8 md:top-12 left-8 md:left-12 w-16 h-16 md:w-24 md:h-24 bg-purple-600 rounded-2xl md:rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(139,92,246,0.4)]">
-                            <Activity className="w-8 h-8 md:w-12 md:h-12 text-white" />
-                        </div>
 
-                        {/* Audit Terminal Visualization */}
-                        <div className="absolute top-12 right-12 w-64 h-48 glass-purple rounded-2xl p-4 hidden md:block opacity-40 group-hover:opacity-100 transition-opacity border border-white/10 overflow-hidden font-mono text-[9px]">
-                            <div className="flex gap-1.5 mb-3">
-                                <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                                <div className="w-2 h-2 rounded-full bg-amber-500/50" />
-                                <div className="w-2 h-2 rounded-full bg-emerald-500/50" />
-                            </div>
-                            <div className="text-purple-400 mb-1">SCANNING ASSERTIONS...</div>
-                            <div className="text-gray-500">
-                                [O] Existence: VERIFIED<br />
-                                [O] Completeness: RUNNING...<br />
-                                [!] Valuation: ANOMALY DETECTED<br />
-                                [O] Rights & Oblig: PENDING<br />
-                                &gt; Analyzing Ind AS 115 revenue block_<br />
-                                <div className="mt-4 w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-purple-500 w-[65%] animate-pulse" />
+
+                        {/* Feature Grid Visualization */}
+                        {/* Feature Grid Visualization */}
+                        <div className="relative w-full h-auto lg:absolute lg:top-8 lg:right-8 lg:w-[60%] lg:h-[70%] grid grid-cols-1 sm:grid-cols-2 gap-3 content-start lg:opacity-80 pointer-events-none mb-8 lg:mb-0 order-first lg:order-none">
+                            <div className="glass-purple rounded-xl p-4 border border-white/10 flex flex-col justify-between transform hover:scale-105 transition-transform duration-500">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                    <span className="text-[10px] font-black uppercase text-purple-300 tracking-wider truncate">Live Validation</span>
                                 </div>
+                                <div className="space-y-1">
+                                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                        <div className="h-full bg-green-500 w-[92%]" />
+                                    </div>
+                                    <div className="text-[9px] text-gray-500 font-mono text-right">92% ACCURACY</div>
+                                </div>
+                            </div>
+
+                            <div className="glass-purple rounded-xl p-4 border border-white/10 font-mono text-[9px] overflow-hidden">
+                                <div className="text-purple-400 mb-2 border-b border-white/10 pb-1">ASSERTION LOG</div>
+                                <div className="space-y-1 text-gray-400">
+                                    <div className="flex justify-between"><span>Completeness</span><span className="text-green-400">PASSED</span></div>
+                                    <div className="flex justify-between"><span>Existence</span><span className="text-green-400">PASSED</span></div>
+                                    <div className="flex justify-between"><span>Valuation</span><span className="text-amber-400">REVIEW</span></div>
+                                    <div className="flex justify-between opacity-50"><span>Rights</span><span className="text-blue-400">PENDING</span></div>
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-2 glass-purple rounded-xl p-4 border border-white/10 flex items-center justify-between">
+                                <div>
+                                    <div className="text-[10px] font-black uppercase text-purple-300 tracking-wider mb-1">DATA INTEGRITY</div>
+                                    <div className="text-[9px] text-gray-500 max-w-[150px]">Blockchain-verified ledger audits active</div>
+                                </div>
+                                <Activity className="w-8 h-8 text-purple-500/50 shrink-0" />
+                            </div>
+
+                            <div className="glass-purple rounded-xl p-4 border border-white/10">
+                                <div className="text-[10px] font-black uppercase text-purple-300 tracking-wider mb-2">RISK SCORE</div>
+                                <div className="text-3xl font-black text-white mb-1">A+</div>
+                                <div className="text-[9px] text-gray-500 font-mono">Top 1% of Auditors</div>
+                            </div>
+
+                            <div className="glass-purple rounded-xl p-4 border border-white/10 flex flex-col justify-center">
+                                <div className="flex -space-x-2 mb-2">
+                                    {[1, 2, 3].map(i => <div key={i} className={`w-6 h-6 rounded-full border border-black bg-purple-${i * 200} flex items-center justify-center text-[8px] font-bold text-black bg-gradient-to-br from-purple-400 to-indigo-400`} />)}
+                                </div>
+                                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">Multi-player Sync</div>
                             </div>
                         </div>
 
@@ -163,9 +219,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                             <Activity className="w-[500px] h-[500px]" />
                         </div>
                         <div className="relative z-10 mt-auto">
-                            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight uppercase">AUDIT ARENA</h2>
+                            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight uppercase">INSIGHTS</h2>
                             <p className="text-gray-400 text-base md:text-lg max-w-md mb-8 leading-relaxed">
-                                Step into high-fidelity environments. Verify 150+ real-world assertions, analyze complex ledgers, and master Ind AS 115 standards.
+                                Deep dive into performance metrics. Verify 150+ real-world assertions, analyze complex ledgers, and master Ind AS 115 standards.
                             </p>
                             <div className="flex flex-wrap gap-4">
                                 <span className="px-4 py-2 bg-purple-500/10 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-400 border border-purple-500/20">Real Docs</span>
@@ -176,15 +232,54 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
                     {/* Side Info: Tax & Drills */}
                     <div className="lg:col-span-4 flex flex-col gap-4 md:gap-6">
-                        <div className="flex-1 glass-purple rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col justify-center border border-white/5 hover:border-purple-500/50 transition-colors">
-                            <Layout className="w-10 h-10 md:w-12 md:h-12 text-purple-500 mb-6 md:mb-8" />
-                            <h3 className="text-xl md:text-3xl font-black mb-4 uppercase">TAX SANDBOX</h3>
-                            <p className="text-[10px] md:text-sm text-gray-500 leading-relaxed uppercase tracking-tight font-black">Corporate Tax + VAT Simulations</p>
+                        <div className="flex-1 glass-purple rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col justify-between border border-white/5 hover:border-purple-500/50 transition-colors group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                <Layout className="w-32 h-32" />
+                            </div>
+                            <div>
+                                <Layout className="w-10 h-10 md:w-12 md:h-12 text-purple-500 mb-6 md:mb-8" />
+                                <h3 className="text-xl md:text-3xl font-black mb-4 uppercase">TAX SANDBOX</h3>
+                                <p className="text-[10px] md:text-sm text-gray-500 leading-relaxed uppercase tracking-tight font-black mb-6">Corporate Tax + VAT Simulations</p>
+                            </div>
+
+                            {/* Tax Visuals */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                    <span>Compliance</span>
+                                    <span className="text-green-400">98%</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 w-[98%]" />
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-mono text-purple-300">GST-R1</div>
+                                    <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-mono text-purple-300">Form 16</div>
+                                    <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-mono text-purple-300">TDS</div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex-1 glass-purple rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col justify-center border border-white/5 hover:border-purple-500/50 transition-colors bg-gradient-to-br from-purple-600/20 to-transparent">
-                            <Zap className="w-10 h-10 md:w-12 md:h-12 text-purple-400 mb-6 md:mb-8" />
-                            <h3 className="text-xl md:text-3xl font-black mb-4 uppercase">DAILY DRILLS</h3>
-                            <p className="text-[10px] md:text-sm text-gray-500 leading-relaxed uppercase tracking-tight font-black">10-Minute Technical Workouts</p>
+
+                        <div className="flex-1 glass-purple rounded-[2rem] md:rounded-[3rem] p-8 md:p-10 flex flex-col justify-between border border-white/5 hover:border-purple-500/50 transition-colors bg-gradient-to-br from-purple-600/20 to-transparent group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                <Zap className="w-32 h-32" />
+                            </div>
+                            <div>
+                                <Zap className="w-10 h-10 md:w-12 md:h-12 text-purple-400 mb-6 md:mb-8" />
+                                <h3 className="text-xl md:text-3xl font-black mb-4 uppercase">DAILY DRILLS</h3>
+                                <p className="text-[10px] md:text-sm text-gray-500 leading-relaxed uppercase tracking-tight font-black mb-6">10-Minute Brain Workouts</p>
+                            </div>
+
+                            {/* Drill Visuals */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
+                                    <div className="text-2xl font-black text-white mb-1">12</div>
+                                    <div className="text-[8px] font-bold uppercase tracking-widest text-gray-500">Day Streak</div>
+                                </div>
+                                <div className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
+                                    <div className="text-2xl font-black text-purple-400 mb-1">850</div>
+                                    <div className="text-[8px] font-bold uppercase tracking-widest text-gray-500">XP Earned</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -192,52 +287,73 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
             {/* --- CHAPTER 3: MASTERY (Gamification) --- */}
             <section id="mastery" className="relative py-24 md:py-48 px-4 md:px-8 overflow-hidden bg-white/2">
-                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 md:gap-24">
-                    <div className="flex-1 text-center lg:text-left">
-                        <div className="inline-block px-4 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black mb-6 md:mb-8 uppercase tracking-[0.4em]">The Progression System</div>
-                        <h2 className="text-4xl md:text-7xl font-black mb-8 md:mb-10 tracking-tighter leading-tight uppercase">ASCEND THE <br /> <span className="text-purple-500">HIERARCHY</span></h2>
-                        <p className="text-base md:text-xl text-gray-400 mb-10 md:mb-12 leading-relaxed">
-                            Earn XP, unlock achievement badges, and dominate the leaderboard. We don't just teach finance; we build your professional profile.
-                        </p>
-                        <div className="space-y-6">
-                            {[
-                                { icon: Star, label: 'XP-Based leveling' },
-                                { icon: Award, label: 'Verified competence badges' },
-                                { icon: TrendingUp, label: 'Dynamic performance stats' }
-                            ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-6">
-                                    <div className="w-12 h-12 rounded-xl bg-purple-600/20 flex items-center justify-center border border-purple-500/30">
-                                        <item.icon className="w-6 h-6 text-purple-400" />
+                <div className="max-w-4xl mx-auto flex flex-col items-center gap-16 md:gap-24">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 w-full items-center">
+                        <div className="space-y-8 flex flex-col items-start text-left">
+                            <div className="inline-block px-4 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-[0.4em]">The Progression System</div>
+                            <h2 className="text-4xl md:text-7xl font-black tracking-tighter leading-[0.9] uppercase">ASCEND THE <br /> <span className="text-purple-500">HIERARCHY</span></h2>
+                            <p className="text-base md:text-xl text-gray-400 leading-relaxed max-w-sm">
+                                Earn XP, unlock achievement badges, and dominate the leaderboard. We don't just teach finance; we build your professional profile.
+                            </p>
+                            <div className="space-y-4 w-full">
+                                {[
+                                    { icon: Star, label: 'XP-Based leveling' },
+                                    { icon: Award, label: 'Verified competence badges' },
+                                    { icon: TrendingUp, label: 'Dynamic performance stats' }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-4 w-full bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-colors">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center border border-purple-500/30 shrink-0">
+                                            <item.icon className="w-5 h-5 text-purple-400" />
+                                        </div>
+                                        <span className="text-sm font-bold uppercase tracking-widest text-gray-300">{item.label}</span>
                                     </div>
-                                    <span className="text-base md:text-lg font-bold uppercase tracking-widest text-gray-300">{item.label}</span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Visual: Mock XP Card */}
-                    <div className="flex-1 w-full flex items-center justify-center">
-                        <div className="relative perspective-1000 lg:rotate-y-[-10deg] lg:rotate-x-[10deg]">
-                            <div className="w-72 md:w-80 h-[450px] md:h-[500px] glass-purple rounded-[3rem] p-10 border border-white/20 relative shadow-[0_50px_100px_rgba(0,0,0,0.6)] animate-[float_6s_infinite]">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/20 to-transparent rounded-[3rem]" />
-                                <div className="relative">
-                                    <div className="w-16 h-16 bg-purple-600 rounded-2xl mb-12 shadow-[0_0_30px_rgba(139,92,246,0.6)]" />
-                                    <div className="h-4 w-3/4 bg-white/10 rounded-full mb-4" />
-                                    <div className="h-4 w-1/2 bg-white/5 rounded-full mb-12" />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="h-20 bg-white/5 rounded-2xl border border-white/5" />
-                                        <div className="h-20 bg-white/5 rounded-2xl border border-white/5" />
+                        {/* Productive Visual: Rank Card */}
+                        <div className="relative">
+                            <div className="absolute -inset-4 bg-purple-500/20 blur-3xl rounded-full opacity-50" />
+                            <div className="relative glass-purple p-8 rounded-[2.5rem] border border-white/10">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div>
+                                        <div className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-2">Current Rank</div>
+                                        <div className="text-3xl font-black text-white italic">SENIOR AUDITOR</div>
+                                    </div>
+                                    <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center border border-yellow-500/50">
+                                        <Award className="w-6 h-6 text-yellow-500" />
                                     </div>
                                 </div>
-                                <div className="absolute bottom-10 left-10 right-10">
-                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-2">Reputation: ELITE</div>
-                                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                                        <div className="h-full bg-purple-500 w-[72%] shadow-[0_0_15px_rgba(139,92,246,0.8)]" />
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider mb-2 text-gray-400">
+                                            <span>Level 12 Progress</span>
+                                            <span className="text-white">2,450 / 3,000 XP</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 w-[82%]" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {[
+                                            { label: 'Global Rank', val: '#42' },
+                                            { label: 'Weekly XP', val: '+850' },
+                                            { label: 'Streak', val: '12 Day' }
+                                        ].map((stat, i) => (
+                                            <div key={i} className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                                                <div className="text-lg font-black text-white mb-1">{stat.val}</div>
+                                                <div className="text-[7px] font-bold uppercase tracking-widest text-gray-500">{stat.label}</div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Visual: Mock XP Card - Removed */}
                 </div>
             </section>
 
