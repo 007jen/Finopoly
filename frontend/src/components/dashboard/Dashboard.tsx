@@ -324,7 +324,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           {/* Left Col: Continue Learning Section */}
           <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl lg:rounded-3xl p-[23px] lg:p-[30px] text-white shadow-2xl flex flex-col justify-between h-full">
             <div>
-              <h2 className="text-[1.4rem] lg:text-[1.78rem] font-bold mb-3">
+              <h2 className="text-[1.4rem] lg:text-[1.78rem] font-bold mb-3 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
                 {lastActivity ? 'Continue Learning' : 'Start Your Journey'}
               </h2>
               <p className="text-[1.05rem] lg:text-[1.18rem] opacity-95 mb-2">
@@ -357,10 +357,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl lg:rounded-3xl p-[23px] lg:p-[30px] text-white shadow-xl flex flex-col justify-between h-full">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-[1.4rem] lg:text-[1.78rem] font-bold mb-2">Your XP Balance</h2>
+                <h2 className="text-[1.3rem] lg:text-[1.78rem] font-bold mb-3 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">Your XP Balance</h2>
                 <div className="flex items-center gap-3 mb-2">
                   <Star className="w-[30px] h-[30px] lg:w-[38px] lg:h-[38px] fill-white text-white" />
-                  <span className="text-[1.75rem] lg:text-[2.40rem] font-bold">{user?.xp.toLocaleString()}</span>
+                  <span className="text-[1.3rem] lg:text-[2.40rem] font-bold">{user?.xp.toLocaleString()}</span>
                   <span className="text-lg lg:text-xl font-medium opacity-90 pt-1.5 lg:pt-2">XP</span>
                 </div>
               </div>

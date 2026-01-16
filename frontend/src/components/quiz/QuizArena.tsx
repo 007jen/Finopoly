@@ -412,7 +412,7 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
             </button>
           )}
           <div className="text-center w-full">
-            <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-1 lg:mb-3 tracking-tight">Quiz Arcade</h1>
+            <h1 className="text-2xl lg:text-4xl font-black text-gray-900 mb-1 lg:mb-3 tracking-tight drop-shadow-[0_0_12px_rgba(59,130,246,0.4)]">Quiz Arcade</h1>
             <p className="text-gray-600 text-[12px] lg:text-xl">Challenge yourself with different quiz formats</p>
           </div>
         </div>
@@ -425,7 +425,7 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
                 <Brain className="w-6 h-6 lg:w-8 lg:h-8" />
               </div>
               <div>
-                <h2 className="text-2xl lg:text-3xl font-black text-gray-900 leading-tight">Drill Cockpit</h2>
+                <h2 className="text-2xl lg:text-3xl font-black text-gray-900 leading-tight drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]">Drill Cockpit</h2>
                 <p className="text-gray-500 text-[10px] lg:text-sm uppercase font-black tracking-[0.2em] opacity-60">Real-world analyst challenges</p>
               </div>
             </div>
@@ -471,7 +471,7 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
                       </div>
 
                       <div className="space-y-3 mb-8 flex-1">
-                        <h3 className="text-xl lg:text-2xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-xl lg:text-2xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors drop-shadow-[0_0_8px_rgba(59,130,246,0.4)]">
                           {drill.title}
                         </h3>
                         <p className="text-gray-500 text-sm lg:text-base leading-relaxed line-clamp-2">
@@ -539,7 +539,7 @@ const QuizArena: React.FC<QuizArenaProps> = ({ onStartDrill, onBack }) => {
                     <div className={`w-16 lg:w-20 h-16 lg:h-20 bg-gradient-to-br ${mode.color} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xl`}>
                       <Icon className="w-8 lg:w-10 h-8 lg:h-10 text-white" />
                     </div>
-                    <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3">{mode.title}</h3>
+                    <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3 drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]">{mode.title}</h3>
                     <p className="text-gray-600 text-sm lg:text-base mb-6 leading-relaxed">{mode.description}</p>
 
                     <div className="space-y-3 text-sm lg:text-base text-gray-500 mb-6">

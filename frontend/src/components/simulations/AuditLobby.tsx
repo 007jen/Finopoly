@@ -132,7 +132,7 @@ export const AuditLobby: React.FC<AuditLobbyProps> = ({ onStartAudit, onBack }) 
                                 </div>
 
                                 <div className="space-y-2 mb-[28px] flex-1">
-                                    <h3 className="text-[1.1rem] lg:text-[1.32rem] font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tight">
+                                    <h3 className="text-[1.1rem] lg:text-[1.32rem] font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tight drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]">
                                         {c.companyName}
                                     </h3>
                                     <p className="text-gray-1000 font-bold text-[15px] lg:text-[1.02rem] mb-1">{c.title}</p>

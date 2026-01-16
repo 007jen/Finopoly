@@ -103,17 +103,17 @@ const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSub
 
             {/* Entry Area */}
             <div className="flex-1 space-y-4">
-                <div className="grid grid-cols-12 gap-2 md:gap-4 text-[9px] md:text-[11px] font-black text-[#77b0aa] uppercase border-b border-[#77b0aa]/20 pb-2">
+                <div className="grid grid-cols-12 gap-1 md:gap-4 text-[9px] md:text-[11px] font-black text-[#77b0aa] uppercase border-b border-[#77b0aa]/20 pb-2">
                     <div className="col-span-1">Dr</div>
-                    <div className="col-span-7 md:col-span-7 leading-none">Particulars</div>
-                    <div className="col-span-4 md:col-span-2 text-right">Amount</div>
+                    <div className="col-span-11 md:col-span-7 leading-none">Particulars</div>
+                    <div className="hidden md:block col-span-2 text-right">Amount</div>
                     <div className="hidden md:block col-span-2 text-right">Credit</div>
                 </div>
 
                 {/* Dynamic Entry Row */}
-                <div className="grid grid-cols-12 gap-2 md:gap-4 items-center">
+                <div className="grid grid-cols-12 gap-1 md:gap-4 items-center">
                     <div className="col-span-1 text-[#e4be1e] font-black text-xs md:text-sm leading-none">Dr</div>
-                    <div className="col-span-7 md:col-span-7 relative">
+                    <div className="col-span-11 md:col-span-7 relative">
                         <input
                             type="text"
                             value={formData.particulars}
@@ -138,7 +138,12 @@ const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSub
                             </div>
                         )}
                     </div>
-                    <div className="col-span-4 md:col-span-2 text-right">
+                </div>
+
+                {/* Mobile Amount Row */}
+                <div className="grid grid-cols-12 gap-1 md:gap-4 items-center md:hidden">
+                    <div className="col-span-6 text-right">
+                        <span className="text-[9px] text-[#77b0aa] uppercase mr-2">Debit:</span>
                         <input
                             type="number"
                             value={formData.debit || ''}
@@ -146,11 +151,33 @@ const TallyAuditView: React.FC<TallyAuditViewProps> = ({ ledger, onSubmit, isSub
                             onKeyDown={handleKeyDown}
                             onChange={(e) => handleChange('debit', parseFloat(e.target.value))}
                             placeholder="0.00"
-                            className={`w-full bg-transparent text-right border-b outline-none py-1.5 md:py-1 text-xs md:text-sm font-bold ${activeField === 'debit' ? 'border-[#e4be1e] bg-[#135d66]/30' : 'border-[#77b0aa]/20'
+                            className={`w-24 bg-transparent text-right border-b outline-none py-1.5 text-xs font-bold ${activeField === 'debit' ? 'border-[#e4be1e] bg-[#135d66]/30' : 'border-[#77b0aa]/20'
                                 }`}
                         />
                     </div>
-                    <div className="hidden md:block col-span-2 text-right">
+                    <div className="col-span-6 text-right opacity-50">
+                        <span className="text-[9px] text-[#77b0aa] uppercase mr-2">Credit:</span>
+                        <span className="text-[10px] italic">Auto</span>
+                    </div>
+                </div>
+
+                {/* Desktop Amount Row (Original) */}
+                <div className="hidden md:grid grid-cols-12 gap-4 items-center -mt-8 pointer-events-none">
+                    <div className="col-span-1"></div>
+                    <div className="col-span-7"></div>
+                    <div className="col-span-2 text-right pointer-events-auto">
+                        <input
+                            type="number"
+                            value={formData.debit || ''}
+                            onFocus={() => setActiveField('debit')}
+                            onKeyDown={handleKeyDown}
+                            onChange={(e) => handleChange('debit', parseFloat(e.target.value))}
+                            placeholder="0.00"
+                            className={`w-full bg-transparent text-right border-b outline-none py-1 text-sm font-bold ${activeField === 'debit' ? 'border-[#e4be1e] bg-[#135d66]/30' : 'border-[#77b0aa]/20'
+                                }`}
+                        />
+                    </div>
+                    <div className="col-span-2 text-right">
                         <span className="opacity-20 italic text-[10px]">Auto</span>
                     </div>
                 </div>

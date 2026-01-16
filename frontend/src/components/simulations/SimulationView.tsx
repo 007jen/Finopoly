@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, } from 'react';
 import { Check, X, ArrowLeft, Shield, Sparkles } from 'lucide-react';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { useAuth } from '../../context/AuthContext';
@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti';
 import { api } from '../../lib/api';
 import InvoiceView from './InvoiceView';
 import TallyAuditView from './TallyAuditView';
+import { ChevronRight } from 'lucide-react';
 
 // --- Types ---
 type PaymentMode = 'CASH' | 'BANK' | 'UPI';
@@ -294,18 +295,42 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
   const renderPhaseContent = () => {
     if (phase === 'BRIEF') {
       return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-          <div className="max-w-2xl w-full bg-slate-800 rounded-3xl p-10 border border-slate-700 shadow-2xl">
-            <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-600/20">
-              <Shield size={40} className="text-white" />
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+          {/* Background Ambient Glows */}
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] pointer-events-none"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[128px] pointer-events-none"></div>
+
+          <div className="max-w-2xl w-full bg-slate-800/80 backdrop-blur-xl rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-white/10 shadow-2xl relative z-10">
+            <div className="mb-6 sm:mb-8 relative inline-block">
+              <div className="absolute inset-0 bg-blue-500 blur-xl opacity-40 rounded-3xl"></div>
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg border border-white/20">
+                <Shield size={32} className="text-white drop-shadow-md sm:w-9 sm:h-9" />
+              </div>
             </div>
-            <h1 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">Audit Engagement</h1>
-            <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-              {clientBriefData?.context || `You are assigned to audit ${currentLevel?.companyName || 'the client'}. Your objective is to verify records and issue a professional opinion.`}
-            </p>
-            <button onClick={() => setPhase('PLANNING')} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-xl">
-              ACCEPT ASSIGNMENT
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tighter mb-4 sm:mb-6 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+              Audit Engagement
+            </h1>
+
+            <div className="bg-slate-900/50 rounded-2xl p-4 sm:p-6 border border-white/5 mb-6 sm:mb-8">
+              <p className="text-slate-300 text-base sm:text-lg lg:text-xl leading-relaxed">
+                {clientBriefData?.context || `You are assigned to audit `}
+                <span className="text-blue-400 font-bold">{currentLevel?.companyName || 'the client'}</span>
+                {clientBriefData?.context ? '' : `. Your objective is to verify records and issue a professional opinion.`}
+              </p>
+            </div>
+
+            <button
+              onClick={() => setPhase('PLANNING')}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-4 sm:py-5 rounded-2xl transition-all shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)] active:scale-[0.98] text-lg sm:text-xl tracking-widest uppercase border border-white/10 flex items-center justify-center gap-3 group"
+            >
+              Accept Assignment
+              <ArrowLeft className="rotate-180 group-hover:translate-x-1 transition-transform" />
             </button>
+
+            <p className="text-center text-slate-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-6">
+              Finopoly Assurance Standards • ISO 27001
+            </p>
           </div>
         </div>
       );
@@ -313,20 +338,48 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
     if (phase === 'PLANNING') {
       return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-          <div className="max-w-2xl w-full bg-slate-800 rounded-3xl p-10 border border-slate-700 shadow-2xl">
-            <h1 className="text-3xl font-black text-white uppercase mb-8">Phase 1: Planning</h1>
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-6 mb-8">
-              <p className="text-yellow-500 text-sm font-bold mb-2 uppercase tracking-widest">Auditor's Note</p>
-              <p className="text-slate-300">Set your materiality threshold for this audit.</p>
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg h-full max-h-lg bg-yellow-500/5 rounded-full blur-[128px] pointer-events-none"></div>
+
+          <div className="max-w-2xl w-full bg-slate-800/90 backdrop-blur-xl rounded-[2rem] p-6 sm:p-10 border border-white/10 shadow-2xl relative z-10 mx-auto">
+            <h1 className="text-2xl sm:text-4xl font-black text-white uppercase mb-6 sm:mb-8 tracking-tight">
+              Phase 1: <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">Planning</span>
+            </h1>
+
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-5 sm:p-6 mb-8 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+              <p className="text-yellow-500 text-xs sm:text-sm font-black mb-2 uppercase tracking-widest flex items-center gap-2">
+                <Sparkles size={14} /> Auditor's Note
+              </p>
+              <p className="text-slate-300 text-sm sm:text-base font-medium">Set your materiality threshold for this audit based on the company size.</p>
             </div>
-            <div className="space-y-6 mb-10">
-              <label className="block text-slate-400 font-bold text-sm uppercase">Materiality Threshold (₹)</label>
-              <input type="number" value={materiality} onChange={(e) => setMateriality(parseInt(e.target.value))} className="w-full bg-slate-900 border-2 border-slate-700 rounded-xl py-4 px-6 text-white font-mono text-xl focus:border-blue-500 outline-none" />
+
+            <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-10">
+              <label className="block text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-wider">Materiality Threshold (₹)</label>
+              <div className="relative">
+                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-xl">₹</span>
+                <input
+                  type="number"
+                  value={materiality}
+                  onChange={(e) => setMateriality(parseInt(e.target.value))}
+                  className="w-full bg-slate-900 border-2 border-slate-700/50 rounded-2xl py-4 pl-12 pr-6 text-white font-mono text-xl sm:text-2xl focus:border-yellow-500/50 focus:bg-slate-900 focus:shadow-[0_0_20px_rgba(234,179,8,0.1)] outline-none transition-all placeholder:text-slate-600"
+                />
+              </div>
             </div>
-            <div className="flex gap-4">
-              <button onClick={() => setPhase('BRIEF')} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl">BACK</button>
-              <button onClick={() => setPhase('SAMPLING')} className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl">SAVE & PROCEED</button>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => setPhase('BRIEF')}
+                className="order-2 sm:order-1 flex-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl transition-all uppercase tracking-wider text-sm"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setPhase('SAMPLING')}
+                className="order-1 sm:order-2 flex-[2] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-lg uppercase tracking-widest"
+              >
+                Save & Proceed
+              </button>
             </div>
           </div>
         </div>
@@ -335,42 +388,60 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
 
     if (phase === 'SAMPLING') {
       return (
-        <div className="min-h-screen bg-slate-900 p-10">
-          <div className="max-w-5xl mx-auto space-y-8">
-            <header className="flex justify-between items-end">
+        <div className="min-h-screen bg-slate-900 p-4 sm:p-10 flex flex-col">
+          <div className="max-w-6xl mx-auto w-full space-y-6 sm:space-y-8 flex-1">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
               <div>
-                <h1 className="text-3xl font-black text-white uppercase">Phase 2: Sampling</h1>
-                <p className="text-slate-400 mt-2">Select transactions for detailed testing.</p>
+                <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">Phase 2: <span className="text-blue-400">Sampling</span></h1>
+                <p className="text-slate-400 mt-2 text-sm sm:text-base max-w-md">Select transactions from the ledger below for detailed substantive testing.</p>
               </div>
-              <div className="bg-slate-800 p-4 border border-slate-700 rounded-xl">
-                <p className="text-xs text-slate-500 uppercase font-black">Materiality</p>
-                <p className="text-yellow-500 font-mono font-bold text-lg">₹{materiality.toLocaleString()}</p>
+              <div className="bg-slate-800/80 backdrop-blur-sm p-4 border border-slate-700 rounded-2xl flex flex-col items-end shadow-lg w-full sm:w-auto">
+                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Materiality Threshold</p>
+                <p className="text-yellow-500 font-mono font-bold text-xl sm:text-2xl drop-shadow-sm">₹{materiality.toLocaleString()}</p>
               </div>
             </header>
-            <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
-              <table className="w-full text-left font-mono text-sm">
-                <thead className="bg-slate-900 text-slate-500 uppercase font-black border-b border-slate-700 text-xs">
-                  <tr><th className="p-4">Date</th><th className="p-4">Particulars</th><th className="p-4 text-right">Debit (₹)</th><th className="p-4 text-center">Action</th></tr>
-                </thead>
-                <tbody className="text-slate-300">
-                  {levels.map((lvl, idx) => (
-                    <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                      <td className="p-4">{lvl.ledger.date}</td>
-                      <td className="p-4 font-bold">{lvl.ledger.particulars}</td>
-                      <td className="p-4 text-right">₹{lvl.ledger.debit?.toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        <button onClick={() => setSelectedSamples(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx])} className={`px-4 py-2 rounded-lg font-bold ${selectedSamples.includes(idx) ? 'bg-blue-600' : 'bg-slate-700'}`}>
-                          {selectedSamples.includes(idx) ? 'SELECTED' : 'SELECT'}
-                        </button>
-                      </td>
+
+            <div className="bg-slate-800/50 backdrop-blur-md rounded-3xl border border-slate-700/50 overflow-hidden shadow-2xl flex-1 flex flex-col">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left font-mono text-sm min-w-[600px]">
+                  <thead className="bg-slate-900/50 text-slate-500 uppercase font-black border-b border-slate-700/50 text-[10px] sm:text-xs tracking-wider">
+                    <tr>
+                      <th className="p-4 sm:p-6">Date</th>
+                      <th className="p-4 sm:p-6">Particulars</th>
+                      <th className="p-4 sm:p-6 text-right">Debit (₹)</th>
+                      <th className="p-4 sm:p-6 text-center">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="text-slate-300 divide-y divide-slate-700/30">
+                    {levels.map((lvl, idx) => (
+                      <tr key={idx} className={`hover:bg-slate-700/30 transition-colors ${selectedSamples.includes(idx) ? 'bg-blue-500/5' : ''}`}>
+                        <td className="p-4 sm:p-6">{lvl.ledger.date}</td>
+                        <td className="p-4 sm:p-6 font-bold text-white">{lvl.ledger.particulars}</td>
+                        <td className="p-4 sm:p-6 text-right font-medium">₹{lvl.ledger.debit?.toLocaleString()}</td>
+                        <td className="p-4 sm:p-6 text-center">
+                          <button
+                            onClick={() => setSelectedSamples(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx])}
+                            className={`px-4 sm:px-6 py-2 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-md ${selectedSamples.includes(idx) ? 'bg-blue-600 text-white shadow-blue-500/20' : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
+                          >
+                            {selectedSamples.includes(idx) ? 'Selected' : 'Select'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <button onClick={() => setPhase('PLANNING')} className="px-8 py-4 bg-slate-800 text-slate-400 font-bold rounded-xl">BACK</button>
-              <button disabled={selectedSamples.length === 0} onClick={() => { setCurrentLevelIdx(selectedSamples[0]); setPhase('TESTING'); }} className="px-12 py-4 bg-green-600 text-white font-black rounded-xl shadow-xl">COMMENCE TESTING</button>
+
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4">
+              <button onClick={() => setPhase('PLANNING')} className="w-full sm:w-auto px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-xl transition-all uppercase tracking-wider text-sm">Back</button>
+              <button
+                disabled={selectedSamples.length === 0}
+                onClick={() => { setCurrentLevelIdx(selectedSamples[0]); setPhase('TESTING'); }}
+                className="w-full sm:w-auto px-10 sm:px-12 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-30 disabled:grayscale text-white font-black rounded-xl shadow-xl shadow-emerald-600/20 active:scale-95 uppercase tracking-widest text-sm sm:text-base flex items-center justify-center gap-2"
+              >
+                Commence Testing <ChevronRight size={18} />
+              </button>
             </div>
           </div>
         </div>
@@ -380,35 +451,54 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
     if (phase === 'REPORTING') {
       const totalFaults = selectedSamples.filter(i => levels[i].faultyField !== null).length;
       return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-          <div className="max-w-4xl w-full bg-slate-800 rounded-3xl p-10 border border-slate-700 shadow-2xl">
-            <header className="text-center mb-10">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><Shield size={32} className="text-white" /></div>
-              <h1 className="text-3xl font-black text-white uppercase">Final Phase: Audit Opinion</h1>
-              <p className="text-slate-400 mt-2">What is your professional conclusion?</p>
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="max-w-4xl w-full bg-slate-800/90 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-12 border border-slate-700/50 shadow-2xl my-auto">
+            <header className="text-center mb-10 sm:mb-12">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-600/30">
+                <Shield size={40} className="text-white drop-shadow-md" />
+              </div>
+              <h1 className="text-3xl sm:text-5xl font-black text-white uppercase tracking-tighter mb-3">Final Phase: Audit Opinion</h1>
+              <p className="text-slate-400 text-base sm:text-lg">Based on your testing, conclude the engagement.</p>
             </header>
-            <div className="grid grid-cols-3 gap-6 mb-10">
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-10 sm:mb-12">
               {[
-                { id: 'UNMODIFIED', label: 'Unmodified', desc: 'Books are true and fair.', color: 'bg-green-600' },
-                { id: 'QUALIFIED', label: 'Qualified', desc: 'True & fair, except specific items.', color: 'bg-yellow-600' },
-                { id: 'ADVERSE', label: 'Adverse', desc: 'Significant errors detected.', color: 'bg-red-600' }
+                { id: 'UNMODIFIED', label: 'Unmodified', desc: 'Financial statements are true and fair.', color: 'from-green-600 to-emerald-600', shadow: 'shadow-green-500/20' },
+                { id: 'QUALIFIED', label: 'Qualified', desc: 'True & fair, except for specific misstatements.', color: 'from-yellow-500 to-amber-600', shadow: 'shadow-yellow-500/20' },
+                { id: 'ADVERSE', label: 'Adverse', desc: 'Significant material misstatements detected.', color: 'from-red-600 to-rose-600', shadow: 'shadow-red-500/20' }
               ].map(opt => (
-                <button key={opt.id} onClick={() => handleOpinion(opt.id as any)} className="p-6 bg-slate-900 border border-slate-700 rounded-2xl text-center hover:border-blue-500 transition-all">
-                  <div className={`w-10 h-10 ${opt.color} rounded-lg mb-4 flex items-center justify-center mx-auto`}><Check size={20} className="text-white" /></div>
-                  <h3 className="text-white font-bold mb-2">{opt.label}</h3>
-                  <p className="text-slate-500 text-xs">{opt.desc}</p>
+                <button
+                  key={opt.id}
+                  onClick={() => handleOpinion(opt.id as any)}
+                  className="group relative p-6 sm:p-8 bg-slate-900 border border-slate-700 rounded-2xl text-center hover:border-transparent transition-all overflow-hidden"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${opt.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className="relative z-10">
+                    <div className={`w-12 h-12 bg-white/10 rounded-xl mb-4 flex items-center justify-center mx-auto ring-1 ring-white/20 group-hover:bg-white/20 group-hover:scale-110 transition-all`}>
+                      <Check size={24} className="text-white" />
+                    </div>
+                    <h3 className="text-white font-black text-lg sm:text-xl mb-2 uppercase tracking-tight">{opt.label}</h3>
+                    <p className="text-slate-500 text-xs sm:text-sm font-medium group-hover:text-white/80 transition-colors">{opt.desc}</p>
+                  </div>
                 </button>
               ))}
             </div>
-            <div className="bg-slate-900/50 p-6 rounded-2xl border border-dashed border-slate-700">
-              <div className="flex justify-between items-center text-sm mb-4"><span className="text-slate-500 uppercase font-black">Testing Summary</span></div>
-              <div className="flex justify-between text-white font-mono mb-2"><span>Samples Tested</span><span>{selectedSamples.length}</span></div>
-              <div className="flex justify-between text-blue-400 font-mono"><span>Mistakes Caught</span><span>{foundErrors} / {totalFaults}</span></div>
+
+            <div className="bg-slate-900/50 p-6 sm:p-8 rounded-3xl border border-dashed border-slate-700 max-w-lg mx-auto">
+              <div className="flex justify-between items-center text-xs sm:text-sm mb-4">
+                <span className="text-slate-500 uppercase font-black tracking-widest">Testing Summary</span>
+                <span className="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-bold text-xs">{selectedSamples.length} Vouchers</span>
+              </div>
+              <div className="flex justify-between items-center bg-slate-800 rounded-xl p-4">
+                <span className="text-slate-400 font-bold text-sm">Errors Detected</span>
+                <span className="text-white font-mono font-bold text-xl">{foundErrors} <span className="text-slate-600 text-base">/ {totalFaults}</span></span>
+              </div>
             </div>
           </div>
         </div>
       );
     }
+
 
     if (!currentLevel) return <div className="min-screen bg-slate-900"></div>;
 
@@ -424,20 +514,24 @@ const SimulationView: React.FC<SimulationViewProps> = ({ caseId, onBack }) => {
             <div className="text-center font-mono text-red-500 border border-slate-700 px-4 py-1 rounded bg-slate-900">{Math.ceil(timeLeft)}s</div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-6 pb-32">
-          <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
-            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700">
-              <InvoiceView data={currentLevel.invoice} />
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 pb-32">
+          <div className="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 items-stretch">
+            <div className="overflow-x-auto rounded-3xl border border-slate-700 bg-slate-800 p-2 sm:p-4">
+              <div className="min-w-[320px]">
+                <InvoiceView data={currentLevel.invoice} />
+              </div>
             </div>
-            <div className="bg-slate-800 rounded-3xl p-4 border border-slate-700 flex flex-col">
-              <TallyAuditView
-                ledger={currentLevel.ledger}
-                onSubmit={handleVoucherSubmit}
-                isSubmitting={gameState === 'RESULT'}
-                /* --- AZURE CLOUD START --- */
-                autoFillData={scannedData}
-              /* --- AZURE CLOUD END --- */
-              />
+            <div className="bg-slate-800 rounded-3xl p-2 sm:p-4 border border-slate-700 flex flex-col overflow-x-auto">
+              <div className="min-w-[320px]">
+                <TallyAuditView
+                  ledger={currentLevel.ledger}
+                  onSubmit={handleVoucherSubmit}
+                  isSubmitting={gameState === 'RESULT'}
+                  /* --- AZURE CLOUD START --- */
+                  autoFillData={scannedData}
+                /* --- AZURE CLOUD END --- */
+                />
+              </div>
 
               {/* --- AZURE CLOUD START (HIDDEN) --- */}
               {false && (

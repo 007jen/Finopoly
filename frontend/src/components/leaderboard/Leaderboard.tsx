@@ -145,7 +145,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase border border-indigo-200">
                           {user.name.charAt(0)}
                         </div>
-                        <span className="font-semibold text-gray-900 text-sm">{user.name}</span>
+                        <span className="font-semibold text-gray-900 text-sm drop-shadow-[0_0_10px_rgba(99,102,241,0.8)]">{user.name}</span>
                       </div>
                     </td>
                     <td className="py-3 px-6 text-center">
@@ -173,7 +173,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                       </div>
                     </td>
                     <td className="py-3 px-6 text-right">
-                      <span className="font-bold text-gray-900">{user.xp.toLocaleString()}</span>
+                      <span className="font-bold text-gray-900 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{user.xp.toLocaleString()}</span>
                       <span className="text-xs text-gray-400 ml-1">XP</span>
                     </td>
                   </tr>
@@ -195,12 +195,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                     <div className="h-9 w-9 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase shadow-sm border border-indigo-100">
                       {user.name.charAt(0)}
                     </div>
-                    <div className="font-semibold text-gray-900 text-sm">{user.name}</div>
+                    <div className="font-semibold text-gray-900 text-sm drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]">{user.name}</div>
                   </div>
 
                   {/* Right: XP */}
                   <div className="text-right">
-                    <span className="block font-bold text-gray-900 text-sm">{user.xp.toLocaleString()}</span>
+                    <span className="block font-bold text-gray-900 text-sm drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{user.xp.toLocaleString()}</span>
                     <span className="text-[10px] text-gray-400 font-medium">XP</span>
                   </div>
                 </div>
@@ -259,7 +259,7 @@ const PodiumCard = ({ user, rank, isWinner = false, color, iconColor }: { user?:
 
       {/* Info - Compact Text */}
       <div className="text-center w-full">
-        <h3 className={`font-bold text-gray-900 truncate px-2 ${isWinner ? 'text-sm' : 'text-xs'}`}>{user.name}</h3>
+        <h3 className={`font-bold text-gray-900 truncate px-2 ${isWinner ? 'text-sm' : 'text-xs'} drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]`}>{user.name}</h3>
 
         {/* Stats Grid for Podium */}
         <div className="mt-3 grid grid-cols-2 gap-1 text-[10px] text-gray-500 bg-gray-50 p-2 rounded-lg border border-gray-100/50">
@@ -275,7 +275,7 @@ const PodiumCard = ({ user, rank, isWinner = false, color, iconColor }: { user?:
 
         <div className="mt-3 inline-flex items-center gap-1.5 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
           <Star className={`h-3 w-3 ${iconColor} fill-current`} />
-          <span className="font-bold text-gray-700 text-xs">{user.xp.toLocaleString()} XP</span>
+          <span className="font-bold text-gray-700 text-xs drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">{user.xp.toLocaleString()} XP</span>
         </div>
       </div>
     </div>

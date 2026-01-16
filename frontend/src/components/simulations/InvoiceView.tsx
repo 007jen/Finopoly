@@ -68,23 +68,25 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ data }) => {
             </div>
 
             {/* Secondary Meta Table - Stacked on Mobile */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 border border-slate-300 mb-8 rounded-sm overflow-hidden shadow-sm">
-                {['P.O. #', 'Sales Rep', 'Ship Date', 'Ship Via', 'Terms', 'Due Date'].map((header) => (
-                    <div key={header} className="bg-blue-50/50 border-r border-slate-300 p-2 text-[8px] md:text-[9px] font-black text-blue-800 text-center uppercase truncate">
-                        {header}
-                    </div>
-                ))}
-                {['PO-9912', 'Admin', data.date, 'Ground', 'Net 30', 'Next Month'].map((val, i) => (
-                    <div key={i} className="border-r border-slate-300 p-2 text-[9px] md:text-[10px] text-center text-slate-600 font-medium min-h-[30px] flex items-center justify-center truncate">
-                        {val}
-                    </div>
-                ))}
+            <div className="overflow-x-auto mb-8 border border-slate-300 rounded-sm shadow-sm">
+                <div className="grid grid-cols-3 sm:grid-cols-6 min-w-[500px]">
+                    {['P.O. #', 'Sales Rep', 'Ship Date', 'Ship Via', 'Terms', 'Due Date'].map((header) => (
+                        <div key={header} className="bg-blue-50/50 border-r border-slate-300 p-2 text-[8px] md:text-[9px] font-black text-blue-800 text-center uppercase truncate last:border-r-0">
+                            {header}
+                        </div>
+                    ))}
+                    {['PO-9912', 'Admin', data.date, 'Ground', 'Net 30', 'Next Month'].map((val, i) => (
+                        <div key={i} className="border-r border-slate-300 p-2 text-[9px] md:text-[10px] text-center text-slate-600 font-medium min-h-[30px] flex items-center justify-center truncate last:border-r-0">
+                            {val}
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Line Items Table */}
             <div className="flex-1">
-                <div className="border border-slate-300 rounded-sm overflow-hidden">
-                    <table className="w-full text-left text-[11px] border-collapse">
+                <div className="border border-slate-300 rounded-sm overflow-x-auto">
+                    <table className="w-full text-left text-[11px] border-collapse min-w-[600px]">
                         <thead className="bg-blue-900/5 text-blue-900 font-black uppercase tracking-wider">
                             <tr>
                                 <th className="p-3 border-r border-slate-300">Description</th>

@@ -6,6 +6,9 @@ import { useAuth } from "../context/AuthContext";
 
 // Backend port is 5000 (Local) or Production URL
 // Backend port is 5000 (Local) or Production URL
+// const SOCKET_URL = isProduction
+//     ? "https://api.tryfinopoly.com"
+//     : (import.meta.env.VITE_API_URL || "http://localhost:5000");
 const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Financial/Professional avatar colors
@@ -175,7 +178,7 @@ export default function Phase1Chat() {
     };
 
     return (
-        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-0 sm:p-6 lg:p-8 flex items-center justify-center relative overflow-hidden">
+        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-0 flex items-center justify-center relative overflow-hidden">
 
             {/* --- ADAPTIVE ANIMATED BACKGROUND IMPROVED --- */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -184,7 +187,7 @@ export default function Phase1Chat() {
             </div>
 
             {/* --- MAIN CONTAINED BODY (Reduced by ~6%) --- */}
-            <div className="flex flex-col w-full h-full max-w-full sm:max-w-[96%] bg-[#f8fafc] text-slate-900 font-sans rounded-none sm:rounded-[2rem] shadow-none sm:shadow-2xl sm:shadow-slate-800/60 border-none sm:border sm:border-white/60 overflow-hidden relative z-10 flex-1">
+            <div className="flex flex-col w-full h-full max-w-full bg-[#f8fafc] text-slate-900 font-sans rounded-none shadow-none border-none overflow-hidden relative z-10 flex-1">
 
                 {/* --- HEADER --- */}
                 <div className="h-14 sm:h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-6 z-20">
