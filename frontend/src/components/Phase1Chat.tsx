@@ -5,10 +5,8 @@ import confetti from "canvas-confetti";
 import { useAuth } from "../context/AuthContext";
 
 // Backend port is 5000 (Local) or Production URL
-const isProduction = import.meta.env.MODE === 'production';
-const SOCKET_URL = isProduction
-    ? "https://api.tryfinopoly.com"
-    : (import.meta.env.VITE_API_URL || "http://localhost:5000");
+// Backend port is 5000 (Local) or Production URL
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // Financial/Professional avatar colors
 const getAvatarColor = (name: string) => {
