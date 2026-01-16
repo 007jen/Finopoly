@@ -40,11 +40,12 @@ app.use(express.json());
 const allowedOrigins = [
     "https://tryfinopoly.com",
     "https://www.tryfinopoly.com",
+    "https://finopoly-git-dev-jenils-projects-50d0b879.vercel.app",
     "http://localhost:5173",
     "http://localhost:4173",
     "http://localhost:3000",
     process.env.FRONTEND_URL
-].filter(Boolean) as string[];
+].filter(Boolean) as string[]
 
 const corsOptions = {
     origin: allowedOrigins,
