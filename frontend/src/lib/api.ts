@@ -3,10 +3,11 @@
 // 1. Determine the Base URL based on environment
 // Force Re-deploy V2
 const isProduction = import.meta.env.MODE === 'production';
-const BASE_URL = isProduction
-    ? "https://api.tryfinopoly.com"
-    : (import.meta.env.VITE_API_URL || "http://localhost:5000");
-
+// const BASE_URL = isProduction
+//     ? "https://api.tryfinopoly.com"
+//     : (import.meta.env.VITE_API_URL || "http://localhost:5000");
+// Line 7
+export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 type RequestOptions = RequestInit & {
     headers?: Record<string, string>;
 };
