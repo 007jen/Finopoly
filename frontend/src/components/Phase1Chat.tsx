@@ -178,7 +178,7 @@ export default function Phase1Chat() {
     };
 
     return (
-        <div className="h-[calc(100vh-64px)] bg-slate-100/40 p-0 flex items-center justify-center relative overflow-hidden">
+        <div className="h-[calc(100dvh-60px)] bg-slate-100/40 p-0 flex flex-col relative overflow-hidden">
 
             {/* --- ADAPTIVE ANIMATED BACKGROUND IMPROVED --- */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -196,25 +196,24 @@ export default function Phase1Chat() {
                             <MessageSquare size={16} className="text-white sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <h1 className="font-extrabold text-[11px] sm:text-base lg:text-lg tracking-tight text-slate-900 uppercase">Community Hub</h1>
+                            <h1 className="font-extrabold text-base sm:text-lg lg:text-2xl tracking-tight text-slate-900">Community Hub</h1>
                             <p className="text-[9px] sm:text-[10px] text-blue-600 font-black flex items-center gap-1.5 uppercase tracking-widest">
-                                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(37,99,235,0.4)]"></span>
-                                Live Discussion
+
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3">
                         <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-slate-200/50">
-                            <Shield size={14} className="text-blue-600" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            <Shield size={16} className="text-blue-600 w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-slate-500">
                                 <span className="text-blue-600">{room}</span>
                             </span>
                         </div>
-                        <div className="flex items-center gap-2 bg-blue-50/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full border border-blue-100/50 transition-colors hover:bg-blue-100">
-                            <Users size={14} className="text-blue-700 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-blue-700">124 Pro Nodes</span>
-                        </div>
+                        {/* <div className="flex items-center gap-2 bg-blue-50/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full border border-blue-100/50 transition-colors hover:bg-blue-100">
+                            <Users size={16} className="text-blue-700 w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-blue-700">124 Pro Nodes</span>
+                        </div> */}
                     </div>
                 </div>
 
@@ -247,10 +246,10 @@ export default function Phase1Chat() {
                                 {/* Content Bubble */}
                                 <div className={`flex flex-col max-w-[90%] sm:max-w-[75%] lg:max-w-[65%] ${isMe ? "items-end" : "items-start"}`}>
                                     <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-                                        <span className={`text-[8.5px] sm:text-[10px] font-black uppercase tracking-widest ${isMe ? "text-blue-600" : "text-slate-500"}`}>
+                                        <span className={`text-xs sm:text-sm font-black uppercase tracking-widest ${isMe ? "text-blue-600" : "text-slate-500"}`}>
                                             {authorName}
                                         </span>
-                                        <span className="text-[7.5px] sm:text-[9px] text-slate-400 font-bold opacity-80 uppercase tracking-tighter">
+                                        <span className="text-[10px] sm:text-xs text-slate-400 font-bold opacity-80 uppercase tracking-tighter">
                                             {msg.time ? new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just Now"}
                                         </span>
                                     </div>
@@ -303,7 +302,7 @@ export default function Phase1Chat() {
                                         </div>
                                     ) : (
                                         /* --- 💬 STANDARD TEXT --- */
-                                        <div className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-[11.5px] sm:text-[14px] font-bold shadow-sm leading-relaxed relative group transition-all border
+                                        <div className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold shadow-sm leading-relaxed relative group transition-all border
                                             ${isMe ? "bg-blue-600 text-white border-blue-700 rounded-tr-none shadow-blue-600/10"
                                                 : "bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200/70 rounded-tl-none hover:border-slate-300"
                                             }`}>
@@ -371,7 +370,7 @@ export default function Phase1Chat() {
                 )}
 
                 {/* --- INPUT AREA --- */}
-                <div className="p-2 sm:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/40 z-20">
+                <div className="pt-2 px-2 pb-0 sm:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/40 z-20">
                     <div className="max-w-4xl mx-auto">
                         <div className="flex items-center gap-1.5 sm:gap-3 bg-white p-1 rounded-xl sm:rounded-2xl border border-slate-200 focus-within:border-blue-500/50 focus-within:ring-8 focus-within:ring-blue-500/5 transition-all shadow-lg shadow-slate-200/50">
                             <button
@@ -388,7 +387,7 @@ export default function Phase1Chat() {
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                                 placeholder="Collaborate with peers..."
-                                className="flex-1 bg-transparent text-slate-700 text-[11.5px] sm:text-sm px-1.5 sm:px-3 py-2 outline-none placeholder-slate-400 font-bold"
+                                className="flex-1 bg-transparent text-slate-700 text-sm sm:text-base px-1.5 sm:px-3 py-2 outline-none placeholder-slate-400 font-bold"
                             />
 
                             <button
@@ -400,7 +399,7 @@ export default function Phase1Chat() {
                             </button>
                         </div>
 
-                        <div className="flex justify-center mt-3 sm:mt-4">
+                        <div className="sm:flex justify-center mt-3 sm:mt-4">
                             <div className="flex items-center gap-2 text-[9px] sm:text-[10px] text-slate-400 font-black bg-white/50 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-200/50 uppercase tracking-[0.05em] transition-all hover:bg-white/80">
                                 <Sparkles size={12} className="text-blue-500 animate-pulse" />
                                 Drop a live drill by clicking the <Plus size={10} className="inline mx-0.5" /> button

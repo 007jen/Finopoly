@@ -530,6 +530,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
           <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">Weekly Goals</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {weeklyGoals.map((goal, index) => {
+              const displayCurrent = Math.min(goal.current, goal.target);
               const rawProgress = (goal.current / goal.target) * 100;
               const progress = Math.min(rawProgress, 100);
               const isComp = goal.current >= goal.target;
@@ -538,7 +539,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
                 <div key={index} className={`p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border shadow-sm transition-all ${isComp ? 'border-green-200 bg-green-50' : 'border-gray-200'}`}>
                   <h3 className="font-bold text-gray-900 mb-3">{goal.label}</h3>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-600">{goal.current}/{goal.target} {goal.unit}</span>
+                    <span className="text-sm text-gray-600">{displayCurrent}/{goal.target} {goal.unit}</span>
                     <span className={`text-sm font-bold ${isComp ? 'text-green-600' : 'text-gray-900'}`}>{Math.round(progress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">

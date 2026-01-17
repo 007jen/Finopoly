@@ -45,48 +45,31 @@ const TopBar: React.FC<TopBarProps> = ({ user, setActiveTab, onMenuClick }) => {
           </div>
 
           {/* Mobile: Stats Row */}
-          <div className="flex md:hidden items-center gap-2">
-            {/* XP */}
-            <div className="flex items-center gap-1.5 bg-yellow-50 px-2 py-1.5 rounded-lg border border-yellow-100">
-              <Trophy className="w-3.5 h-3.5 text-yellow-600" />
-              <span className="text-xs font-bold text-yellow-700"><span data-xp-display>0</span></span>
-            </div>
 
-            {/* Level */}
-            <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100">
-              <Star className="w-3.5 h-3.5 text-blue-600" />
-              <span className="text-xs font-bold text-blue-700">L{user?.currentLevel || 1}</span>
-            </div>
-
-            {/* Streak */}
-            <div className="flex items-center gap-1.5 bg-red-50 px-2 py-1.5 rounded-lg border border-red-100">
-              <Flame className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-bold text-red-600">{user?.dailyStreak || 0}</span>
-            </div>
-          </div>
         </div>
 
         {/* Right side - User info & Actions */}
         <div className="flex items-center gap-1 sm:gap-4 ml-auto flex-shrink-0">
 
           {/* Stats Group (Tablet+) */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Stats Group (Responsive) */}
+          <div className="flex items-center gap-2 md:gap-3">
             {/* XP Display */}
-            <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-100">
-              <Trophy className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm font-bold text-yellow-700" data-xp-display>0</span>
+            <div className="flex items-center gap-1.5 md:gap-2 bg-yellow-50 px-2 md:px-3 py-1.5 rounded-lg border border-yellow-100">
+              <Trophy className="w-3.5 h-3.5 md:w-4 md:h-4 text-yellow-600" />
+              <span className="text-xs md:text-sm font-bold text-yellow-700" data-xp-display>0</span>
             </div>
 
             {/* Level Display */}
-            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
-              <Star className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-bold text-blue-700">L{user?.currentLevel || 1}</span>
+            <div className="flex items-center gap-1.5 md:gap-2 bg-blue-50 px-2 md:px-3 py-1.5 rounded-lg border border-blue-100">
+              <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-600" />
+              <span className="text-xs md:text-sm font-bold text-blue-700">L{user?.currentLevel || 1}</span>
             </div>
 
             {/* Streak Display */}
-            <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
-              <Flame className="w-4 h-4 text-red-500" />
-              <span className="text-sm font-bold text-red-600">{user?.dailyStreak || 0}</span>
+            <div className="flex items-center gap-1.5 md:gap-2 bg-red-50 px-2 md:px-3 py-1.5 rounded-lg border border-red-100">
+              <Flame className="w-3.5 h-3.5 md:w-4 md:h-4 text-red-500" />
+              <span className="text-xs md:text-sm font-bold text-red-600">{user?.dailyStreak || 0}</span>
             </div>
           </div>
 
