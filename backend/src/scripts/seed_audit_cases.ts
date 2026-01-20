@@ -95,6 +95,38 @@ const INITIAL_CASES = [
         expectedAction: "REJECT",
         violationReason: "Date Mismatch: Invoice differs from Ledger Year",
         tags: ["Accounting Standards", "Date Check"]
+    },
+    {
+        title: "TEST: Payroll Mismatch",
+        companyName: "Test Corp",
+        difficulty: "Beginner",
+        description: "TEST CASE: Verify payroll entry against bank advice. expect mismatch.",
+        xpReward: 500,
+        timeLimit: 120,
+        isActive: true,
+        invoiceDetails: {
+            vendor: "Staff Welfare Fund",
+            invoiceNo: "PAY/FEB/24",
+            date: "28-02-2024",
+            amount: 45000,
+            tax: 0,
+            total: 45000,
+            description: "Feb Payroll",
+            paymentMode: "BANK",
+            gstin: "NA"
+        },
+        ledgerDetails: {
+            date: "28-02-24",
+            particulars: "Salaries & Wages",
+            vchType: "Payment",
+            vchNo: "999",
+            debit: 50000,
+            credit: null
+        },
+        expectedAction: "REJECT",
+        violationReason: "Mismatch: Ledger (50k) > Actual Payout (45k)",
+        faultyField: "amount",
+        tags: ["TESTing", "Payroll"]
     }
 ];
 

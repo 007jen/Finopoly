@@ -3,25 +3,25 @@ import {
   Plus,
   CreditCard as Edit,
   Trash2,
-  Save,
+  // Save,
   X,
   FileText,
   Scale,
   Calculator,
   Zap,
-  Eye,
+  // Eye,
   Search,
-  Filter,
+  // Filter,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  Target,
-  Award,
-  Shield,
+  // ChevronLeft,
+  // ChevronRight,
+  // Target,
+  // Award,
+  // Shield,
   Clock,
   Layers
 } from 'lucide-react';
-import { ContextPanel } from '../Challenges/ContextPanel';
+// import { ContextPanel } from '../Challenges/ContextPanel';
 import { db } from '../../lib/database';
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { api } from '../../lib/api';
@@ -163,6 +163,7 @@ const ContentManagement: React.FC = () => {
           xpReward: formData.xp_reward,
           chartUrl: formData.chartUrl || null,
           datasetUrl: formData.datasetUrl || null,
+          sampleDataUrl: formData.sampleDataUrl || null,
           videoUrl: formData.videoUrl,
           question: formData.question,
           instructions: formData.instructions,
@@ -486,7 +487,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                   <input
                     type="number"
                     value={formData.xp_reward}
-                    onChange={e => setFormData({ ...formData, xp_reward: parseInt(e.target.value) || 0 })}
+                    onChange={e => setFormData({ ...formData, xp_reward: Number.parseInt(e.target.value) || 0 })}
                     className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-blue-500 outline-none transition-all font-black text-gray-800"
                   />
                 </div>
@@ -606,9 +607,9 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                         value={formData.invoiceDetails.vendor} onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, vendor: e.target.value } })} />
                       <div className="grid grid-cols-2 gap-4">
                         <input type="number" placeholder="Amt" className="w-full bg-white border border-gray-100 rounded-xl px-5 py-3 font-bold text-sm"
-                          value={formData.invoiceDetails.amount} onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, amount: parseFloat(e.target.value) } })} />
+                          value={formData.invoiceDetails.amount} onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, amount: Number.parseFloat(e.target.value) } })} />
                         <input type="number" placeholder="Total" className="w-full bg-white border border-gray-100 rounded-xl px-5 py-3 font-bold text-sm"
-                          value={formData.invoiceDetails.total} onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, total: parseFloat(e.target.value) } })} />
+                          value={formData.invoiceDetails.total} onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, total: Number.parseFloat(e.target.value) } })} />
                       </div>
                       <input placeholder="Inv Number" className="w-full bg-white border border-gray-100 rounded-xl px-5 py-3 font-bold text-sm"
                         value={formData.invoiceDetails.invoiceNo} onChange={e => setFormData({ ...formData, invoiceDetails: { ...formData.invoiceDetails, invoiceNo: e.target.value } })} />
@@ -625,7 +626,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                         value={formData.ledgerDetails.particulars} onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, particulars: e.target.value } })} />
                       <div className="grid grid-cols-2 gap-4">
                         <input type="number" placeholder="Debit" className="w-full bg-white border border-gray-100 rounded-xl px-5 py-3 font-bold text-sm"
-                          value={formData.ledgerDetails.debit} onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, debit: parseFloat(e.target.value) } })} />
+                          value={formData.ledgerDetails.debit} onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, debit: Number.parseFloat(e.target.value) } })} />
                         <input placeholder="Vch Type" className="w-full bg-white border border-gray-100 rounded-xl px-5 py-3 font-bold text-sm"
                           value={formData.ledgerDetails.vchType} onChange={e => setFormData({ ...formData, ledgerDetails: { ...formData.ledgerDetails, vchType: e.target.value } })} />
                       </div>
@@ -665,16 +666,124 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
             {/* Arcade / Other forms can be extended here similarly */}
             {contentType === 'arcade' && (
               <div className="space-y-8">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Challenge parameters omitted for brevity in this view, assuming standard number prompt.</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Core Narrative & Visuals</p>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Analysis Objective (Description)</label>
+                  <textarea
+                    rows={3}
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-white border border-gray-100 rounded-3xl px-8 py-6 focus:border-blue-500 outline-none transition-all font-medium text-gray-800 resize-none"
+                    placeholder="Briefly describe the context and goal of this analysis..."
+                  />
+                  <p className="text-[9px] text-gray-400 font-bold mt-2 ml-2">Required for 'Your Objective' section. Must be detailed.</p>
+                </div>
+
+                {/* Instructions */}
+                <div>
+                  <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Methodology (Instructions)</label>
+                  <textarea
+                    rows={4}
+                    value={formData.instructions}
+                    onChange={e => setFormData({ ...formData, instructions: e.target.value })}
+                    className="w-full bg-white border border-gray-100 rounded-3xl px-8 py-6 focus:border-blue-500 outline-none transition-all font-medium text-gray-800 resize-none"
+                    placeholder="Step-by-step specific instructions for the analyst..."
+                  />
+                </div>
+
+                {/* Assets */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest">Main Chart URL</label>
+                    <input
+                      value={formData.chartUrl}
+                      onChange={e => setFormData({ ...formData, chartUrl: e.target.value })}
+                      className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 font-bold"
+                      placeholder="https://... (Direct Image Link)"
+                    />
+                    {/* Preview Block */}
+                    {formData.chartUrl && (
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video group">
+                        <img
+                          src={formData.chartUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden absolute inset-0 flex items-center justify-center text-red-500 font-bold bg-red-50 p-4 text-center text-xs">
+                          Unable to load image. Ensure it's a direct link (ends in .png/.jpg).
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-[9px] text-gray-400 font-bold">
+                      Use "Copy Image Address", not the page URL.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Video Solution URL</label>
+                    <input
+                      value={formData.videoUrl}
+                      onChange={e => setFormData({ ...formData, videoUrl: e.target.value })}
+                      className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 font-bold"
+                      placeholder="https://youtube.com/..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Dataset CSV URL</label>
+                    <input
+                      value={formData.datasetUrl}
+                      onChange={e => setFormData({ ...formData, datasetUrl: e.target.value })}
+                      className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 font-bold"
+                      placeholder="https://... (CSV)"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest">Sample Data Image URL</label>
+                    <input
+                      value={formData.sampleDataUrl || ''}
+                      onChange={e => setFormData({ ...formData, sampleDataUrl: e.target.value })}
+                      className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 font-bold"
+                      placeholder="https://... (Optional Image)"
+                    />
+                    {/* Preview Block */}
+                    {formData.sampleDataUrl && (
+                      <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-video group mt-3">
+                        <img
+                          src={formData.sampleDataUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden absolute inset-0 flex items-center justify-center text-red-500 font-bold bg-red-50 p-4 text-center text-xs">
+                          Invalid Image Link
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Challenge Inquiry</label>
                   <input
                     value={formData.question}
                     onChange={e => setFormData({ ...formData, question: e.target.value })}
                     className="w-full bg-white border border-gray-100 rounded-2xl px-6 py-4 font-bold"
-                    placeholder="What is the user solving?"
+                    placeholder="What is the final question asking for?"
                   />
                 </div>
+
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] text-gray-400 font-black uppercase mb-3 tracking-widest">Correct Valuation</label>
@@ -682,6 +791,7 @@ const ContentForm: React.FC<ContentFormProps> = ({ contentType, item, onSave, on
                       value={formData.correctVal}
                       onChange={e => setFormData({ ...formData, correctVal: e.target.value })}
                       className="w-full bg-white border border-emerald-500/30 rounded-2xl px-6 py-4 font-black text-emerald-700"
+                      placeholder="Exact Number"
                     />
                   </div>
                   <div>

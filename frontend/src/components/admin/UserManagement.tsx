@@ -503,35 +503,35 @@ const UserManagement: React.FC = () => {
 
       {/* Report Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <div className="bg-white rounded-[4rem] shadow-2xl p-12 w-full max-w-4xl border border-gray-100 animate-in slide-in-from-bottom-10 duration-500 overflow-hidden relative">
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300 overflow-y-auto p-4 md:p-8">
+          <div className="bg-white rounded-[2rem] md:rounded-[4rem] shadow-2xl p-6 md:p-12 w-full max-w-4xl border border-gray-100 animate-in slide-in-from-bottom-10 duration-500 relative my-auto">
             <button
               onClick={() => setShowReportModal(false)}
-              className="absolute top-8 right-8 p-3 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-2xl transition-all z-10"
+              className="absolute top-4 right-4 md:top-8 md:right-8 p-3 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-2xl transition-all z-10"
             >
               <X size={24} />
             </button>
 
             <div ref={reportRef} className="bg-white">
-              <div className="flex justify-between items-start mb-12">
+              <div className="flex flex-col md:flex-row justify-between items-start mb-8 md:mb-12 gap-4">
                 <div>
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest mb-4">
                     Analytical Diagnostic Report
                   </div>
-                  <h3 className="text-4xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-2">{editingUser?.name}</h3>
-                  <p className="text-gray-400 font-bold text-sm">Citizen ID Protocol: {editingUser?.id}</p>
+                  <h3 className="text-3xl md:text-4xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-2 break-words">{editingUser?.name}</h3>
+                  <p className="text-gray-400 font-bold text-sm">Citizen ID Protocol: <span className="text-xs">{editingUser?.id}</span></p>
                 </div>
-                <div className="text-right">
+                <div className="hidden md:block text-right">
                   <p className="text-gray-300 font-black text-5xl uppercase tracking-tighter opacity-20">FINOPOLY</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
-                <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-10 mb-8 md:mb-12">
+                <div className="bg-gray-50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Core Competency</p>
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-black text-gray-900">{editingUser?.xp?.toLocaleString() || 0}</span>
-                    <span className="text-sm font-black text-blue-600 mb-1 uppercase">XP</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900">{editingUser?.xp?.toLocaleString() || 0}</span>
+                    <span className="text-xs md:text-sm font-black text-blue-600 mb-1 uppercase">XP</span>
                   </div>
                   <div className="mt-6 flex items-center gap-2">
                     <div className="px-3 py-1 bg-white rounded-lg text-[9px] font-black text-gray-600 border border-gray-100 uppercase tracking-widest">
@@ -539,29 +539,29 @@ const UserManagement: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                <div className="bg-gray-50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Simulations Deployed</p>
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-black text-gray-900">{editingUser?.completedSimulations || 0}</span>
-                    <span className="text-sm font-black text-emerald-600 mb-1 uppercase">Units</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900">{editingUser?.completedSimulations || 0}</span>
+                    <span className="text-xs md:text-sm font-black text-emerald-600 mb-1 uppercase">Units</span>
                   </div>
                 </div>
-                <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                <div className="bg-gray-50 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">System Engagement</p>
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-black text-gray-900">{Math.floor((editingUser?.activeSeconds || 0) / 3600)}</span>
-                    <span className="text-sm font-black text-amber-600 mb-1 uppercase">Hours</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900">{Math.floor((editingUser?.activeSeconds || 0) / 3600)}</span>
+                    <span className="text-xs md:text-sm font-black text-amber-600 mb-1 uppercase">Hours</span>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 h-[300px]">
-                <div className="bg-gray-50 rounded-[3rem] p-8 border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-10 h-auto md:h-[300px]">
+                <div className="bg-gray-50 rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden h-[300px] md:h-auto">
                   <p className="absolute top-6 left-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">Competency Vectors</p>
                   {/* Simplified Radar Chart representation */}
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center mt-4">
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
+                      <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
                         { subject: 'Forensic Audit', A: editingUser?.auditCorrect || 0, fullMark: editingUser?.auditTotal || 100 },
                         { subject: 'Tax Law', A: editingUser?.taxCorrect || 0, fullMark: editingUser?.taxTotal || 100 },
                         { subject: 'Case Law', A: editingUser?.caselawCorrect || 0, fullMark: editingUser?.caselawTotal || 100 },
@@ -575,7 +575,7 @@ const UserManagement: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-[3rem] p-8 border border-gray-100 flex flex-col">
+                <div className="bg-gray-50 rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 border border-gray-100 flex flex-col h-[300px] md:h-auto">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-8">Performance Progression</p>
                   <div className="flex-1 flex items-end justify-between gap-1">
                     {reportData ? reportData.map((d: any, i: number) => (
@@ -592,7 +592,7 @@ const UserManagement: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-12 flex gap-4">
+            <div className="mt-8 md:mt-12 flex gap-4">
               <button
                 onClick={downloadReport}
                 className="flex-1 py-5 bg-gray-900 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-gray-200 active:scale-95 transition-all flex items-center justify-center gap-3"

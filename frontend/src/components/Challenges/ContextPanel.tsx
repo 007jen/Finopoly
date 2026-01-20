@@ -86,29 +86,15 @@ export const ContextPanel = ({ challenge }: ContextProps) => {
 
                 {challenge.datasetUrl && (
                     <div className="flex justify-center">
-                        <button
-                            onClick={async () => {
-                                try {
-                                    const response = await fetch(challenge.datasetUrl);
-                                    const blob = await response.blob();
-                                    const url = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    const fileName = `${challenge.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
-                                    a.download = fileName;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    window.URL.revokeObjectURL(url);
-                                    document.body.removeChild(a);
-                                } catch (err) {
-                                    window.open(challenge.datasetUrl, '_blank');
-                                }
-                            }}
+                        <a
+                            href={challenge.datasetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="group flex items-center justify-center gap-3 bg-teal-600 text-white w-full lg:w-auto px-6 sm:px-10 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-base sm:text-lg hover:bg-teal-700 transition-all hover:shadow-2xl hover:-translate-y-1"
                         >
                             <Download className="w-5 h-5 sm:w-6 sm:h-6" />
-                            Download Dataset
-                        </button>
+                            Access Dataset
+                        </a>
                     </div>
                 )}
             </div>
