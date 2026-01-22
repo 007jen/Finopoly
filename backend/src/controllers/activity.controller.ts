@@ -1,34 +1,4 @@
-// import { Request, Response } from "express";
-// import { recordActivity } from "../services/activity.service";
 
-// const allowedTypes = ["quiz", "audit", "tax", "caselaw"];
-// export const logActivity = async (req: Request, res: Response) => {
-//     try {
-//         const userId = req.user?.clerkId;
-//         const { type, referenceId, xpEarned, score } = req.body;
-
-//         if (!type || !referenceId || !xpEarned || !score) {
-//             return res.status(400).json({ error: "Missing fields" });
-//         }// this function is used to validate the activity type it checks if the required fields are present
-
-//         if (!allowedTypes.includes(type)) {
-//             return res.status(400).json({ error: "Invalid activity type" });
-//         } // this function is used to validate the activity type it checks if the activity type is allowed
-
-//         const activity = await recordActivity({
-//             clerkId: userId!,// what is this ?   
-//             type,
-//             referenceId,
-//             xpEarned,
-//             score,
-//         });
-
-//         res.status(201).json(activity);
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: "Activity failed" });
-//     }
-// };
 
 
 import { Request, Response } from "express";
