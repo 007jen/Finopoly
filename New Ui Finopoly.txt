@@ -1,0 +1,16 @@
+new task
+New Tab(Weekly challenges)<--Learning Modules
+Admin + Tax + Case (Resets every 72hours )
+
+Principle AI (monitoring)
+
+Admin:-
+About the Problem
+Chart(Visualization of issues)
+Description(in depth explanation of the issue)
+Input box(user will Input the Explanation/Solution to the Problem)
+Solution(locked until Submitted)
+
+Rules :
+	IF user ask correct set of questions then Principle will award with more details 5 i.e. give next step to solution but if the 
+	questions are not upto the mark

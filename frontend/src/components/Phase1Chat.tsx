@@ -178,54 +178,37 @@ export default function Phase1Chat() {
     };
 
     return (
-        <div className="h-[calc(100dvh-60px)] bg-slate-100/40 p-0 flex flex-col relative overflow-hidden">
-
-            {/* --- ADAPTIVE ANIMATED BACKGROUND IMPROVED --- */}
-            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[50%] bg-blue-100/40 blur-[100px] rounded-full animate-pulse duration-[8s]"></div>
-                <div className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-slate-200/50 blur-[100px] rounded-full animate-pulse duration-[12s]"></div>
-            </div>
-
-            {/* --- MAIN CONTAINED BODY (Reduced by ~6%) --- */}
-            <div className="flex flex-col w-full h-full max-w-full bg-[#f8fafc] text-slate-900 font-sans rounded-none shadow-none border-none overflow-hidden relative z-10 flex-1">
+        <div className="h-[calc(100dvh-60px)] bg-gray-50 flex flex-col relative overflow-hidden">
+            {/* --- MAIN CONTAINED BODY --- */}
+            <div className="flex flex-col w-full h-full max-w-6xl mx-auto bg-white text-slate-900 font-sans border-x border-gray-100 overflow-hidden relative z-10 flex-1 shadow-sm">
 
                 {/* --- HEADER --- */}
-                <div className="h-14 sm:h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-6 z-20">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <div className="bg-blue-600 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl shadow-lg shadow-blue-600/20 transition-transform hover:scale-105 active:scale-95">
-                            <MessageSquare size={16} className="text-white sm:w-5 sm:h-5" />
+                <div className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 z-20">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-blue-600 p-2 rounded-xl shadow-md">
+                            <MessageSquare size={18} className="text-white" />
                         </div>
                         <div>
-                            <h1 className="font-extrabold text-base sm:text-lg lg:text-2xl tracking-tight text-slate-900">Community Hub</h1>
-                            <p className="text-[9px] sm:text-[10px] text-blue-600 font-black flex items-center gap-1.5 uppercase tracking-widest">
-
-                            </p>
+                            <h1 className="font-bold text-lg tracking-tight text-slate-900 leading-none">Community Lounge</h1>
+                            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mt-1">Networking & Growth</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="hidden sm:flex items-center gap-2 bg-slate-100/80 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-slate-200/50">
-                            <Shield size={16} className="text-blue-600 w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-slate-500">
-                                <span className="text-blue-600">{room}</span>
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                            <Shield size={14} className="text-blue-600" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
+                                {room}
                             </span>
                         </div>
-                        {/* <div className="flex items-center gap-2 bg-blue-50/80 backdrop-blur-sm px-3 sm:px-4 py-1.5 rounded-full border border-blue-100/50 transition-colors hover:bg-blue-100">
-                            <Users size={16} className="text-blue-700 w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-blue-700">124 Pro Nodes</span>
-                        </div> */}
                     </div>
                 </div>
 
                 {/* --- CHAT STREAM --- */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-6 relative no-scrollbar z-10">
-                    {/* Professional Mesh Pattern */}
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mt-12"></div>
-
-                    {/* System Notification */}
-                    <div className="flex justify-center my-4 sm:my-6">
-                        <div className="bg-white/60 backdrop-blur-md text-slate-500 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] py-1.5 px-4 sm:px-6 rounded-full border border-slate-200/50 shadow-sm transition-all hover:bg-white/80 text-center mx-4">
-                            Instant Peer-to-Peer Learning Network Established
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 relative z-10 bg-gray-50/30">
+                    <div className="flex justify-center mb-8">
+                        <div className="bg-white px-4 py-1 rounded-full border border-gray-100 shadow-sm text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                            Beginning of the conversation
                         </div>
                     </div>
 
@@ -236,54 +219,47 @@ export default function Phase1Chat() {
                         const isSolved = msg.challengeData?.isSolved;
 
                         return (
-                            <div key={msg.id || `msg-${idx}`} className={`flex gap-3 sm:gap-4 ${isMe ? "flex-row-reverse" : "flex-row"} animate-in fade-in slide-in-from-bottom-2 duration-400`}>
-
+                            <div key={msg.id || `msg-${idx}`} className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"} animate-in fade-in slide-in-from-bottom-1 duration-300`}>
                                 {/* Avatar */}
-                                <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-[10px] sm:text-sm font-black text-white shadow-lg flex-shrink-0 transition-all hover:scale-110 ring-2 ring-white/50 ${getAvatarColor(authorName)}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 transition-transform hover:scale-105 ${getAvatarColor(authorName)}`}>
                                     {authorName.charAt(0).toUpperCase()}
                                 </div>
 
                                 {/* Content Bubble */}
-                                <div className={`flex flex-col max-w-[90%] sm:max-w-[75%] lg:max-w-[65%] ${isMe ? "items-end" : "items-start"}`}>
+                                <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
                                     <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-                                        <span className={`text-xs sm:text-sm font-black uppercase tracking-widest ${isMe ? "text-blue-600" : "text-slate-500"}`}>
+                                        <span className={`text-[11px] font-bold ${isMe ? "text-blue-600" : "text-gray-500"}`}>
                                             {authorName}
                                         </span>
-                                        <span className="text-[10px] sm:text-xs text-slate-400 font-bold opacity-80 uppercase tracking-tighter">
+                                        <span className="text-[9px] text-gray-300 font-medium">
                                             {msg.time ? new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just Now"}
                                         </span>
                                     </div>
 
                                     {isChallenge ? (
-                                        /* --- 🏆 THE CHALLENGE WIDGET --- */
-                                        <div className={`bg-white/90 backdrop-blur-sm border-2 ${isSolved ? 'border-emerald-100 shadow-sm' : 'border-blue-100/80 shadow-xl shadow-blue-500/5'} rounded-xl sm:rounded-2xl p-3 sm:p-5 w-full max-w-sm group transition-all hover:border-blue-400/30`}>
-                                            <div className="flex justify-between items-center mb-2 sm:mb-4">
-                                                <div className={`flex items-center ${isSolved ? 'text-emerald-600' : 'text-blue-600'} text-[8px] sm:text-[10px] font-black uppercase tracking-widest`}>
-                                                    <div className={`p-1 rounded-lg mr-1.5 sm:mr-2 ${isSolved ? 'bg-emerald-50' : 'bg-blue-50'}`}>
-                                                        <Zap size={12} className={`${isSolved ? 'fill-emerald-600' : 'fill-blue-600'} sm:w-[14px] sm:h-[14px]`} />
-                                                    </div>
-                                                    {isSolved ? "Drill Resolved" : "Active Peer Drill"}
-                                                </div>
-                                                <div className="flex items-center gap-1 text-slate-400 group-hover:text-blue-400 transition-colors">
-                                                    <TrendingUp size={10} className="sm:w-[12px] sm:h-[12px]" />
-                                                    <span className="text-[7.5px] sm:text-[9px] font-bold uppercase tracking-tighter">Skill Booster</span>
+                                        /* --- CHALLENGE WIDGET --- */
+                                        <div className={`bg-white border ${isSolved ? 'border-emerald-100' : 'border-blue-100'} rounded-2xl p-4 w-full max-w-sm shadow-sm transition-all hover:shadow-md`}>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <div className={`flex items-center gap-1.5 ${isSolved ? 'text-emerald-600' : 'text-blue-600'} text-[9px] font-bold uppercase tracking-widest`}>
+                                                    <Zap size={12} className={isSolved ? 'fill-emerald-600' : 'fill-blue-600'} />
+                                                    {isSolved ? "Drill Resolved" : "Community Drill"}
                                                 </div>
                                             </div>
 
-                                            <p className={`font-bold text-[12.5px] sm:text-[15px] mb-3 sm:mb-4 leading-relaxed ${isSolved ? 'text-slate-400 italic' : 'text-slate-800'}`}>
+                                            <p className={`font-semibold text-sm mb-4 leading-relaxed ${isSolved ? 'text-gray-400 italic' : 'text-slate-800'}`}>
                                                 {msg.content}
                                             </p>
 
                                             {isSolved ? (
-                                                <div className="flex items-center gap-1.5 text-emerald-600 text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-emerald-50/80 backdrop-blur-sm py-2 px-3 rounded-xl border border-emerald-100/50">
+                                                <div className="flex items-center gap-1.5 text-emerald-600 text-[10px] font-bold uppercase tracking-widest bg-emerald-50 py-1.5 px-3 rounded-xl border border-emerald-100">
                                                     <CheckCircle size={12} /> Resolved by {msg.challengeData.winner}
                                                 </div>
                                             ) : (
                                                 <div className="flex gap-2">
                                                     <input
                                                         type="text"
-                                                        placeholder="Solve this drill..."
-                                                        className="flex-1 bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-2 text-sm outline-none focus:bg-white focus:border-blue-500/60 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 placeholder:text-slate-400 shadow-inner font-medium"
+                                                        placeholder="Your answer..."
+                                                        className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-3 py-1.5 text-xs outline-none focus:bg-white focus:border-blue-500/30 transition-all font-medium"
                                                         onKeyDown={(e) => {
                                                             if (e.key === "Enter") submitAnswer(msg.id, e.currentTarget.value);
                                                         }}
@@ -293,7 +269,7 @@ export default function Phase1Chat() {
                                                             const input = e.currentTarget.parentElement?.querySelector('input');
                                                             if (input) submitAnswer(msg.id, input.value);
                                                         }}
-                                                        className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-600/20"
+                                                        className="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-sm"
                                                     >
                                                         Solve
                                                     </button>
@@ -301,10 +277,10 @@ export default function Phase1Chat() {
                                             )}
                                         </div>
                                     ) : (
-                                        /* --- 💬 STANDARD TEXT --- */
-                                        <div className={`px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold shadow-sm leading-relaxed relative group transition-all border
-                                            ${isMe ? "bg-blue-600 text-white border-blue-700 rounded-tr-none shadow-blue-600/10"
-                                                : "bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200/70 rounded-tl-none hover:border-slate-300"
+                                        /* --- TEXT MESSAGE --- */
+                                        <div className={`px-4 py-2 rounded-2xl text-sm font-medium shadow-sm leading-relaxed border transition-all
+                                            ${isMe ? "bg-blue-600 text-white border-blue-600 rounded-tr-none"
+                                                : "bg-white text-slate-700 border-gray-100 rounded-tl-none hover:border-gray-200"
                                             }`}>
                                             {msg.content}
                                         </div>
@@ -313,56 +289,46 @@ export default function Phase1Chat() {
                             </div>
                         );
                     })}
-                    <div ref={scrollRef} className="h-4" />
+                    <div ref={scrollRef} className="h-2" />
                 </div>
 
                 {/* --- COMPACT CHALLENGE CREATOR --- */}
                 {isChallMode && (
-                    <div className="mx-4 sm:mx-8 mb-4 animate-in slide-in-from-bottom-4 duration-400 z-20">
-                        <div className="bg-white/95 backdrop-blur-xl border-2 border-blue-500/80 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600 animate-gradient-x bg-[length:200%_auto]"></div>
+                    <div className="mx-6 mb-2 animate-in slide-in-from-bottom-4 duration-300 z-20">
+                        <div className="bg-white border-2 border-blue-100 rounded-2xl p-4 shadow-xl">
                             <div className="flex justify-between items-center mb-4">
-                                <div className="flex items-center gap-2.5 text-blue-600">
-                                    <div className="p-1.5 rounded-lg bg-blue-50">
-                                        <Zap size={16} className="fill-blue-600" />
-                                    </div>
-                                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.1em]">Create Community Drill</span>
+                                <div className="flex items-center gap-2 text-blue-600">
+                                    <Zap size={14} className="fill-blue-600" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">New Community Drill</span>
                                 </div>
-                                <button onClick={() => setIsChallMode(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                                    <X size={18} />
+                                <button onClick={() => setIsChallMode(false)} className="p-1 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+                                    <X size={16} />
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">The Question</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="Enter question..."
+                                    value={challQuest}
+                                    onChange={(e) => setChallQuest(e.target.value)}
+                                    className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs outline-none focus:border-blue-500/30 transition-all font-semibold"
+                                />
+                                <div className="flex gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Enter your audit question..."
-                                        value={challQuest}
-                                        onChange={(e) => setChallQuest(e.target.value)}
+                                        placeholder="Enter answer..."
+                                        value={challAns}
+                                        onChange={(e) => setChallAns(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && sendChallenge()}
-                                        className="w-full bg-slate-50/50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500/50 focus:bg-white transition-all font-bold placeholder:font-medium placeholder:text-slate-400"
+                                        className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-xs outline-none focus:border-blue-500/30 transition-all font-semibold"
                                     />
-                                </div>
-                                <div className="space-y-1 relative">
-                                    <label className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">The Answer</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Hidden solution..."
-                                            value={challAns}
-                                            onChange={(e) => setChallAns(e.target.value)}
-                                            onKeyDown={(e) => e.key === "Enter" && sendChallenge()}
-                                            className="flex-1 bg-slate-50/50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500/50 focus:bg-white transition-all font-bold placeholder:font-medium placeholder:text-slate-400"
-                                        />
-                                        <button
-                                            onClick={sendChallenge}
-                                            disabled={!challQuest.trim() || !challAns.trim()}
-                                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-30 disabled:grayscale text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 active:scale-95 flex items-center gap-2"
-                                        >
-                                            Deploy <Send size={12} />
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={sendChallenge}
+                                        disabled={!challQuest.trim() || !challAns.trim()}
+                                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center gap-2"
+                                    >
+                                        Post <Send size={12} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -370,95 +336,58 @@ export default function Phase1Chat() {
                 )}
 
                 {/* --- INPUT AREA --- */}
-                <div className="pt-2 px-2 pb-0 sm:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-200/40 z-20">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="flex items-center gap-1.5 sm:gap-3 bg-white p-1 rounded-xl sm:rounded-2xl border border-slate-200 focus-within:border-blue-500/50 focus-within:ring-8 focus-within:ring-blue-500/5 transition-all shadow-lg shadow-slate-200/50">
-                            <button
-                                onClick={() => setIsChallMode(!isChallMode)}
-                                className={`p-2.5 sm:p-3 rounded-xl transition-all ${isChallMode ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 ring-4 ring-blue-500/10' : 'bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
-                                title="Drop a Drill"
-                            >
-                                <Plus size={20} className={`sm:w-5 sm:h-5 transition-transform duration-300 ${isChallMode ? 'rotate-45' : ''}`} />
-                            </button>
+                <div className="p-4 sm:p-6 bg-white border-t border-gray-100 z-20">
+                    <div className="max-w-4xl mx-auto flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100 transition-all shadow-sm focus-within:bg-white focus-within:border-blue-500/20 focus-within:shadow-md">
+                        <button
+                            onClick={() => setIsChallMode(!isChallMode)}
+                            className={`p-2 rounded-xl transition-all ${isChallMode ? 'bg-blue-600 text-white shadow-md rotate-45' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                            title="Create Drill"
+                        >
+                            <Plus size={18} />
+                        </button>
 
-                            <input
-                                type="text"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                                placeholder="Collaborate with peers..."
-                                className="flex-1 bg-transparent text-slate-700 text-sm sm:text-base px-1.5 sm:px-3 py-2 outline-none placeholder-slate-400 font-bold"
-                            />
+                        <input
+                            type="text"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                            placeholder="Type a message..."
+                            className="flex-1 bg-transparent text-slate-700 text-sm px-2 py-1.5 outline-none font-medium"
+                        />
 
-                            <button
-                                onClick={sendMessage}
-                                disabled={!message.trim()}
-                                className="w-9 h-9 sm:w-11 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-lg sm:rounded-xl flex items-center justify-center transition-all disabled:opacity-30 disabled:grayscale transform active:scale-90 shadow-xl shadow-blue-600/20"
-                            >
-                                <Send size={16} className="sm:w-[18px] sm:h-[18px] translate-x-0.5 -translate-y-0.5" />
-                            </button>
-                        </div>
-
-                        <div className="sm:flex justify-center mt-3 sm:mt-4">
-                            <div className="flex items-center gap-2 text-[9px] sm:text-[10px] text-slate-400 font-black bg-white/50 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-200/50 uppercase tracking-[0.05em] transition-all hover:bg-white/80">
-                                <Sparkles size={12} className="text-blue-500 animate-pulse" />
-                                Drop a live drill by clicking the <Plus size={10} className="inline mx-0.5" /> button
-                            </div>
-                        </div>
+                        <button
+                            onClick={sendMessage}
+                            disabled={!message.trim()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-40 shadow-sm hover:scale-105 active:scale-95"
+                        >
+                            <Send size={16} className="translate-x-0.5 -translate-y-0.5" />
+                        </button>
                     </div>
                 </div>
             </div>
 
-            {/* --- FOUL POLICE MODAL (HIDDEN) --- */}
-            {false && showWarning && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-4 border-red-500 max-w-md w-full overflow-hidden transform animate-in zoom-in-95 duration-300">
-                        <div className="bg-red-500 p-6 flex flex-col items-center gap-2">
-                            <div className="flex gap-2">
-                                <span className="text-4xl animate-bounce">🚨</span>
-                                <Shield className="text-white w-12 h-12" />
-                                <span className="text-4xl animate-bounce">🚔</span>
-                            </div>
-                            <h2 className="text-white font-black text-2xl uppercase tracking-tighter">Foul Police Active</h2>
+            {/* --- FOUL POLICE MODAL --- */}
+            {showWarning && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2rem] shadow-2xl border border-red-100 max-w-sm w-full overflow-hidden transform animate-in zoom-in-95 duration-300">
+                        <div className="bg-red-50 to-red-600 p-6 flex flex-col items-center gap-2 border-b border-red-100">
+                            <Shield className="text-red-500 w-10 h-10" />
+                            <h2 className="text-red-600 font-bold text-lg uppercase tracking-widest mt-2">Community Guidelines</h2>
                         </div>
-                        <div className="p-8 text-center">
-                            <p className="text-slate-600 font-bold mb-6 leading-relaxed">
+                        <div className="p-6 text-center">
+                            <p className="text-slate-600 font-medium mb-6 text-sm leading-relaxed">
                                 {warningMessage.replace("Message blocked: ", "")}
                             </p>
-                            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-8">
-                                <p className="text-red-600 text-[10px] font-black uppercase tracking-widest">
-                                    Final Warning: Please maintain professional conduct in the community hub.
-                                </p>
-                            </div>
                             <button
                                 onClick={() => setShowWarning(false)}
-                                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
+                                className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg"
                             >
-                                Understood, Officer
+                                Understood
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-
-            {/* Custom Animations in Tailwind Global (Conceptual - standard classes used above) */}
-            <style>{`
-                @keyframes gradient-x {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-                .animate-gradient-x {
-                    animation: gradient-x 4s ease infinite;
-                }
-                .no-scrollbar::-webkit-scrollbar {
-                    display: none;
-                }
-                .no-scrollbar {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-            `}</style>
         </div>
     );
 }
